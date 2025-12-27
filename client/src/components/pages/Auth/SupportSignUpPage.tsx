@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import NewSupportForm from "@/components/Form/auth/signUp-forms/NewSupportForm";
-import ROUTES from "@/lib/CONSTANTS/ROUTES";
+import ROUTES from "@/lib/constants/routes";
 
 function SupportSignUpPage() {
     //Animation

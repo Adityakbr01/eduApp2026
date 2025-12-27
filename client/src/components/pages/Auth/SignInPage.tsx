@@ -6,7 +6,7 @@ import { useRef } from "react";
 
 
 import LoginForm from "@/components/Form/auth/signIn-form/SigninForm";
-import ROUTES from "@/lib/CONSTANTS/ROUTES";
+import ROUTES from "@/lib/constants/routes";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 

@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Mail } from "lucide-react";
 
-import ROUTES from "@/lib/CONSTANTS/ROUTES";
+import ROUTES from "@/lib/constants/routes";
 import { useSendResetPasswordOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
 

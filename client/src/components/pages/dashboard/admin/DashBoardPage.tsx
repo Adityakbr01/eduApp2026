@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { PERMISSIONS } from "@/lib/CONSTANTS/PERMISSIONS";
+import { PERMISSIONS } from "@/lib/constants/PERMISSIONS";
 import { cn } from "@/lib/utils";
 import { CheckPermission, collectPermissions } from "@/lib/utils/permissions";
 import { approvalStatusEnum, type User } from "@/services/auth";

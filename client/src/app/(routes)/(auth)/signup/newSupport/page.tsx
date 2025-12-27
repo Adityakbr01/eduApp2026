@@ -1,5 +1,5 @@
 import SupportSignUpPage from "@/components/pages/Auth/SupportSignUpPage";
-import APP_INFO from "@/lib/CONSTANTS/APP_INFO";
+import APP_INFO from "@/lib/constants/APP_INFO";
 
 export const metadata = {
     title: `SUPPORT TEAM Sign Up | ${APP_INFO.NAME}`,

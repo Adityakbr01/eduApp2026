@@ -3,12 +3,12 @@
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
-import type { Role } from "@/lib/CONSTANTS/ROLES";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth";
 import { checkRole } from "@/lib/utils/permissions";
 import type { ReactNode } from "react";
+import { Role } from "@/validators/auth.schema";
 
 export type RoleGateProps = {
     allowed: Role[];

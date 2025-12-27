@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { PERMISSIONS } from "@/lib/CONSTANTS/PERMISSIONS";
+import { PERMISSIONS } from "@/lib/constants/PERMISSIONS";
 import { CheckPermission, collectPermissions, hasAnyPermission, missingPermissions } from "@/lib/utils/permissions";
 import type { User } from "@/services/auth";
 import { usersQueries } from "@/services/users/index";
