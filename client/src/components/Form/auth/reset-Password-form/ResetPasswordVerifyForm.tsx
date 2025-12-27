@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from "lucide-react";
 
-import ROUTES from "@/lib/constants/routes";
+import ROUTES from "../../../../lib/constants/routes";
 import { useSendResetPasswordOtp, useVerifyResetPasswordOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
 
