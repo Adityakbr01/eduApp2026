@@ -1,4 +1,4 @@
-const APP_INFO = {
+const APP_info = {
     NAME: "EduApp",
     VERSION: "1.0.0",
     EMAIL: "support@eduapp.com",
@@ -11,4 +11,4 @@ const APP_INFO = {
     COPYRIGHT: `© ${new Date().getFullYear()} EduApp. All rights reserved.`,
 };
 
-export default APP_INFO;
+export default APP_info;

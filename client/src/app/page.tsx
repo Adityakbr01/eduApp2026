@@ -1,8 +1,7 @@
 import HomePage from "@/components/pages/Home/HomePage";
-import APP_INFO from "@/lib/constants/app_info";
-
+import APP_info from "@/lib/constants/app_info";
 export const metadata = {
-  title: `${APP_INFO.NAME}`,
+  title: `${APP_info.NAME}`,
   description: "Admin dashboard for managing the application.",
 };
 

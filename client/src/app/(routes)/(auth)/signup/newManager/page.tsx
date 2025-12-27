@@ -1,8 +1,8 @@
 import ManagerSignUpPage from "@/components/pages/Auth/ManagerSignUpPage";
-import APP_INFO from "@/lib/constants/app_info";
+import APP_info from "@/lib/constants/app_info";;
 
 export const metadata = {
-    title: `MANAGER Sign Up | ${APP_INFO.NAME}`,
+    title: `MANAGER Sign Up | ${APP_info.NAME}`,
     description: "Create your MANAGER account."
 };
 

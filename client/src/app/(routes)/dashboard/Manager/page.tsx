@@ -1,10 +1,10 @@
 import DashBoardPage from "@/components/pages/dashboard/manager/DashBoard";
 import RoleGate from "@/components/pages/dashboard/RoleGate";
-import APP_INFO from "@/lib/constants/app_info";
+import APP_info from "@/lib/constants/app_info";;
 import { ROLES } from "@/validators/auth.schema";
 
 export const metadata = {
-    title: `Manager Dashboard | ${APP_INFO.NAME}`,
+    title: `Manager Dashboard | ${APP_info.NAME}`,
     description: "Manager dashboard for managing the application.",
 };
 
