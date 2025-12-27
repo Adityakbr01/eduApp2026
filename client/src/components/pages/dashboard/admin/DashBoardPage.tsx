@@ -20,7 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { APP_PERMISSIONS } from "@/lib/constants/permissions";
 import { cn } from "@/lib/utils";
 import { CheckPermission, collectPermissions } from "@/lib/utils/permissions";
 import { approvalStatusEnum, type User } from "@/services/auth";
@@ -31,6 +30,7 @@ import UsersPage from "./UsersPage";
 import type { UserRow } from "./types";
 import OverviewWidgets from "./OverviewWidgets";
 import { adminUtils, PermissionKey, RolePermission } from "./utils";
+import APP_PERMISSIONS from "@/lib/constants/permissions";
 
 
 function DashBoardPage() {

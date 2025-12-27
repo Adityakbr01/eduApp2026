@@ -21,7 +21,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { APP_PERMISSIONS } from "@/lib/constants/permissions";
 import { CheckPermission, collectPermissions, hasAnyPermission, missingPermissions } from "@/lib/utils/permissions";
 import type { User } from "@/services/auth";
 import { usersQueries } from "@/services/users/index";
@@ -33,6 +32,7 @@ import UsersPage from "../admin/UsersPage";
 import type { UserRow } from "../admin/types";
 import OverviewWidgets from "../admin/OverviewWidgets";
 import { adminUtils } from "../admin/utils";
+import APP_PERMISSIONS from "@/lib/constants/permissions";
 
 
 function DashBoardPage() {

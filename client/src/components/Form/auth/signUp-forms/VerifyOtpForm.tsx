@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Loader2, KeyRound } from "lucide-react";
 
 import { secureLocalStorage } from "@/lib/utils/encryption";
-import links from "import links from "@/lib/constants/links";
 import { AUTH } from "@/lib/constants/auth";
 
 import { registerVerifyOtpSchema, type RegisterVerifyOtpInput } from "@/validators/auth.schema";
 import { useSendRegisterOtp, useVerifyRegisterOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
+import links from "@/lib/constants/links";
 
 function maskEmail(email: string) {
     const [name, domain] = email.split("@");

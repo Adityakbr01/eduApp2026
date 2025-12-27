@@ -1,4 +1,4 @@
-export const APP_PERMISSIONS = {
+const APP_PERMISSIONS = {
     COURSE_CREATE: "course:create",  // e.g create a new course
     COURSE_READ: "course:read",      // e.g view course content
     COURSE_UPDATE: "course:update",  // e.g update course content
@@ -27,5 +27,7 @@ export const APP_PERMISSIONS = {
     SELF_UPDATE: "self:update", // e.g update own profile
     SELF_DELETE: "self:delete", // e.g delete own account
 } as const;
+
+export default APP_PERMISSIONS;
 
 export type AppPermission = (typeof APP_PERMISSIONS)[keyof typeof APP_PERMISSIONS];

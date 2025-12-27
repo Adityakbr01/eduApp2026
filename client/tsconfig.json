@@ -26,7 +26,13 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
+      "lib/*": [
+        "./lib/*"
+      ],
+      "components/*": [
+        "./src/components/*"
+      ],
     }
   },
   "include": [
