@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import NewManagerForm from "@/components/form/auth/signUp-forms/NewManagerForm";
-import ROUTES from "@/lib/constants/routes";
+import ROUTES from "@/lib/constants/links";
 function ManagerSignUpPage() {
     //Animation
     const formWrapperRef = useRef<HTMLDivElement>(null);
