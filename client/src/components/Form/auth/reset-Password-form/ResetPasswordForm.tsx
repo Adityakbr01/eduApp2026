@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Mail } from "lucide-react";
 
-import ROUTES from "../../../../lib/constants/links";
+import links from "../../../../lib/constants/links";
 import { useSendResetPasswordOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
 
@@ -45,7 +45,7 @@ export default function ResetPasswordForm() {
                 handleMutationError<ResetPasswordForm>(error, form.setError);
             },
         });
-        router.push(`${ROUTES.AUTH.RESET_PASSWORD_VERIFY}?email=${encodeURIComponent(data.email)}`);
+        router.push(`${links.AUTH.RESET_PASSWORD_VERIFY}?email=${encodeURIComponent(data.email)}`);
     };
 
     return (
@@ -91,7 +91,7 @@ export default function ResetPasswordForm() {
                 <div className="text-center text-sm text-muted-foreground">
                     Remember your password?{" "}
                     <a
-                        href={ROUTES.AUTH.LOGIN}
+                        href={links.AUTH.LOGIN}
                         className="text-primary hover:underline font-medium"
                     >
                         Sign in

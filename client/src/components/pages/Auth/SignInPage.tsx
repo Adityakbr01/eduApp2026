@@ -8,7 +8,7 @@ import { useRef } from "react";
 import LoginForm from "@/components/form/auth/signIn-form/SigninForm";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
-import ROUTES from "@/lib/constants/links";
+import links from "import links from "@/lib/constants/links";s";
 
 function SignInPage() {
 
@@ -58,7 +58,7 @@ function SignInPage() {
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             I don&apos;t have an account?{" "}
-                            <Link href={ROUTES.AUTH.REGISTER_NEW_STUDENT} className="text-blue-600 font-semibold">
+                            <Link href={links.AUTH.REGISTER_NEW_STUDENT} className="text-blue-600 font-semibold">
                                 Sign Up
                             </Link>
                         </p>

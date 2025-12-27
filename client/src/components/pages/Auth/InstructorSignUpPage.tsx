@@ -7,7 +7,7 @@ import { useRef } from "react";
 import NewInstructorForm from "@/components/form/auth/signUp-forms/NewInstructorForm";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
-import ROUTES from "@/lib/constants/links";
+import links from "import links from "@/lib/constants/links";s";
 
 function InstructorSignUpPage() {
 
@@ -61,7 +61,7 @@ function InstructorSignUpPage() {
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Already have an account?{" "}
-                            <Link href={ROUTES.AUTH.LOGIN} className="text-blue-600 font-semibold">
+                            <Link href={links.AUTH.LOGIN} className="text-blue-600 font-semibold">
                                 Sign In
                             </Link>
                         </p>

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Loader2, User, Mail, Lock, Phone, MapPin } from "lucide-react";
 
-import ROUTES from "@/lib/constants/links";
+import links from "import links from "@/lib/constants/links";s";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { useRegister } from "@/services/auth/mutations";
 import { AxiosError } from "axios";
@@ -84,7 +84,7 @@ function NewStudentForm() {
         secureLocalStorage.setItem("authStep", "2");
         await register.mutateAsync(data, {
             onSuccess: () => {
-                router.push(ROUTES.AUTH.VERIFY_OTP);
+                router.push(links.AUTH.VERIFY_OTP);
             },
             onError: (error: unknown) => {
                 handleMutationError<RegisterFormData>(error as AxiosError, form.setError);
@@ -92,7 +92,7 @@ function NewStudentForm() {
                     // Keep user on step 1 if there are validation errors
                     secureLocalStorage.setItem("authStep", "1");
                     if (error.status === 409) {
-                        router.push(ROUTES.AUTH.LOGIN);
+                        router.push(links.AUTH.LOGIN);
                     }
                 }
             }

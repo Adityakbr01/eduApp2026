@@ -1,5 +1,5 @@
 
-const ROUTES = {
+const links = {
     HOME: "/",
     AUTH: {
         LOGIN: "/signin",
@@ -21,4 +21,4 @@ const ROUTES = {
 
 };
 
-export default ROUTES;
+export default links;

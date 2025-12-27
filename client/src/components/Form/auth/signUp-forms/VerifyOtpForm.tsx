@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, KeyRound } from "lucide-react";
 
 import { secureLocalStorage } from "@/lib/utils/encryption";
-import ROUTES from "@/lib/constants/links";
+import links from "import links from "@/lib/constants/links";s";
 import { AUTH } from "@/lib/constants/auth";
 
 import { registerVerifyOtpSchema, type RegisterVerifyOtpInput } from "@/validators/auth.schema";
@@ -44,7 +44,7 @@ export default function VerifyOtpForm() {
         const savedData = secureLocalStorage.getItem<{ email: string } | null>("registerData", null);
 
         if (step !== "2" || !savedData?.email) {
-            router.replace(ROUTES.AUTH.REGISTER_NEW_STUDENT);
+            router.replace(links.AUTH.REGISTER_NEW_STUDENT);
             return;
         }
 
@@ -72,7 +72,7 @@ export default function VerifyOtpForm() {
                 secureLocalStorage.removeItem("authStep");
                 secureLocalStorage.removeItem("registerData");
                 secureLocalStorage.removeItem("registerFormData");
-                router.push(ROUTES.AUTH.LOGIN);
+                router.push(links.AUTH.LOGIN);
             },
         });
     };

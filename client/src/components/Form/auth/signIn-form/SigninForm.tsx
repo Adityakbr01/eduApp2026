@@ -23,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
-import ROUTES from "@/lib/constants/links";
+import links from "@/lib/constants/links";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { authMutations } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
@@ -74,7 +74,7 @@ export default function SigninForm() {
             secureLocalStorage.removeItem("userCredentials");
             secureLocalStorage.removeItem("rememberMe");
         }
-        router.push(ROUTES.HOME);
+        router.push(links.HOME);
     };
 
 
@@ -154,7 +154,7 @@ export default function SigninForm() {
                     {/* Reset password */}
                     <div className="text-right">
                         <a
-                            href={ROUTES.AUTH.RESET_PASSWORD}
+                            href={links.AUTH.RESET_PASSWORD}
                             className="text-sm text-primary hover:underline"
                         >
                             Forgot password?

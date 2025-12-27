@@ -15,6 +15,6 @@ export const applyMiddlewares = (app: Express) => {
     compressionMiddleware(app);
     cookieMiddleware(app);
 
-    // Apply rate limiter ONLY to API routes
+    // Apply rate limiter ONLY to API links
     app.use("/api", apiRateLimiter);
 };

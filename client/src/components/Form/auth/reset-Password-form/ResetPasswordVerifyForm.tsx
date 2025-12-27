@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from "lucide-react";
 
-import ROUTES from "@/lib/constants/links";
+import links from "@/lib/constants/links";
 import { useSendResetPasswordOtp, useVerifyResetPasswordOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
 
@@ -64,7 +64,7 @@ export default function ResetPasswordVerifyForm({
                 handleMutationError<ResetPasswordVerifyForm>(error, form.setError);
             },
             onSuccess: () => {
-                router.push(ROUTES.AUTH.LOGIN);
+                router.push(links.AUTH.LOGIN);
             }
         });
     };
@@ -198,7 +198,7 @@ export default function ResetPasswordVerifyForm({
                 <div className="text-center text-sm text-muted-foreground">
                     Remember your password?{" "}
                     <a
-                        href={ROUTES.AUTH.LOGIN}
+                        href={links.AUTH.LOGIN}
                         className="text-primary hover:underline font-medium"
                     >
                         Sign in

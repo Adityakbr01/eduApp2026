@@ -16,5 +16,5 @@ export const refreshTokenCookieOptions: CookieOptions = {
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
     maxAge: env.JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000,
-    path: "/api/v1/auth",         // 🔥 refresh limited to auth routes
+    path: "/api/v1/auth",         // 🔥 refresh limited to auth links
 };

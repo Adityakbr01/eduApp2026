@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
 
 
-const AUTH_IGNORE_ROUTES = [
+const AUTH_IGNORE_links = [
     "/auth/session",
     "/auth/me",
     "/auth/token-refresh",
@@ -37,11 +37,11 @@ api.interceptors.response.use(
         const apiError = error?.response?.data?.error;
         const errorCode = apiError?.code;
 
-        // Ignore auth bootstrap routes
+        // Ignore auth bootstrap links
         if (
             status === 401 &&
             url &&
-            AUTH_IGNORE_ROUTES.some((r) => url.includes(r))
+            AUTH_IGNORE_links.some((r) => url.includes(r))
         ) {
             return Promise.reject(error);
         }

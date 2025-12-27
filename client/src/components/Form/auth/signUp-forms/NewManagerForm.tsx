@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Building2, Eye, EyeOff, Loader2, Lock, Mail, MapPin, Phone, User, Users } from "lucide-react";
 
-import ROUTES from "@/lib/constants/links";
+import links from "@/lib/constants/links";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { authMutations } from "@/services/auth/mutations";
 import { AxiosError } from "axios";
@@ -164,12 +164,12 @@ export default function NewManagerForm() {
                 secureLocalStorage.removeItem("registerFormData");
                 secureLocalStorage.removeItem("registerData");
                 secureLocalStorage.removeItem("authStep");
-                router.push(ROUTES.HOME);
+                router.push(links.HOME);
             }, onError: (error) => {
                 handleMutationError<RegisterFormData>(error as AxiosError, form.setError);
                 if (error instanceof AxiosError && error.response) {
                     if (error.response.status === 409) {
-                        router.push(ROUTES.AUTH.LOGIN);
+                        router.push(links.AUTH.LOGIN);
                     }
                 }
             }
