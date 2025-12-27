@@ -4,7 +4,6 @@ import { useGetCurrentUser } from "@/services/auth";
 import { useLogout } from "@/services/auth/mutations";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
-;
 
 export default function HomePage() {
     const { user, hydrated, isLoggedIn } = useAuthStore();
