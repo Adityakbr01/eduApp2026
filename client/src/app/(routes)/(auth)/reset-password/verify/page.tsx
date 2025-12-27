@@ -1,4 +1,4 @@
-import ResetPasswordVerifyPage from "@/components/pages/Auth/ResetPasswordVerifyPage";
+import ResetPasswordVerifyPage from "@/components/pages/Auth/resetPasswordVerifyPage";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

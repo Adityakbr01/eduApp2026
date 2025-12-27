@@ -1,4 +1,4 @@
-import StudentSignUpPage from "@/components/pages/Auth/StudentSignUpPage";
+import StudentSignUpPage from "@/components/pages/Auth/studentSignUpPage";
 import APP_info from "@/lib/constants/app_info";;
 
 export const metadata = {

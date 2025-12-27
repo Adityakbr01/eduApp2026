@@ -1,4 +1,4 @@
-import InstructorSignUpPage from "@/components/pages/Auth/InstructorSignUpPage";
+import InstructorSignUpPage from "@/components/pages/Auth/instructorsignuppage";
 import APP_info from "@/lib/constants/app_info";;
 
 export const metadata = {

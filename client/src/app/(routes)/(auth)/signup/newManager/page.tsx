@@ -1,4 +1,4 @@
-import ManagerSignUpPage from "@/components/pages/Auth/ManagerSignUpPage";
+import ManagerSignUpPage from "@/components/pages/Auth/managerSignUpPage";
 import APP_info from "@/lib/constants/app_info";;
 
 export const metadata = {
