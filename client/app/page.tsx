@@ -1,3 +1,4 @@
+import HomePage from "@/components/pages/HomePage";
 import APP_info from "@/constants/app_info";
 
 export const metadata = {
@@ -9,7 +10,7 @@ export const metadata = {
 function Page() {
   return (
     <div className="min-h-screen min-w-screen h-screen">
-      <div>Hello</div>
+      <HomePage />
     </div>
   );
 }
