@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import NewSupportForm from "@/components/form/auth/signUp-forms/NewSupportForm";
-import links from "import links from "@/lib/constants/links";s";
+import ROUTES from "@/lib/constants/links";
 
 
 function SupportSignUpPage() {
@@ -59,7 +59,7 @@ function SupportSignUpPage() {
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Already have an account?{" "}
-                            <Link href={links.AUTH.LOGIN} className="text-blue-600 font-semibold">
+                            <Link href={ROUTES.AUTH.LOGIN} className="text-blue-600 font-semibold">
                                 Sign In
                             </Link>
                         </p>

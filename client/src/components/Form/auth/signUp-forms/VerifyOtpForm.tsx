@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, KeyRound } from "lucide-react";
 
 import { secureLocalStorage } from "@/lib/utils/encryption";
-import links from "import links from "@/lib/constants/links";s";
+import links from "import links from "@/lib/constants/links";
 import { AUTH } from "@/lib/constants/auth";
 
 import { registerVerifyOtpSchema, type RegisterVerifyOtpInput } from "@/validators/auth.schema";

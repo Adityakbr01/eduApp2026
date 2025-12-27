@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 
-import ResetPasswordForm from "@/components/form/auth/reset-Password-form/ResetPasswordForm";
+import ResetPasswordForm from "@/components/form/auth/reset-password-form/ResetPasswordForm";
 
 function ResetPasswordPage() {
 

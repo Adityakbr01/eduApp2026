@@ -8,7 +8,7 @@ import { useRef } from "react";
 import NewStudentForm from "@/components/form/auth/signUp-forms/NewStudentForm";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
-import links from "import links from "@/lib/constants/links";s";
+import links from "import links from "@/lib/constants/links";
 
 function StudentSignUpPage() {
 
