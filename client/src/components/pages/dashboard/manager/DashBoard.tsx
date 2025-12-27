@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { PERMISSIONS } from "@/lib/constants/permissions";
+import { APP_PERMISSIONS } from "@/lib/constants/permissions";
 import { CheckPermission, collectPermissions, hasAnyPermission, missingPermissions } from "@/lib/utils/permissions";
 import type { User } from "@/services/auth";
 import { usersQueries } from "@/services/users/index";
@@ -45,21 +45,21 @@ function DashBoardPage() {
     console.log("Current User in Manager Dashboard:", user);
     const permissionSet = useMemo(() => collectPermissions(user), [user]);
     const canViewUsers = hasAnyPermission(permissionSet, [
-        PERMISSIONS.USER_READ,
-        PERMISSIONS.USER_MANAGE,
+        APP_PERMISSIONS.USER_READ,
+        APP_PERMISSIONS.USER_MANAGE,
     ]);
 
     const CanManageUser = CheckPermission({
         carrier: permissionSet,
-        requirement: PERMISSIONS.USER_MANAGE,
+        requirement: APP_PERMISSIONS.USER_MANAGE,
     });
 
     console.log(CanManageUser)
 
     const missingUserPermissions = useMemo(
         () => (canViewUsers ? [] : missingPermissions(permissionSet, [
-            PERMISSIONS.USER_READ,
-            PERMISSIONS.USER_MANAGE,
+            APP_PERMISSIONS.USER_READ,
+            APP_PERMISSIONS.USER_MANAGE,
         ])),
         [canViewUsers, permissionSet],
     );

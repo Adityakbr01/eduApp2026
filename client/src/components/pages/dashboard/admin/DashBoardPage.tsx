@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { PERMISSIONS } from "@/lib/constants/permissions";
+import { APP_PERMISSIONS } from "@/lib/constants/permissions";;
 import { cn } from "@/lib/utils";
 import { CheckPermission, collectPermissions } from "@/lib/utils/permissions";
 import { approvalStatusEnum, type User } from "@/services/auth";
@@ -40,7 +40,7 @@ function DashBoardPage() {
     const permissionSet = useMemo(() => collectPermissions(user), [user]);
     const CanManageUser = CheckPermission({
         carrier: permissionSet,
-        requirement: PERMISSIONS.USER_MANAGE,
+        requirement: APP_PERMISSIONS.USER_MANAGE,
     });
 
     const [page, setPage] = useState(1);
