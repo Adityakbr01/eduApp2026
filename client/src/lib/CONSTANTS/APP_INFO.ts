@@ -1,0 +1,14 @@
+const APP_INFO = {
+    NAME: "EduApp",
+    VERSION: "1.0.0",
+    EMAIL: "support@eduapp.com",
+    WEBSITE: "https://eduapp.com",
+    DESCRIPTION: "A modern learning platform for students and mentors.",
+    AUTHOR: "EduApp Team",
+    COMPANY: "EduApp Pvt Ltd",
+    ADDRESS: "123 Learning Street, Pune, India",
+    CONTACT_NUMBER: "+91 9876543210",
+    COPYRIGHT: `© ${new Date().getFullYear()} EduApp. All rights reserved.`,
+};
+
+export default APP_INFO;

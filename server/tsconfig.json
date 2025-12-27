@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "module": "nodenext",
+    "target": "esnext",
+    "lib": [
+      "esnext"
+    ],
+    "types": [
+      "node"
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ],
+      "configs/*": [
+        "./src/configs/*"
+      ],
+      "controllers": [
+        "./src/controllers/*"
+      ],
+      "environment/*": [
+        "./src/environments/*"
+      ],
+      "db/*": [
+        "./src/db/*"
+      ],
+      "helpers/*": [
+        "./src/helpers/*"
+      ],
+      "constants/*": [
+        "./src/constants/*"
+      ],
+      "repositories/*": [
+        "./src/repositories/*"
+      ],
+    },
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  },
+  "include": [
+    "./src"
+  ],
+  "exclude": [
+    "./node_modules"
+  ]
+}

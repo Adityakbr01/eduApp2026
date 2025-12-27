@@ -1,0 +1,55 @@
+import { RoleModel } from "src/models/role.model.js";
+import User from "src/models/user.model.js";
+import type { PopulatedRole, UserWithRole } from "src/types/auth.type.js";
+export const authRepository = {
+    findUserByEmailOrPhone: async (email: string, phone?: string) => {
+        const orConditions: any[] = [{ email }];
+        if (phone) orConditions.push({ phone });
+
+        return User.findOne({ $or: orConditions });
+    },
+
+    findUserByEmailWithOtp: async (email: string) => {
+        return User.findOne({ email }).select(
+            "+verifyOtp +verifyOtpExpiry +approvalStatus +password"
+        );
+    },
+
+    findUserForLogin: async (email: string) => {
+        return User.findOne({ email }).select(
+            "+password +isEmailVerified +isBanned +approvalStatus +permissions +roleId"
+        );
+    },
+
+    findUserByIdWithPassword: async (userId: string) => {
+        return User.findById(userId).select(
+            "+password +isEmailVerified +isBanned +approvalStatus"
+        );
+    },
+
+    createUser: async (data: any) => {
+        return User.create(data);
+    },
+
+    updateOtpByEmail: async (email: string, otp: string, expiry: Date) => {
+        return User.updateOne(
+            { email },
+            { verifyOtp: otp, verifyOtpExpiry: expiry }
+        );
+    },
+
+    saveUser: async (user: any) => {
+        return user.save();
+    },
+
+    findRoleByName: async (role: string) => {
+        return RoleModel.findOne({ name: role });
+    },
+
+    findUserMinimalById: async (userId: string) => {
+        return User.findById(userId)
+            .select("name email roleId isEmailVerified approvalStatus isBanned phone")
+            .populate<{ roleId: PopulatedRole }>("roleId", "name")
+            .lean<UserWithRole>();
+    },
+};
