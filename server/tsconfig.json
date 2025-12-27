@@ -18,7 +18,7 @@
       "configs/*": [
         "./src/configs/*"
       ],
-      "controllers": [
+      "controllers/*": [
         "./src/controllers/*"
       ],
       "environment/*": [
@@ -35,14 +35,14 @@
       ],
       "repositories/*": [
         "./src/repositories/*"
-      ],
+      ]
     },
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": [
     "./src"
