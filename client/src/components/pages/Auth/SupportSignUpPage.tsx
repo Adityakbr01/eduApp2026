@@ -8,6 +8,7 @@ import { gsap } from "gsap";
 import NewSupportForm from "@/components/Form/auth/signUp-forms/NewSupportForm";
 import ROUTES from "@/lib/constants/routes";
 
+
 function SupportSignUpPage() {
     //Animation
     const formWrapperRef = useRef<HTMLDivElement>(null);
