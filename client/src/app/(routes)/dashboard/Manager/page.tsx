@@ -1,6 +1,6 @@
 import DashBoardPage from "@/components/pages/dashboard/manager/DashBoard";
 import RoleGate from "@/components/pages/dashboard/RoleGate";
-import APP_INFO from "@/lib/constants/APP_INFO";
+import APP_INFO from "@/lib/constants/app_info";
 import { ROLES } from "@/validators/auth.schema";
 
 export const metadata = {

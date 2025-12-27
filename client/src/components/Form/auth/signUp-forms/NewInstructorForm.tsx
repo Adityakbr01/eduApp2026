@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Loader2, User, Mail, Lock, Phone, MapPin, FileText, Briefcase, Award } from "lucide-react";
 
-import ROUTES from "../../../../lib/constants/routes";
+import ROUTES from "@/lib/constants/routes";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { authMutations } from "@/services/auth/mutations";
 import { AxiosError } from "axios";
