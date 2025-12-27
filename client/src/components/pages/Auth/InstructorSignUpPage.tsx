@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 
 
-import NewInstructorForm from "@/components/Form/auth/signUp-forms/NewInstructorForm";
+import NewInstructorForm from "@/components/form/auth/signUp-forms/NewInstructorForm";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import ROUTES from "@/lib/constants/routes";

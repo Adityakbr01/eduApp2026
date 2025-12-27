@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 
 
-import VerifyOtpForm from "@/components/Form/auth/signUp-forms/VerifyOtpForm";
+import VerifyOtpForm from "@/components/form/auth/signUp-forms/VerifyOtpForm";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 

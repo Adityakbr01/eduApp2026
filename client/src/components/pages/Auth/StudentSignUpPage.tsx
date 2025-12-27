@@ -5,7 +5,7 @@ import { useRef } from "react";
 
 
 
-import NewStudentForm from "@/components/Form/auth/signUp-forms/NewStudentForm";
+import NewStudentForm from "@/components/form/auth/signUp-forms/NewStudentForm";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import ROUTES from "@/lib/constants/routes";

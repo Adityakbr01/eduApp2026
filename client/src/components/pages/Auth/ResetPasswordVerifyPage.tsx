@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 
-import ResetPasswordVerifyForm from "@/components/Form/auth/reset-Password-form/ResetPasswordVerifyForm";
+import ResetPasswordVerifyForm from "@/components/form/auth/reset-Password-form/ResetPasswordVerifyForm";
 
 function ResetPasswordVerifyPage({ initialEmail }: { initialEmail: string }) {
     //Animation
