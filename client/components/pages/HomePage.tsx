@@ -5,7 +5,7 @@ import { useLogout } from "@/services/auth/mutations";
 import { useAuthStore } from "@/store/auth";
 import Link from "next/link";
 
-export default function HomePage() {
+function HomePage() {
     const { user, hydrated, isLoggedIn } = useAuthStore();
     console.log("HomePage render:", { user, hydrated, isLoggedIn });
     const logOut = useLogout()
@@ -33,4 +33,8 @@ export default function HomePage() {
         </div>
 
     </div>;
+
+
 }
+
+export default HomePage;

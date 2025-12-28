@@ -1,4 +1,6 @@
-import HomePage from "@/components/pages/homePage";
+
+
+import HomePage from "@/components/pages/HomePage";
 import APP_info from "@/constants/app_info";
 
 export const metadata = {
