@@ -154,17 +154,12 @@ userSchema.methods.comparePassword = async function (plainPassword: string) {
     return bcrypt.compare(plainPassword, this.password);
 };
 
-userSchema.methods.generateAccessToken = async function (sessionId: string) {
-    const extraPermissions = await PermissionModel
-        .find({ _id: { $in: this.permissions } })
-        .select("code description -_id")
-        .lean();
-
+userSchema.methods.generateAccessToken = async function (sessionId: string, roleName: string) {
     return jwt.sign(
         {
             userId: this._id,
             roleId: this.roleId,
-            extraPermissions: extraPermissions.map(p => p.code),
+            roleName: roleName,
             sessionId,
         },
         env.JWT_ACCESS_TOKEN_SECRET,

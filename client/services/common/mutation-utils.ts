@@ -1,3 +1,5 @@
+// # This util provides standardized success and error handling for mutations and displays toast notifications accordingly.
+// services/common/mutation-utils.ts
 import toast from "react-hot-toast";
 import { normalizeApiError } from "../auth/error-utils";
 

@@ -7,10 +7,10 @@ declare global {
     namespace Express {
         interface UserPermission {
             role?: string;
-            permissions?: string[];
             id?: UserDocument["_id"];
-            extraPermissions?: UserDocument["extraPermissions"];
             roleId?: UserDocument["roleId"];
+            roleName?: string;
+            sessionId?: string;
         }
 
         interface Request {

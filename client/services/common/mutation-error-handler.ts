@@ -1,7 +1,7 @@
+// # this handler responsible for setting form errors from mutation errors
 // services/common/mutation-error-handler.ts
 import { AxiosError } from "axios";
 import { FieldValues, UseFormSetError, Path } from "react-hook-form";
-
 /**
  * Type-safe wrapper for react-hook-form setError
  */

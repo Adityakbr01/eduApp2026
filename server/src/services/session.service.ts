@@ -13,7 +13,6 @@ export interface SessionData {
     userId: string;
     createdAt: number;
     expiresAt: number;
-    permissions: string[]; // 👈 PRE-COMPUTED EFFECTIVE PERMS
 }
 
 class SessionService {
@@ -31,7 +30,6 @@ class SessionService {
     async createSession(
         userId: string,
         sessionId: string,
-        permissions: string[]
     ): Promise<void> {
         const sessionKey = this.getSessionKey(userId);
         const ttl = env.JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS;
@@ -40,7 +38,6 @@ class SessionService {
         const sessionData: SessionData = {
             sessionId,
             userId,
-            permissions,
             createdAt: now,
             expiresAt: now + ttl * 1000,
         };
@@ -48,7 +45,7 @@ class SessionService {
         await cacheManager.set(sessionKey, sessionData, ttl);
 
         logger.info(
-            `✅ Session created | user=${userId} | sessionId=${sessionId} | perms=${permissions.length}`
+            `✅ Session created | user=${userId} | sessionId=${sessionId}`
         );
     }
 
@@ -110,10 +107,10 @@ class SessionService {
     }
 
     // Get permissions from active session
-    async getSessionPermissions(userId: string): Promise<string[]> {
-        const session = await this.getSession(userId);
-        return session?.permissions || [];
-    }
+    // async getSessionPermissions(userId: string): Promise<string[]> {
+    //     const session = await this.getSession(userId);
+    //     return session?.permissions || [];
+    // }
 
 }
 

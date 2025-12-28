@@ -10,15 +10,17 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { ROLES } from "src/constants/roles.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import CheckUserEmailAndBanned from "src/helpers/checkUserEmailAndBanned.js";
+import checkUserEmailVerified from "src/helpers/checkUserEmailVerified.js";
 import invalidateUserAuth from "src/helpers/invalidateUserAuth.js";
 import { getUserPermissions } from "src/middlewares/custom/getUserPermissions.js";
 import type { RegisterSchemaInput } from "src/schemas/auth.schema.js";
-import { approvalStatusEnum } from "src/types/user.model.type.js";
 import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
 import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "./session.service.js";
+import e from "express";
+import { RoleModel } from "src/models/role.model.js";
 
 
 export const authService = {
@@ -238,32 +240,8 @@ export const authService = {
         const user =
             await authRepository.findUserForLogin(email);
 
-        if (!user) {
-            throw new AppError(
-                "User not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND, [{ path: 'email', message: 'User with this email does not exist' }]
-            );
-        }
-
-        if (!user.isEmailVerified) {
-            throw new AppError(
-                "Email not verified",
-                STATUSCODE.FORBIDDEN,
-                ERROR_CODE.EMAIL_NOT_VERIFIED, [{ path: 'email', message: 'Email is not verified' }]
-            );
-        }
-
         CheckUserEmailAndBanned(user);
-
-        if (user.approvalStatus !== approvalStatusEnum.APPROVED) {
-            throw new AppError(
-                "Account pending approval",
-                STATUSCODE.FORBIDDEN,
-                ERROR_CODE.ACCOUNT_NOT_APPROVED, [{ path: 'approvalStatus', message: 'Account is not approved' }]
-            );
-        }
-
+        checkUserEmailVerified(user);
         const isPasswordValid =
             await user.comparePassword(password);
 
@@ -276,20 +254,22 @@ export const authService = {
         }
 
         const sessionId = uuidv4();
-        const rolePerms = await getUserPermissions(user.roleId);
-        const userPerms = user.permissions || [];
 
-        const effectivePermissions = Array.from(
-            new Set([...rolePerms.permissions, ...userPerms])
-        );
+        const role = await RoleModel
+            .findById(user.roleId)
+            .select("name")
+            .lean();
+
+        if (!role) {
+            throw new AppError("Role not found", 500);
+        }
 
         const accessToken =
-            await user.generateAccessToken(sessionId);
+            await user.generateAccessToken(sessionId, role.name);
 
         await sessionService.createSession(
             String(user._id),
             sessionId,
-            effectivePermissions
         );
 
         await cacheManager.del(
@@ -320,6 +300,7 @@ export const authService = {
         }
 
         CheckUserEmailAndBanned(user);
+        checkUserEmailVerified(user);
 
         const { otp, hashedOtp, expiry } = await generateOtp();
 
@@ -544,14 +525,9 @@ export const authService = {
 
         const rolePerms =
             await getUserPermissions(user.roleId._id);
-
-        const extraPerms =
-            req.user.extraPermissions || [];
-
         const permissions = [
             ...new Set([
                 ...rolePerms.permissions,
-                ...extraPerms,
             ]),
         ];
 
@@ -576,6 +552,8 @@ export const authService = {
     getSessionInfoService: async (req: any) => ({
         userId: req.user.id,
         roleId: req.user.roleId,
-        permissions: req.user.permissions,
+        roleName: req.user.roleName,
+        sessionId: req.user.sessionId,
+        isAuthenticated: true,
     }),
 };

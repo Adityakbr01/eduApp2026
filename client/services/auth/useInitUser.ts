@@ -11,8 +11,9 @@ export const useInitUser = () => {
             console.log("Session data:", data);
             setUser({
                 userId: data.data.userId,
-                roleId: data.data.roleId,
-                permissions: data.data.permissions,
+                actualRoleId: data.data.roleId,
+                roleName: data.data.roleName,
+                sessionId: data.data.sessionId,
             });
             markHydrated();
         }

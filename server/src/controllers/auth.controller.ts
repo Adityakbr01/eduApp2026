@@ -27,7 +27,6 @@ const authController = {
     loginUser: catchAsync<{}, any, LoginBody>(async (req, res) => {
         const { email, password } = req.body;
         const result = await authService.loginUserService(email, password);
-        console.log('Login Result:', result);
         setAuthCookies(res, result.accessToken);
         sendResponse(res, 200, "User logged in successfully", {
             userId: result.userId,

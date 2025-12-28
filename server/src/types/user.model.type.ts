@@ -54,5 +54,5 @@ export interface IUser {
     supportTeamProfile?: SupportTeamProfile;
 
     comparePassword: (password: string) => Promise<boolean>;
-    generateAccessToken: (sessionId: string) => string;
+    generateAccessToken: (sessionId: string, roleName: string) => string;
 }

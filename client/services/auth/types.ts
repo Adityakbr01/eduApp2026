@@ -28,6 +28,8 @@ export interface User {
     createdAt?: string;
     updatedAt?: string;
     approvedBy?: string | null;
+    sessionId?: string;
+    actualRoleId?: string;
 }
 
 
@@ -143,9 +145,11 @@ export interface SessionResponse {
 
 
 export interface SessionData {
-    userId: string;
-    roleId: roleIdInterface;
-    permissions: string[];
+    isAuthenticated: boolean,
+    sessionId: string,
+    roleName: string,
+    roleId: string
+    userId: string,
 }
 
 // Generic API Response Wrapper

@@ -11,7 +11,7 @@ interface AccessTokenPayload extends JwtPayload {
     userId: string;
     roleId: string;
     sessionId: string;
-    extraPermissions?: string[];
+    roleName: string;
 }
 
 const authMiddleware = async (
@@ -84,19 +84,12 @@ const authMiddleware = async (
                 }
             ]);
         }
-
-        logger.info("✅ Auth success", {
-            userId: decoded.userId,
-            roleId: decoded.roleId,
-            permissionsCount: session.permissions?.length || 0,
-            path: req.originalUrl,
-        });
-
         // 5️⃣ Attach minimal user context
         req.user = {
             id: decoded.userId,
             roleId: decoded.roleId,
-            permissions: session.permissions || [],
+            sessionId: decoded.sessionId,
+            roleName: decoded.roleName,
         };
 
         next();

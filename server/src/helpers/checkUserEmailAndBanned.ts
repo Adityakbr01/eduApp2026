@@ -3,6 +3,7 @@ import AppError from "src/utils/AppError.js";
 import { approvalStatusEnum, type IUser } from "../types/user.model.type.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
+import path from "path";
 
 function CheckUserEmailAndBanned(user: IUser) {
 
@@ -21,11 +22,13 @@ function CheckUserEmailAndBanned(user: IUser) {
         );
     }
 
+
+
     // ✅ Account pending approval
     if (!user.approvalStatus || user.approvalStatus === approvalStatusEnum.PENDING) {
         throw new AppError(
             "Your account is awaiting for approval",
-            STATUSCODE.FORBIDDEN,
+            STATUSCODE.BAD_REQUEST,
             ERROR_CODE.ACCOUNT_PENDING_APPROVAL,
             [
                 {
@@ -36,11 +39,27 @@ function CheckUserEmailAndBanned(user: IUser) {
         );
     }
 
+    if (user.approvalStatus === approvalStatusEnum.REJECTED) {
+        throw new AppError(
+            "Your account registration was rejected",
+            STATUSCODE.BAD_REQUEST,
+            ERROR_CODE.ACCOUNT_REGISTRATION_REJECTED,
+            [
+                {
+                    path: "email",
+                    message: "Your account registration was rejected. Please contact support for more information."
+                }
+            ],
+        );
+    }
+
+
+
     // ✅ Banned account
     if (user.isBanned) {
         throw new AppError(
             "Your account has been suspended",
-            STATUSCODE.FORBIDDEN,
+            STATUSCODE.BAD_REQUEST,
             ERROR_CODE.FORBIDDEN,
             [
                 {

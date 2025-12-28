@@ -72,9 +72,6 @@ export const useLogin = (
             qc.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
             mutationHandlers.success("Login successful");
         },
-        onError: (error) => {
-            mutationHandlers.error(error);
-        },
         ...options,
     });
 };
@@ -90,7 +87,8 @@ export const useSendResetPasswordOtp = (
             mutationHandlers.success(d.message || "OTP sent"),
         onError: (error) => {
             mutationHandlers.error(error);
-        }, ...options,
+        },
+        ...options,
     });
 
 export const useVerifyResetPasswordOtp = (
