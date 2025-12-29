@@ -31,14 +31,12 @@ class SessionService {
             expiresAt: now + env.JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000,
         };
         await this.saveSession(userId, session);
-        logger.info(`✅ Session created | user=${userId} | sessionId=${sessionId}`);
     }
 
     async validateSession(userId: string, sessionId: string): Promise<boolean> {
         const session = await this.getSession(userId);
         if (!session || session.expiresAt < Date.now() || session.sessionId !== sessionId) {
             if (session?.expiresAt < Date.now()) await this.deleteSession(userId);
-            logger.info(`❌ Session invalid for user=${userId}`);
             return false;
         }
         return true;
@@ -50,7 +48,6 @@ class SessionService {
 
     async deleteSession(userId: string): Promise<void> {
         await cacheManager.del(this.getSessionKey(userId));
-        logger.info(`🗑️ Session deleted | user=${userId}`);
     }
 
     async hasActiveSession(userId: string): Promise<boolean> {
@@ -65,7 +62,6 @@ class SessionService {
 
         const updatedSession: SessionData = { ...session, permissions };
         await this.saveSession(userId, updatedSession);
-        logger.info(permissions ? `✅ Session permissions updated | user=${userId}` : `✅ Session permissions cleared | user=${userId}`);
     }
 
     async setSessionPermissions(userId: string, permissions: PermissionDTO[]): Promise<void> {

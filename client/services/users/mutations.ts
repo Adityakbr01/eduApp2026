@@ -74,8 +74,6 @@ const useApproveUser = (
             options?.onSuccess?.(api, variables, context, undefined as never);
         },
         onError: (error, variables, context) => {
-            toast.error("User approval failed");
-            console.error("User approval failed:", error);
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USERS.ALL] });
             options?.onError?.(error, variables, context, undefined as never);
         },
@@ -130,8 +128,6 @@ const useDeleteUser = (
             options?.onSuccess?.(api, variables, context, undefined as never);
         },
         onError: (error, variables, context) => {
-            toast.error("User deletion failed");
-            console.error("User deletion failed:", error);
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USERS.ALL] });
             options?.onError?.(error, variables, context, undefined as never);
         },
