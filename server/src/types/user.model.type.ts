@@ -1,4 +1,6 @@
 import type { Types } from "mongoose";
+import type { PermissionSummary } from "src/helpers/getUserExtraPermissions.js";
+import type { PermissionDTO, PopulatedRole } from "./auth.type.js";
 
 export enum approvalStatusEnum {
     PENDING = "PENDING",
@@ -32,7 +34,7 @@ export interface IUser {
     name: string;
     email: string;
     password: string;
-    roleId: Types.ObjectId;
+    roleId: Types.ObjectId | PopulatedRole;
 
     verifyOtp?: string;
     verifyOtpExpiry?: Date;
@@ -54,5 +56,5 @@ export interface IUser {
     supportTeamProfile?: SupportTeamProfile;
 
     comparePassword: (password: string) => Promise<boolean>;
-    generateAccessToken: (sessionId: string, roleName: string, permissions: string[]) => string;
+    generateAccessToken: (sessionId: string, roleName: string) => string;
 }

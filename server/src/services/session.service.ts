@@ -1,117 +1,86 @@
+import cacheInvalidation from "src/cache/cacheInvalidation.js";
 import cacheManager from "src/cache/cacheManager.js";
 import { env } from "src/configs/env.js";
+import type { PermissionDTO } from "src/types/auth.type.js";
 import logger from "src/utils/logger.js";
-
-/**
- * Session Service
- * - Enforces SINGLE DEVICE login
- * - Redis stores only sessionId (source of truth)
- */
 
 export interface SessionData {
     sessionId: string;
     userId: string;
     createdAt: number;
     expiresAt: number;
+    permissions?: PermissionDTO[];
 }
 
 class SessionService {
-    /**
-     * Redis key for user session
-     */
     private getSessionKey(userId: string): string {
         return `session:user:${userId}`;
     }
 
-    /**
-     * Create / overwrite session
-     * → Any previous session is INVALIDATED automatically
-     */
-    async createSession(
-        userId: string,
-        sessionId: string,
-    ): Promise<void> {
-        const sessionKey = this.getSessionKey(userId);
-        const ttl = env.JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS;
-        const now = Date.now();
+    private async saveSession(userId: string, session: SessionData): Promise<void> {
+        const ttl = Math.floor((session.expiresAt - Date.now()) / 1000);
+        await cacheManager.set(this.getSessionKey(userId), session, ttl);
+    }
 
-        const sessionData: SessionData = {
+    async createSession(userId: string, sessionId: string): Promise<void> {
+        const now = Date.now();
+        const session: SessionData = {
             sessionId,
             userId,
             createdAt: now,
-            expiresAt: now + ttl * 1000,
+            expiresAt: now + env.JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000,
         };
-
-        await cacheManager.set(sessionKey, sessionData, ttl);
-
-        logger.info(
-            `✅ Session created | user=${userId} | sessionId=${sessionId}`
-        );
+        await this.saveSession(userId, session);
+        logger.info(`✅ Session created | user=${userId} | sessionId=${sessionId}`);
     }
 
-
-    /**
-     * Validate session using sessionId
-     * → Used by access token middleware & refresh token
-     */
     async validateSession(userId: string, sessionId: string): Promise<boolean> {
-        const sessionKey = this.getSessionKey(userId);
-        const session = (await cacheManager.get(sessionKey)) as SessionData | null;
-
-        if (!session) {
-            logger.info(`❌ No active session for user=${userId}`);
+        const session = await this.getSession(userId);
+        if (!session || session.expiresAt < Date.now() || session.sessionId !== sessionId) {
+            if (session?.expiresAt < Date.now()) await this.deleteSession(userId);
+            logger.info(`❌ Session invalid for user=${userId}`);
             return false;
         }
-
-        if (session.expiresAt < Date.now()) {
-            logger.info(`❌ Session expired for user=${userId}`);
-            await this.deleteSession(userId);
-            return false;
-        }
-
-        const isValid = session.sessionId === sessionId;
-
-        if (!isValid) {
-            logger.info(
-                `❌ Session mismatch | user=${userId} | force logout`
-            );
-        }
-
-        return isValid;
+        return true;
     }
 
-    /**
-     * Get active session (debug / admin use)
-     */
     async getSession(userId: string): Promise<SessionData | null> {
-        const sessionKey = this.getSessionKey(userId);
-        return (await cacheManager.get(sessionKey)) as SessionData | null;
+        return (await cacheManager.get(this.getSessionKey(userId))) as SessionData | null;
     }
 
-    /**
-     * Delete session (logout / password change / security)
-     */
     async deleteSession(userId: string): Promise<void> {
-        const sessionKey = this.getSessionKey(userId);
-        await cacheManager.del(sessionKey);
+        await cacheManager.del(this.getSessionKey(userId));
         logger.info(`🗑️ Session deleted | user=${userId}`);
     }
 
-    /**
-     * Check if user has valid active session
-     */
     async hasActiveSession(userId: string): Promise<boolean> {
         const session = await this.getSession(userId);
-        if (!session) return false;
-        return session.expiresAt > Date.now();
+        return !!session && session.expiresAt > Date.now();
     }
 
-    // Get permissions from active session
-    // async getSessionPermissions(userId: string): Promise<string[]> {
-    //     const session = await this.getSession(userId);
-    //     return session?.permissions || [];
-    // }
+    // Permissions helpers
+    private async updateSessionPermissions(userId: string, permissions?: PermissionDTO[]): Promise<void> {
+        const session = await this.getSession(userId);
+        if (!session) return;
 
+        const updatedSession: SessionData = { ...session, permissions };
+        await this.saveSession(userId, updatedSession);
+        logger.info(permissions ? `✅ Session permissions updated | user=${userId}` : `✅ Session permissions cleared | user=${userId}`);
+    }
+
+    async setSessionPermissions(userId: string, permissions: PermissionDTO[]): Promise<void> {
+        await this.updateSessionPermissions(userId, permissions);
+    }
+
+    async getSessionPermissions(userId: string): Promise<PermissionDTO[]> {
+        const session = await this.getSession(userId);
+        return session?.permissions || [];
+    }
+
+    async clearSessionPermissions(userId: string): Promise<void> {
+        await this.updateSessionPermissions(userId, undefined);
+        await cacheInvalidation.invalidateUserSession(userId);
+    }
 }
 
 export default new SessionService();

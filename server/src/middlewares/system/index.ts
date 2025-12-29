@@ -16,5 +16,4 @@ export const applyMiddlewares = (app: Express) => {
     cookieMiddleware(app);
 
     // Apply rate limiter ONLY to API links
-    app.use("/api", apiRateLimiter);
 };

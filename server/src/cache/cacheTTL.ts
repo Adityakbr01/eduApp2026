@@ -6,7 +6,7 @@ export const TTL = {
     COURSE_LIST: 30,
     COURSE_DETAIL: 120,
     USER_PROFILE: 300, // 5 minutes
-    USER_LIST: 300, // 5 minutes
+    USER_LIST: 60, // 1 minute
     ROLE_PERMISSIONS: 3600, // 1 hour - roles/permissions change rarely
     USER_PERMISSIONS: 1800 // 30 minutes
 };

@@ -14,6 +14,10 @@ export interface PermissionSummary {
 export const getUserExtraPermissions = async (
     permissionsIds: string[] | Types.ObjectId[]
 ): Promise<PermissionSummary[]> => {
+    // 🔒 HARD GUARD — prevents runtime crash
+    if (!permissionsIds || permissionsIds.length === 0) {
+        return [];
+    }
 
     const objectIds = permissionsIds.map(id => new Types.ObjectId(id));
     const cacheKey = cacheKeyFactory.user.permissions(objectIds.map(id => id.toString()).sort().join("_"));

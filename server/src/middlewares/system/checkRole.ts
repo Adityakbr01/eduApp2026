@@ -13,7 +13,6 @@ const checkRole = (...allowedRoles: string[]) => {
                 new AppError("User role not found. Access denied.", STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED, [{ path: "role", message: "User role is missing" }])
             );
         }
-
         // ✅ Admin Bypass Logic
         if (userRole === ROLES.ADMIN.code) {
             return next();

@@ -1,6 +1,8 @@
+import { ROLES } from "src/constants/roles.js";
 import { RoleModel } from "src/models/role.model.js";
 import User from "src/models/user.model.js";
 import type { PopulatedRole, UserWithRole } from "src/types/auth.type.js";
+import type { IUser } from "src/types/user.model.type.js";
 export const authRepository = {
     findUserByEmailOrPhone: async (email: string, phone?: string) => {
         const orConditions: any[] = [{ email }];
@@ -18,7 +20,7 @@ export const authRepository = {
     findUserForLogin: async (email: string) => {
         return User.findOne({ email }).select(
             "+password +isEmailVerified +isBanned +approvalStatus +permissions +roleId"
-        );
+        )
     },
 
     findUserByIdWithPassword: async (userId: string) => {
@@ -50,6 +52,15 @@ export const authRepository = {
         return User.findById(userId)
             .select("name email roleId isEmailVerified approvalStatus isBanned phone permissions")
             .populate<{ roleId: PopulatedRole }>("roleId", "name")
-            .lean<UserWithRole>() 
+            .lean<UserWithRole>()
     },
-};
+    findUserById: async (userId: string) => {
+        return User.findById(userId).exec();
+    },
+    isAdminUser: async (user: any): Promise<boolean> => {
+        if (!user?.roleId) return false;
+
+        const role = await RoleModel.findById(user.roleId).exec();
+        return role?.name === ROLES.ADMIN.code;
+    },
+}

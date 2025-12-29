@@ -7,6 +7,7 @@ import { RoleModel as RoleSchema } from "./role.model.js";
 import { env } from "src/configs/env.js";
 import { approvalStatusEnum, type IUser } from "src/types/user.model.type.js";
 import { PermissionModel } from "./permission.model.js";
+import type { PermissionDTO } from "src/types/auth.type.js";
 
 
 const userSchema = new Schema<IUser>(
@@ -154,17 +155,16 @@ userSchema.methods.comparePassword = async function (plainPassword: string) {
     return bcrypt.compare(plainPassword, this.password);
 };
 
-userSchema.methods.generateAccessToken = function (
+userSchema.methods.generateAccessToken = async function (
     sessionId: string,
-    roleName: string,
-    permissions: string[]
 ) {
+
+    const role = await RoleSchema.findById(this.roleId).select("name").lean();
     return jwt.sign(
         {
             userId: this._id,
             roleId: this.roleId,
-            roleName,
-            permissions,
+            roleName: role.name,
             sessionId,
         },
         env.JWT_ACCESS_TOKEN_SECRET,

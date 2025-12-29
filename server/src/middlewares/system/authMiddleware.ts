@@ -6,6 +6,7 @@ import sessionService from "src/services/session.service.js";
 import logger from "src/utils/logger.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
+import type { PermissionDTO } from "src/types/auth.type.js";
 
 interface AccessTokenPayload extends JwtPayload {
     userId: string;
@@ -49,7 +50,6 @@ const authMiddleware = async (
             ]);
         }
 
-
         // 3️⃣ Validate Redis session (single-device)
         const isValidSession = await sessionService.validateSession(
             decoded.userId,
@@ -90,7 +90,6 @@ const authMiddleware = async (
             roleId: decoded.roleId,
             sessionId: decoded.sessionId,
             roleName: decoded.roleName,
-            permissions: decoded.permissions || [],
         };
         next();
     } catch (err: any) {

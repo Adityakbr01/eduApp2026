@@ -1,7 +1,6 @@
 import type { Response } from "express";
 import {
-    accessTokenCookieOptions,
-    refreshTokenCookieOptions,
+    accessTokenCookieOptions
 } from "src/configs/cookie.js";
 
 export const setAuthCookies = (

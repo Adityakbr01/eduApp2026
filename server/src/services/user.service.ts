@@ -1,13 +1,21 @@
+import { appendFile } from "fs";
+import { Types } from "mongoose";
 import path from "path";
+import emailQueue from "src/bull/queues/email.queue.js";
+import { addEmailJob, EMAIL_JOB_Names } from "src/bull/workers/email.worker.js";
+import cacheInvalidation from "src/cache/cacheInvalidation.js";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
+import UserInvalidationService from "src/cache/UserInvalidationService.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
+import { ROLES } from "src/constants/roles.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { attachPermissionsToUser, type RolePermissionCache } from "src/helpers/attachUserPermissionHelper.js";
 import { RoleModel } from "src/models/role.model.js";
 import UserModel from "src/models/user.model.js";
 import { authRepository } from "src/repositories/auth.repository.js";
+import { approvalStatusEnum } from "src/types/user.model.type.js";
 import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
 
@@ -73,9 +81,6 @@ const userService = {
                 path: "users", message: "No users available in the database"
             }]);
         }
-
-
-
 
         const pagination = {
             total: totalUsers,
@@ -214,35 +219,48 @@ const userService = {
     //         data: updatedUser,
     //     };
     // },
-    // deleteUserById: async (userId: string, deletedBy: string) => {
-    //     //Todo : add soft delete
-    //     const user = await User.findById(userId).exec();
-    //     if (!user) {
-    //         throw new ApiError({
-    //             statusCode: 404, message: "User not found", errors: [
-    //                 { path: "user", message: "No user found with the given ID" }
-    //             ]
-    //         });
-    //     }
+    deleteUserById: async (userId: string, deletedBy: string) => {
+        //Todo : add soft delete
+        const user = await UserModel.findById(userId).exec();
+        if (!user) {
+            throw new AppError("User not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND, [{
+                path: "user", message: "No user found with the given ID"
+            }]
+            );
+        }
 
-    //     if (deletedBy.toString() === userId.toString()) {
-    //         throw new ApiError({
-    //             statusCode: 403, message: "You cannot delete your own account", errors: [
-    //                 { path: "user", message: "Users cannot delete their own account" }
-    //             ]
-    //         });
-    //     }
+        if (deletedBy.toString() === userId.toString()) {
+            throw new AppError("You cannot delete your own account", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN, [{
+                path: "user", message: "Users cannot delete their own account"
+            }]
+            );
+        }
 
-    //     await User.findByIdAndDelete(userId).exec();
+        const isAdmin = await authRepository.isAdminUser(user);
 
-    //     // Invalidate all user-related caches
-    //     await cacheInvalidation.invalidateUser(userId);
+        if (isAdmin) {
+            throw new AppError(
+                "Cannot delete an admin user",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN,
+                [{ path: "user", message: "Cannot delete an admin user" }]
+            )
+        }
 
-    //     return {
-    //         message: "User deleted successfully",
-    //         data: user,
-    //     };
-    // },
+        await UserModel.findByIdAndDelete(userId).exec();
+
+        // 4️⃣ Invalidate caches & sessions
+        await Promise.all([
+            cacheInvalidation.invalidateUser(userId),
+            cacheInvalidation.invalidateUserSession(userId),
+            UserInvalidationService.invalidateUserEverything(userId),
+        ]);
+
+        return {
+            message: "User deleted successfully",
+            data: user,
+        };
+    },
     // Roles and Permissions
     getAllRoleANDPermission: async () => {
         const cacheKey = cacheKeyFactory.role.all();
@@ -407,89 +425,111 @@ const userService = {
     //         data: user,
     //     };
     // },
-    // approveUser: async (userId: string, approvedBy: string) => {
+    approveUser: async (userId: string, approvedBy: string) => {
+        const user = await authRepository.findUserById(userId);
+        if (!user) {
+            throw new AppError("User not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND, [{
+                path: "user", message: "No user found with the given ID"
+            }]
+            );
+        }
 
-    //     const user = await User.findById(userId).exec();
-    //     if (!user) {
-    //         throw new ApiError({
-    //             statusCode: 404, message: "User not found", errors: [
-    //                 { path: "user", message: "No user found with the given ID" }
-    //             ]
-    //         });
-    //     }
+        if (user.approvalStatus === approvalStatusEnum.APPROVED) {
+            throw new AppError("User is already approved", STATUSCODE.BAD_REQUEST, ERROR_CODE.ACCOUNT_ALREADY_APPROVED, [{
+                path: "user", message: "The user account is already approved"
+            }]);
+        }
 
-    //     if (user.approvalStatus === approvalStatusEnum.APPROVED) {
-    //         throw new ApiError({
-    //             statusCode: 400, message: "User already approved", errors: [
-    //                 { path: "user", message: "User is already approved" }
-    //             ]
-    //         });
-    //     }
+        if (userId.toString() === approvedBy.toString()) {
+            throw new AppError("User approval denied", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN, [{
+                path: "user", message: "You cannot approve your own account"
+            }]);
+        }
 
-    //     if (userId.toString() === approvedBy.toString()) {
-    //         throw new ApiError({
-    //             statusCode: 403, message: "User approval denied", errors: [
-    //                 { path: "user", message: "You cannot approve your own account" }
-    //             ]
-    //         });
-    //     }
+        await addEmailJob(emailQueue, EMAIL_JOB_Names.ACCOUNT_APPROVAL, {
+            to: user.email,
+        });
+        user.approvalStatus = approvalStatusEnum.APPROVED;
+        user.approvedBy = new Types.ObjectId(approvedBy);
+        await user.save();
 
-    //     await addEmailJob(emailQueue, EMAIL_JOB_Names.ACCOUNT_APPROVAL, {
-    //         to: user.email,
-    //     });
-    //     user.approvalStatus = approvalStatusEnum.APPROVED;
-    //     user.approvedBy = new Types.ObjectId(approvedBy);
-    //     await user.save();
+        // 4️⃣ Invalidate caches & sessions
+        await Promise.all([
+            cacheInvalidation.invalidateUser(userId),
+            cacheInvalidation.invalidateUserSession(userId),
+            UserInvalidationService.invalidateUserEverything(userId),
+        ]);
 
-    //     // Invalidate user caches when user is approved
-    //     await cacheInvalidation.invalidateUser(userId);
+        return {
+            message: "User approved successfully",
+            data: user,
+        };
+    },
+    toggleUserStatus: async (userId: string, actionBy: string, options?: { banEmail?: boolean }) => {
+        // 1️⃣ Fetch user
+        const user = await UserModel.findById(userId).exec();
+        if (!user) {
+            throw new AppError(
+                "User not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+                [{ path: "user", message: "No user found with the given ID" }]
+            );
+        }
+        const isAdmin = await authRepository.isAdminUser(user);
 
-    //     return {
-    //         message: "User approved successfully",
-    //         data: user,
-    //     };
-    // },
-    // banUser: async (userId: string, bannedBy: string) => {
+        if (isAdmin) {
+            throw new AppError(
+                "Cannot ban/unban an admin user",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN,
+                [{ path: "user", message: "Cannot ban/unban an admin user" }]
+            )
+        }
 
-    //     const user = await User.findById(userId).exec();
-    //     if (!user) {
-    //         throw new ApiError({
-    //             statusCode: 404, message: "User not found", errors: [
-    //                 { path: "user", message: "No user found with the given ID" }
-    //             ]
-    //         });
-    //     }
+        // 2️⃣ Prevent self-action
+        if (userId === actionBy) {
+            throw new AppError(
+                "You cannot perform this action on your own account",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN,
+                [{ path: "user", message: "Cannot perform action on own account" }]
+            );
+        }
 
-    //     if (userId.toString() === bannedBy.toString()) {
-    //         throw new ApiError({
-    //             statusCode: 403, message: "You cannot ban your own account", errors: [
-    //                 { path: "user", message: "You cannot ban your own account" }
-    //             ]
-    //         });
-    //     }
 
-    //     if (!user.isBanned) {
-    //         await addEmailJob(emailQueue, EMAIL_JOB_Names.ACCOUNT_BAN, {
-    //             to: user.email,
-    //         });
-    //     }
+        // 3️⃣ Handle ban/unban toggle
+        const isBanning = !user.isBanned;
 
-    //     if (user.isBanned) {
-    //         user.isBanned = false; // Unban the user
-    //     } else {
-    //         user.isBanned = true; // Ban the user
-    //         user.bannedBy = new Types.ObjectId(bannedBy);
-    //     }
-    //     await user.save();
+        if (isBanning) {
+            user.isBanned = true;
+            user.bannedBy = new Types.ObjectId(actionBy);
 
-    //     // Invalidate user caches when user is banned or unbanned
-    //     await cacheInvalidation.invalidateUser(userId);
+            // Send email if required
+            if (options?.banEmail) {
+                await addEmailJob(emailQueue, EMAIL_JOB_Names.ACCOUNT_BAN, {
+                    to: user.email,
+                });
+            }
+        } else {
+            user.isBanned = false;
+            user.bannedBy = null;
+        }
 
-    //     return {
-    //         message: user.isBanned ? "User banned successfully" : "User unbanned successfully",
-    //         data: user,
-    //     };
-    // }
+        await user.save();
+
+        // 4️⃣ Invalidate caches & sessions
+        await Promise.all([
+            cacheInvalidation.invalidateUser(userId),
+            cacheInvalidation.invalidateUserSession(userId),
+            UserInvalidationService.invalidateUserEverything(userId),
+        ]);
+
+        return {
+            message: user.isBanned ? "User banned successfully" : "User unbanned successfully",
+            data: user,
+        };
+    }
 };
 
 export default userService;

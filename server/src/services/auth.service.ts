@@ -13,16 +13,15 @@ import CheckUserEmailAndBanned from "src/helpers/checkUserEmailAndBanned.js";
 import checkUserEmailVerified from "src/helpers/checkUserEmailVerified.js";
 import invalidateUserAuth from "src/helpers/invalidateUserAuth.js";
 import { getUserPermissions } from "src/middlewares/custom/getUserPermissions.js";
+import { PermissionModel } from "src/models/permission.model.js";
+import { RolePermissionModel } from "src/models/rolePermission.model.js";
 import type { RegisterSchemaInput } from "src/schemas/auth.schema.js";
 import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
 import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "./session.service.js";
-import e from "express";
-import { RoleModel } from "src/models/role.model.js";
-import { RolePermissionModel } from "src/models/rolePermission.model.js";
-import { PermissionModel } from "src/models/permission.model.js";
+import type { PermissionDTO } from "src/types/auth.type.js";
 
 
 export const authService = {
@@ -239,11 +238,16 @@ export const authService = {
     // LOGIN
     // ============================
     loginUserService: async (email: string, password: string) => {
+        // 1️⃣ Fetch user
         const user = await authRepository.findUserForLogin(email);
 
+        if (!user) throw new AppError("User not found", STATUSCODE.NOT_FOUND);
+
+        // 2️⃣ Run standard checks
         CheckUserEmailAndBanned(user);
         checkUserEmailVerified(user);
 
+        // 3️⃣ Verify password
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
             throw new AppError(
@@ -255,64 +259,50 @@ export const authService = {
         }
 
         const sessionId = uuidv4();
-
-        // 1️⃣ Fetch role name
-        const role = await RoleModel
-            .findById(user.roleId)
-            .select("name")
-            .lean();
-
-        if (!role) {
-            throw new AppError("Role not found", STATUSCODE.INTERNAL_SERVER_ERROR);
-        }
-
-        // 2️⃣ Fetch role permissions
         const rolePermissions = await RolePermissionModel
             .find({ roleId: user.roleId })
-            .populate("permissionId", "code")
             .lean();
 
-        const rolePermissionCodes = rolePermissions.map(
-            (rp: any) => rp.permissionId.code
+        const rolePermissionIds = rolePermissions.map(
+            rp => rp.permissionId
         );
 
-        // 3️⃣ Fetch user-specific permissions (rare)
-        let userPermissionCodes: string[] = [];
+        // 5️⃣ Merge role + custom permission IDs
+        const allPermissionIds = [
+            ...new Set([
+                ...rolePermissionIds.map(String),
+                ...(user.permissions || []).map(String),
+            ]),
+        ];
 
-        if (user.permissions?.length) {
-            const perms = await PermissionModel
-                .find({ _id: { $in: user.permissions } })
-                .select("code")
-                .lean();
+        // 6️⃣ Fetch FULL permission objects
+        const permissions = await PermissionModel.find({
+            _id: { $in: allPermissionIds },
+        }).select("_id code description").lean();
 
-            userPermissionCodes = perms.map(p => p.code);
-        }
+        const roleName =
+            typeof user.roleId === "object" && "name" in user.roleId
+                ? user.roleId.name
+                : undefined;
 
-        // 4️⃣ Merge & dedupe permissions
-        const permissions = [...new Set([
-            ...rolePermissionCodes,
-            ...userPermissionCodes,
-        ])];
 
-        
+        const permissionsDTO: PermissionDTO[] = permissions.map((p) => ({
+            _id: p._id.toString(),
+            code: p.code,
+            description: p.description,
+        }));
 
-        // 5️⃣ Generate JWT (single source of truth)
+        // 6️⃣ Generate JWT
         const accessToken = await user.generateAccessToken(
             sessionId,
-            role.name,
-            permissions
+            roleName,
         );
+        // 7️⃣ Create session for revocation
+        await sessionService.createSession(String(user._id), sessionId);
+        await sessionService.setSessionPermissions(String(user._id), permissionsDTO);
 
-        // 6️⃣ Create session (for revocation)
-        await sessionService.createSession(
-            String(user._id),
-            sessionId
-        );
-
-        // 7️⃣ Clear cached profile
-        await cacheManager.del(
-            cacheKeyFactory.user.byId(String(user._id))
-        );
+        // 8️⃣ Clear cached profile
+        await cacheManager.del(cacheKeyFactory.user.byId(String(user._id)));
 
         return {
             message: "Login successful",

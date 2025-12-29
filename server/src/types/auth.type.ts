@@ -11,10 +11,16 @@ export interface RefreshTokenBody { refreshToken?: string }
 
 
 
+export type PermissionDTO = {
+    _id: string;
+    code: string;
+    description?: string;
+};
 
 export type PopulatedRole = {
     _id: Types.ObjectId;
     name: string;
+
 };
 
 export type UserWithRole = {

@@ -36,7 +36,7 @@ export const authApi = {
     },
 
     login: async (data: LoginRequest): Promise<AuthResponse> => {
-        const res = await api.post<ApiResponse<AuthResponse>>("/auth/login", data);
+        const res = await api.post<ApiResponse<AuthResponse>>("/auth/login", data, { withCredentials: true });
         return res.data.data;
     },
 

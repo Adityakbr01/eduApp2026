@@ -1,7 +1,6 @@
 // server/src/types/express/index.d.ts
-import { UserDocument } from "../../models/user.model.ts";
 import 'express';
-import { Multer } from 'multer';
+import { UserDocument } from "../../models/user.model.ts";
 
 declare global {
     namespace Express {
@@ -11,7 +10,6 @@ declare global {
             roleId?: UserDocument["roleId"];
             roleName?: string;
             sessionId?: string;
-            permissions?: string[];
         }
 
         interface Request {

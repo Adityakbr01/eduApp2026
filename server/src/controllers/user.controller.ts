@@ -33,12 +33,12 @@ const userController = {
     //         data: result.data,
     //     });
     // }),
-    // deleteUserById: catchAsync(async (req, res) => {
-    //     const userId = req.params.id;
-    //     const deleteBy = req.user!.id;
-    //     const result = await userService.deleteUserById(userId, deleteBy);
-    //     sendResponse(res, 200, result.message, result.data);
-    // }),
+    deleteUserById: catchAsync(async (req, res) => {
+        const userId = req.params.id;
+        const deleteBy = req.user!.id;
+        const result = await userService.deleteUserById(userId, deleteBy);
+        sendResponse(res, 200, result.message, result.data);
+    }),
 
     // Roles and Permissions
     getAllRoleANDPermission: catchAsync(async (req, res) => {
@@ -58,19 +58,19 @@ const userController = {
     //     const result = await userService.deletePermissions({ ...req.body }, deleteBy);
     //     sendResponse(res, 200, result.message, result.data);
     // }),
-    // approveUser: catchAsync(async (req, res) => {
-    //     const userId = req.params.id;
-    //     const result = await userService.approveUser(userId, req.user!.id);
-    //     sendResponse(res, 200, "User approved successfully", {
-    //         message: result.message,
-    //         data: result.data,
-    //     });
-    // }),
-    // banUser: catchAsync(async (req, res) => {
-    //     const userId = req.params.id;
-    //     const result = await userService.banUser(userId, req.user!.id);
-    //     sendResponse(res, 200, result.message, result.data);
-    // }),
+    approveUser: catchAsync(async (req, res) => {
+        const userId = req.params.id;
+        const result = await userService.approveUser(userId, req.user!.id);
+        sendResponse(res, 200, "User approved successfully", {
+            message: result.message,
+            data: result.data,
+        });
+    }),
+    toggleUserStatus: catchAsync(async (req, res) => {
+        const userId = req.params.id;
+        const result = await userService.toggleUserStatus(userId, req.user!.id, { banEmail: true });
+        sendResponse(res, 200, result.message, result.data);
+    }),
 };
 
 export default userController;

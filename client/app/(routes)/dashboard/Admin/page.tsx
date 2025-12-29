@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function Page() {
     return (
-        <RoleGate allowed={[user_roles.ADMIN, user_roles.STUDENT]}>
+        <RoleGate allowed={[user_roles.ADMIN, user_roles.STUDENT, user_roles.INSTRUCTOR]}>
             <DashBoardPage />
         </RoleGate>
     );

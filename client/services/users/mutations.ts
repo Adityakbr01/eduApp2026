@@ -90,7 +90,6 @@ const useBanUser = (
     >
 ) => {
     const queryClient = useQueryClient();
-
     return useMutation<
         ApiResult<null>,
         Error,
@@ -104,8 +103,6 @@ const useBanUser = (
             options?.onSuccess?.(api, variables, context, undefined as never);
         },
         onError: (error, variables, context) => {
-            toast.error("User ban/unban failed");
-            console.error("User ban failed:", error);
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USERS.ALL] });
             options?.onError?.(error, variables, context, undefined as never);
         },
