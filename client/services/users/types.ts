@@ -1,3 +1,5 @@
+import { User } from "../auth";
+
 // Single User object inside data.data
 export interface ApprovedUser {
     approvedBy?: string | null;
@@ -21,16 +23,55 @@ export interface PermissionSummary {
     description?: string;
 }
 
+export interface GetMyPermissionsResponse {
+    user: User;
+    customPermissions: PermissionSummary[];
+    rolePermissions: PermissionSummary[];
+}
+
+
+
 export interface RoleWithPermissions {
     _id: string;
     name: string;
     description?: string;
+    customPermissions?: PermissionSummary[];
+    rolePermissions?: PermissionSummary[];
     permissions: PermissionSummary[];
+}
+
+export interface Permission {
+    _id: string;
+    code: string;
+    description: string;
+}
+
+
+export interface UserPermissionsPayload {
+    _id: string;
+    name: string;
+    email: string;
+    roleId: {
+        _id: string;
+        name: string;
+    };
+    permissions: string[];
+    customPermissions: Permission[];
+    rolePermissions: Permission[];
+}
+
+
+
+
+export interface UserPermissionsResponse {
+    rolePermissions: PermissionSummary[];
+    customPermissions: PermissionSummary[];
 }
 
 export interface RolesAndPermissionsPayload {
     message: string;
     data: RoleWithPermissions[];
+    rolePermissions: PermissionSummary[];
 }
 
 // API response structure

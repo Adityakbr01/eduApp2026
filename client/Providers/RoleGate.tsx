@@ -22,7 +22,6 @@ const formatRoleLabel = (role: Role) => role.replace(/_/g, " ").replace(/\b\w/g,
 function RoleGate({ allowed, children, redirectPath = "/", showFallback = true }: RoleGateProps) {
     const router = useRouter();
     const user = useAuthStore((state) => state.user);
-    console.log("RoleGate user:", user);
 
     const hasAccess = useMemo(() => {
         if (!user) return false;

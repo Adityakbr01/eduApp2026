@@ -27,8 +27,8 @@ import { ROLES } from "@/validators/auth.schema";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { UserRow } from "./types";
-import { UserActionsMenu } from "./UserActionsMenu";
+import { UserRow } from "./dashboards/common/types";
+import { UserActionsMenu } from "./dashboards/common/UserActionsMenu";
 
 type UsersProps = {
     filterRole: string | null;

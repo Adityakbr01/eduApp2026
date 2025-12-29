@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { InfoItem } from "./UserInfoTab";
 import type { PermissionCollection } from "./UserAccessTab";
-import { UserRow } from "../../types";
+import { UserRow } from "../../common/types";
 
 type InfoItemsParams = {
     user: UserRow;

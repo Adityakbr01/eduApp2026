@@ -30,6 +30,9 @@ function HomePage() {
             <Link href="/signup/newSupport">Go to SignUp</Link>
             <Link href="/signup/newManager">Go to SignUp</Link>
             <Link href="/signup/newAdmin">Go to SignUp</Link>
+
+            {/* Dashboard */}
+            <Link href="/dashboard/admin">Go to Admin Dashboard</Link>
         </div>
 
     </div>;

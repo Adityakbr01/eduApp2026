@@ -16,24 +16,29 @@ async function seed() {
 
         // 1️⃣ Create Roles
         const roleDocs = [];
-        for (const roleName of Object.values(ROLES)) {
-            let role = await RoleModel.findOne({ name: roleName });
+        for (const roleKey of Object.keys(ROLES)) {
+            const roleInfo = ROLES[roleKey as keyof typeof ROLES];
+            let role = await RoleModel.findOne({ name: roleInfo.code });
             if (!role) {
-                role = await RoleModel.create({ name: roleName });
-                logger.info(`✅ Role created: ${roleName}`);
+                role = await RoleModel.create({
+                    name: roleInfo.code,
+                    description: roleInfo.description
+                });
+                logger.info(`✅ Role created: ${roleInfo.code}`);
             }
             roleDocs.push(role);
         }
 
+
         // 2️⃣ Create Permissions
         const permissionDocs: Record<string, any> = {};
-        for (const permissionName of Object.values(PERMISSIONS)) {
-            let permission = await PermissionModel.findOne({ code: permissionName });
+        for (const perm of Object.values(PERMISSIONS)) {
+            let permission = await PermissionModel.findOne({ code: perm.code });
             if (!permission) {
-                permission = await PermissionModel.create({ code: permissionName });
-                logger.info(`✅ Permission created: ${permissionName}`);
+                permission = await PermissionModel.create({ code: perm.code, description: perm.description });
+                logger.info(`✅ Permission created: ${perm.code}`);
             }
-            permissionDocs[permissionName] = permission;
+            permissionDocs[perm.code] = permission;
         }
 
         // 3️⃣ Assign default permissions to roles

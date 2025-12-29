@@ -11,6 +11,7 @@ declare global {
             roleId?: UserDocument["roleId"];
             roleName?: string;
             sessionId?: string;
+            permissions?: string[];
         }
 
         interface Request {

@@ -1,5 +1,5 @@
 import DashBoardPage from "@/components/pages/dashboards/admin/DashBoardPage";
-import RoleGate from "@/components/pages/dashboards/RoleGate";
+import RoleGate from "@/Providers/RoleGate";
 import APP_info from "@/constants/app_info";
 import { user_roles } from "@/constants/roles";
 

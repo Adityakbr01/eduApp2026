@@ -2,7 +2,7 @@ import { QUERY_KEYS } from "@/config/query-keys";
 import api from "@/lib/api/axios";
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { User } from "../auth";
-import type { RoleWithPermissions, RolesAndPermissionsPayload } from "./types";
+import type { RoleWithPermissions, RolesAndPermissionsPayload, UserPermissionsPayload } from "./types";
 
 
 export interface ApiResponse<T> {
@@ -52,6 +52,7 @@ export type UsersQueryParams = {
 const usersApi = {
     getUsers: async (params: UsersQueryParams = {}): Promise<UsersApiResult> => {
         const res = await api.get<ApiResponse<UsersApiResult>>("/users", { params });
+        console.log("API Response:", res.data);
         return {
             users: res.data.data?.users || [],
             pagination: res.data.data?.pagination || res.data.meta?.pagination || {
@@ -72,6 +73,19 @@ const usersApi = {
         const res = await api.get<ApiResponse<RolesAndPermissionsPayload>>(`/users/getAllRoleANDPermission`);
         return res.data.data?.data ?? [];
     },
+    getMyRoleANDPermission: async (): Promise<UserPermissionsPayload> => {
+        const res = await api.get<ApiResponse<{ data: UserPermissionsPayload }>>(
+            `/users/getMyRoleANDPermission`
+        );
+
+        const payload = res?.data?.data?.data;
+
+        if (!payload) {
+            throw new Error("User permissions payload not found");
+        }
+
+        return payload;
+    }
 
 };
 
@@ -122,11 +136,26 @@ const useGetAllRoleANDPermission = (options?: Omit<
     });
 };
 
+const useGetMyRoleANDPermission = (
+    options?: Omit<
+        UseQueryOptions<UserPermissionsPayload, Error>,
+        "queryKey" | "queryFn"
+    >
+) => {
+    return useQuery<UserPermissionsPayload, Error>({
+        queryKey: [QUERY_KEYS.USERS.MY_ROLES_PERMISSIONS],
+        queryFn: () => usersApi.getMyRoleANDPermission(),
+        staleTime: 5 * 60 * 1000,
+        ...options,
+    });
+};
+
 const usersQueries = {
     api: usersApi,
     useGetUsers,
     useGetUserById,
     useGetAllRoleANDPermission,
+    useGetMyRoleANDPermission,
 };
 
 export default usersQueries;

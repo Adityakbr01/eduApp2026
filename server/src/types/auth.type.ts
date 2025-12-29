@@ -26,4 +26,5 @@ export type UserWithRole = {
     approvalStatus: string;
     isBanned: boolean;
     phone?: string;
+    permissions?: string[];
 };

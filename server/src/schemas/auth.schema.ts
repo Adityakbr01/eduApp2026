@@ -2,7 +2,7 @@ import { ROLES, type Role } from "src/constants/roles.js";
 import z from "zod";
 
 
-const RoleEnum = z.enum(Object.values(ROLES) as [Role, ...Role[]]);
+const RoleEnum = z.enum(Object.values(ROLES).map(role => role.code) as [Role, ...Role[]]);
 
 
 const baseSchema = {
@@ -44,24 +44,24 @@ const supportTeamProfileSchema = z.object({
 const registerSchema = z.discriminatedUnion("role", [
     z.object({
         ...baseSchema,
-        role: z.literal(ROLES.STUDENT),
+        role: z.literal(ROLES.STUDENT.code),
     }),
 
     z.object({
         ...baseSchema,
-        role: z.literal(ROLES.MANAGER),
+        role: z.literal(ROLES.MANAGER.code),
         managerProfile: managerProfileSchema,
     }),
 
     z.object({
         ...baseSchema,
-        role: z.literal(ROLES.INSTRUCTOR),
+        role: z.literal(ROLES.INSTRUCTOR.code),
         instructorProfile: instructorProfileSchema,
     }),
 
     z.object({
         ...baseSchema,
-        role: z.literal(ROLES.SUPPORT),
+        role: z.literal(ROLES.SUPPORT.code),
         supportTeamProfile: supportTeamProfileSchema,
     }),
 ]);

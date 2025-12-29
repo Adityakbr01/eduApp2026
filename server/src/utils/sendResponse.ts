@@ -6,15 +6,14 @@ export const sendResponse = <T>(
     res: Response,
     statusCode: number = STATUSCODE.OK,
     message: string = SUCCESS_CODE.SUCCESS,
-    data: T | null = null
+    data: T | null = null,
+    meta: Record<string, unknown> | null = null
 ) => {
     return res.status(statusCode).json({
         success: true,
         message,
         data,
         timestamp: new Date().toISOString(),
-        meta: {
-            statusCode,
-        },
+        meta,
     });
 };

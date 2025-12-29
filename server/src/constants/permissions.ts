@@ -1,53 +1,43 @@
 // src/constants/permissions.ts
+// src/constants/permissionsWithDescriptions.ts
 export const PERMISSIONS = {
-    // ---------- User Management ----------
-    READ_USER: "READ_USER",           // Read any user (admin/manager)
-    READ_SELF: "READ_SELF",           // Read own profile
-    WRITE_USER: "WRITE_USER",         // Create new users
-    UPDATE_USER: "UPDATE_USER",       // Update any user
-    UPDATE_SELF: "UPDATE_SELF",       // Update own profile
-    DELETE_USER: "DELETE_USER",       // Delete any user
-    DELETE_SELF: "DELETE_SELF",       // Delete own account
-    MANAGE_USER: "MANAGE_USER",       // High-level user management
-
-    // ---------- Role & Permission Management ----------
-    MANAGE_ROLES: "MANAGE_ROLES",             // Create/update/delete roles
-    MANAGE_PERMISSIONS: "MANAGE_PERMISSIONS",// Assign/remove permissions to roles
-
-    // ---------- Course Management ----------
-    READ_COURSE: "READ_COURSE",           // Read any course
-    READ_OWN_COURSE: "READ_OWN_COURSE",   // Read own courses (student)
-    WRITE_COURSE: "WRITE_COURSE",         // Create course
-    UPDATE_COURSE: "UPDATE_COURSE",       // Update any course
-    DELETE_COURSE: "DELETE_COURSE",       // Delete any course
-    MANAGE_COURSE: "MANAGE_COURSE",       // High-level course management
-    ASSIGN_INSTRUCTOR: "ASSIGN_INSTRUCTOR", // Assign instructors to courses
-    PUBLISH_COURSE: "PUBLISH_COURSE",     // Make course live
-    UNPUBLISH_COURSE: "UNPUBLISH_COURSE", // Unpublish course
-
-    // ---------- Enrollment ----------
-    ENROLL_COURSE: "ENROLL_COURSE",       // Enroll student to course
-    UNENROLL_COURSE: "UNENROLL_COURSE",   // Remove enrollment
-    VIEW_ENROLLMENTS: "VIEW_ENROLLMENTS", // See enrollment stats
-
-    // ---------- Reporting / Analytics ----------
-    VIEW_REPORTS: "VIEW_REPORTS",         // See general reports
-    EXPORT_REPORTS: "EXPORT_REPORTS",     // Export data as CSV/PDF
-    VIEW_DASHBOARD: "VIEW_DASHBOARD",     // Access dashboard
-
-    // ---------- System / Settings ----------
-    MANAGE_SETTINGS: "MANAGE_SETTINGS",   // Change system-level settings
-    MANAGE_NOTIFICATIONS: "MANAGE_NOTIFICATIONS", // Send system notifications
-    VIEW_LOGS: "VIEW_LOGS",               // Access server/app logs
-
-    // ---------- Misc / Extra ----------
-    SEND_MESSAGES: "SEND_MESSAGES",       // Messaging capability
-    READ_MESSAGES: "READ_MESSAGES",
-    DELETE_MESSAGES: "DELETE_MESSAGES",
-    UPLOAD_FILES: "UPLOAD_FILES",
-    DOWNLOAD_FILES: "DOWNLOAD_FILES",
-    MANAGE_TAGS: "MANAGE_TAGS",           // For categorization
+    READ_USER: { code: "READ_USER", description: "Read any user (admin/manager)" },
+    READ_SELF: { code: "READ_SELF", description: "Read own profile" },
+    WRITE_USER: { code: "WRITE_USER", description: "Create new users" },
+    UPDATE_USER: { code: "UPDATE_USER", description: "Update any user" },
+    UPDATE_SELF: { code: "UPDATE_SELF", description: "Update own profile" },
+    DELETE_USER: { code: "DELETE_USER", description: "Delete any user" },
+    DELETE_SELF: { code: "DELETE_SELF", description: "Delete own account" },
+    MANAGE_USER: { code: "MANAGE_USER", description: "High-level user management" },
+    MANAGE_ROLES: { code: "MANAGE_ROLES", description: "Create/update/delete roles" },
+    MANAGE_PERMISSIONS: { code: "MANAGE_PERMISSIONS", description: "Assign/remove permissions to roles" },
+    READ_COURSE: { code: "READ_COURSE", description: "Read any course" },
+    READ_OWN_COURSE: { code: "READ_OWN_COURSE", description: "Read own courses (student)" },
+    WRITE_COURSE: { code: "WRITE_COURSE", description: "Create course" },
+    UPDATE_COURSE: { code: "UPDATE_COURSE", description: "Update any course" },
+    DELETE_COURSE: { code: "DELETE_COURSE", description: "Delete any course" },
+    MANAGE_COURSE: { code: "MANAGE_COURSE", description: "High-level course management" },
+    ASSIGN_INSTRUCTOR: { code: "ASSIGN_INSTRUCTOR", description: "Assign instructors to courses" },
+    PUBLISH_COURSE: { code: "PUBLISH_COURSE", description: "Make course live" },
+    UNPUBLISH_COURSE: { code: "UNPUBLISH_COURSE", description: "Unpublish course" },
+    ENROLL_COURSE: { code: "ENROLL_COURSE", description: "Enroll student to course" },
+    UNENROLL_COURSE: { code: "UNENROLL_COURSE", description: "Remove enrollment" },
+    VIEW_ENROLLMENTS: { code: "VIEW_ENROLLMENTS", description: "See enrollment stats" },
+    VIEW_REPORTS: { code: "VIEW_REPORTS", description: "See general reports" },
+    EXPORT_REPORTS: { code: "EXPORT_REPORTS", description: "Export data as CSV/PDF" },
+    VIEW_DASHBOARD: { code: "VIEW_DASHBOARD", description: "Access dashboard" },
+    MANAGE_SETTINGS: { code: "MANAGE_SETTINGS", description: "Change system-level settings" },
+    MANAGE_NOTIFICATIONS: { code: "MANAGE_NOTIFICATIONS", description: "Send system notifications" },
+    VIEW_LOGS: { code: "VIEW_LOGS", description: "Access server/app logs" },
+    SEND_MESSAGES: { code: "SEND_MESSAGES", description: "Messaging capability" },
+    READ_MESSAGES: { code: "READ_MESSAGES", description: "Read messages" },
+    DELETE_MESSAGES: { code: "DELETE_MESSAGES", description: "Delete messages" },
+    UPLOAD_FILES: { code: "UPLOAD_FILES", description: "Upload files" },
+    DOWNLOAD_FILES: { code: "DOWNLOAD_FILES", description: "Download files" },
+    MANAGE_TAGS: { code: "MANAGE_TAGS", description: "Manage tags/categories" },
 } as const;
 
+
+
 // Type-safe helper
-export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]["code"];

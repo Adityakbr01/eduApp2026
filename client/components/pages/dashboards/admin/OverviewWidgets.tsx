@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { ActivityFeedItem, BanSummary, CourseInsight, RecentUserItem } from "../utils";
+import { ActivityFeedItem, BanSummary, CourseInsight, RecentUserItem } from "../common/utils";
 
 export type StatSummary = {
     label: string;

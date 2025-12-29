@@ -18,7 +18,7 @@ import UserAccessTab from "./UserAccessTab";
 import { permissionFormSchema, type PermissionFormValues, type PermissionOption } from "./permissionTypes";
 import { buildInfoItems, buildPermissionCollections } from "./userProfileUtils";
 import { uniqueList } from "./Utils";
-import { UserRow } from "../../types";
+import { UserRow } from "../../common/types";
 
 type UserProfileModalProps = {
     open: boolean;

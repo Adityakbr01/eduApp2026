@@ -14,6 +14,7 @@ export const cacheKeyFactory = {
             return `users:page=${page}:limit=${limit}:search=${s}:role=${r}`;
         },
         permissions: (userId: string) => `user:permissions:${userId}`
+        
     },
     session: {
         byUserId: (userId: string) => `session:user:${userId}`

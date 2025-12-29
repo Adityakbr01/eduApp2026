@@ -21,24 +21,38 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { CheckPermission, collectPermissions } from "@/lib/utils/permissions";
-import { approvalStatusEnum, type User } from "@/services/auth";
+import { CheckPermission } from "@/lib/utils/permissions";
+// import { approvalStatusEnum, type User } from "@/services/auth";
 import app_permissions from "@/constants/permissions";
-import { useAuthStore } from "@/store/auth";
 import usersQueries, { UsersQueryParams } from "@/services/users/queries";
-import { adminUtils, PermissionKey, RolePermission } from "../utils";
-import { UserRow } from "../types";
-import OverviewWidgets from "./OverviewWidgets";
-import UsersPage from "../UsersPage";
+import { UserRow } from "../common/types";
+import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
+// import OverviewWidgets from "./OverviewWidgets";
+import { Permission } from "@/services/users/types";
+import UsersPage from "../../UsersPage";
 
 function DashBoardPage() {
 
+    const { data: userPermissionsData } = usersQueries.useGetMyRoleANDPermission();
+    const finalUserPermissions = useMemo(() => {
+        if (!userPermissionsData) return [];
 
-    const user = useAuthStore((state) => state.user);
-    const permissionSet = useMemo(() => collectPermissions(user), [user]);
+        const rolePerms = userPermissionsData.rolePermissions ?? [];
+        const customPerms = userPermissionsData.customPermissions ?? [];
+
+        const map = new Map<string, Permission>();
+
+        [...rolePerms, ...customPerms].forEach((perm) => {
+            map.set(perm.code, perm); // duplicate codes auto removed
+        });
+
+        return Array.from(map.values());
+    }, [userPermissionsData]);
+
+
     const CanManageUser = CheckPermission({
-        carrier: permissionSet,
-        requirement: app_permissions.USER_MANAGE,
+        carrier: finalUserPermissions,
+        requirement: app_permissions.MANAGE_USER,
     });
 
     const [page, setPage] = useState(1);
@@ -53,8 +67,7 @@ function DashBoardPage() {
         error: usersError,
     } = usersQueries.useGetUsers(queryParams);
 
-
-    const [activeSection, setActiveSection] = useState(adminUtils.sidebarItems[0].value);
+    const [activeSection, setActiveSection] = useState(adminUtils.sidebarItems[1].value);
     const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(adminUtils.initialRolePermissions);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterRole, setFilterRole] = useState<string | null>(null);
@@ -84,49 +97,49 @@ function DashBoardPage() {
         [data?.pagination, page, limit],
     );
 
-    const stats = useMemo(() => {
-        if (!users || users.length === 0) {
-            return adminUtils.quickStats;
-        }
-        const totalUsers = users.length;
-        const verifiedUsers = users.filter((user: User) => user.isEmailVerified).length;
-        const pendingApprovals = users.filter((user: User) => user.approvalStatus === approvalStatusEnum.PENDING).length;
-        const bannedUsers = users.filter((user: User) => user.isBanned).length;
+    // const stats = useMemo(() => {
+    //     if (!users || users.length === 0) {
+    //         return adminUtils.quickStats;
+    //     }
+    //     const totalUsers = users.length;
+    //     const verifiedUsers = users.filter((user: User) => user.isEmailVerified).length;
+    //     const pendingApprovals = users.filter((user: User) => user.approvalStatus === approvalStatusEnum.PENDING).length;
+    //     const bannedUsers = users.filter((user: User) => user.isBanned).length;
 
-        return [
-            {
-                label: "Total Users",
-                value: totalUsers?.toLocaleString(),
-                trend: `${verifiedUsers} verified accounts`,
-                bgColor: "bg-primary/10",
-                border: "border-primary/10",
-            },
-            {
-                label: "Pending Approval",
-                value: pendingApprovals?.toLocaleString(),
-                trend: pendingApprovals ? "Needs review" : "All approved",
-                bgColor: "bg-yellow-500/10",
-                border: "border-yellow-500/10",
-            },
-            {
-                label: "Banned Accounts",
-                value: bannedUsers?.toLocaleString(),
-                trend: bannedUsers ? "Action required" : "No bans active",
-                bgColor: "bg-red-500/10",
-                border: "border-red-500/10",
-            },
-        ];
-    }, [users]);
+    //     return [
+    //         {
+    //             label: "Total Users",
+    //             value: totalUsers?.toLocaleString(),
+    //             trend: `${verifiedUsers} verified accounts`,
+    //             bgColor: "bg-primary/10",
+    //             border: "border-primary/10",
+    //         },
+    //         {
+    //             label: "Pending Approval",
+    //             value: pendingApprovals?.toLocaleString(),
+    //             trend: pendingApprovals ? "Needs review" : "All approved",
+    //             bgColor: "bg-yellow-500/10",
+    //             border: "border-yellow-500/10",
+    //         },
+    //         {
+    //             label: "Banned Accounts",
+    //             value: bannedUsers?.toLocaleString(),
+    //             trend: bannedUsers ? "Action required" : "No bans active",
+    //             bgColor: "bg-red-500/10",
+    //             border: "border-red-500/10",
+    //         },
+    //     ];
+    // }, [users]);
 
     const userRows = useMemo<UserRow[]>(() => {
         if (!users) return [];
         return users.map(adminUtils.mapApiUserToRow);
     }, [users]);
 
-    const recentUsers = useMemo(() => adminUtils.buildRecentUsers(userRows), [userRows]);
-    const activityFeed = useMemo(() => adminUtils.buildActivityFeed(userRows), [userRows]);
-    const courseInsights = useMemo(() => adminUtils.buildCourseInsights(userRows), [userRows]);
-    const banSummary = useMemo(() => adminUtils.buildBanSummary(userRows), [userRows]);
+    // const recentUsers = useMemo(() => adminUtils.buildRecentUsers(userRows), [userRows]);
+    // const activityFeed = useMemo(() => adminUtils.buildActivityFeed(userRows), [userRows]);
+    // const courseInsights = useMemo(() => adminUtils.buildCourseInsights(userRows), [userRows]);
+    // const banSummary = useMemo(() => adminUtils.buildBanSummary(userRows), [userRows]);
 
     const shouldFallbackToMock = !users?.length && !isLoadingUsers && !isUsersError;
     let rowsToRender: UserRow[] = shouldFallbackToMock ? adminUtils.mockUsers : userRows;
@@ -181,6 +194,7 @@ function DashBoardPage() {
                         </button>
                     ))}
                 </nav>
+                {/* sidebar footer */}
                 <div className="mt-auto space-y-3">
                     <Separator />
                     <Button variant="outline" className="w-full justify-start gap-2" size="sm">
@@ -222,7 +236,7 @@ function DashBoardPage() {
                     </div>
                 </header>
                 <div className="space-y-6 px-4 py-6 md:px-8">
-                    {activeSection === "overview" && (
+                    {/* {activeSection === "overview" && (
                         <OverviewWidgets
                             stats={stats}
                             recentUsers={recentUsers}
@@ -231,7 +245,7 @@ function DashBoardPage() {
                             banSummary={banSummary}
                             titlePrefix="Admin "
                         />
-                    )}
+                    )} */}
 
                     {activeSection === "users" && (
                         <UsersPage

@@ -1,31 +1,51 @@
 const app_permissions = {
-    COURSE_CREATE: "course:create",  // e.g create a new course
-    COURSE_READ: "course:read",      // e.g view course content
-    COURSE_UPDATE: "course:update",  // e.g update course content
-    COURSE_DELETE: "course:delete", // e.g delete course entirely
-    COURSE_MANAGE: "course:manage", // e.g create coupons, manage settings, etc.
-    COURSE_ENROLL: "course:enroll", // e.g enroll in a course
+    // ---------- User Management ----------
+    READ_USER: "READ_USER",           // Read any user (admin/manager)
+    READ_SELF: "READ_SELF",           // Read own profile
+    WRITE_USER: "WRITE_USER",         // Create new users
+    UPDATE_USER: "UPDATE_USER",       // Update any user
+    UPDATE_SELF: "UPDATE_SELF",       // Update own profile
+    DELETE_USER: "DELETE_USER",       // Delete any user
+    DELETE_SELF: "DELETE_SELF",       // Delete own account
+    MANAGE_USER: "MANAGE_USER",       // High-level user management
 
-    PAYMENT_PROCESS: "payment:process", // e.g process payments
-    PAYMENT_REFUND: "payment:refund",   // e.g issue refunds
-    PAYMENT_VIEW: "payment:view",       // e.g view payment details
-    PAYMENT_HISTORY: "payment:history", // e.g view payment history
-    PAYMENT_MANAGE: "payment:manage",   // e.g manage payment settings
+    // ---------- Role & Permission Management ----------
+    MANAGE_ROLES: "MANAGE_ROLES",             // Create/update/delete roles
+    MANAGE_PERMISSIONS: "MANAGE_PERMISSIONS",// Assign/remove permissions to roles
 
+    // ---------- Course Management ----------
+    READ_COURSE: "READ_COURSE",           // Read any course
+    READ_OWN_COURSE: "READ_OWN_COURSE",   // Read own courses (student)
+    WRITE_COURSE: "WRITE_COURSE",         // Create course
+    UPDATE_COURSE: "UPDATE_COURSE",       // Update any course
+    DELETE_COURSE: "DELETE_COURSE",       // Delete any course
+    MANAGE_COURSE: "MANAGE_COURSE",       // High-level course management
+    ASSIGN_INSTRUCTOR: "ASSIGN_INSTRUCTOR", // Assign instructors to courses
+    PUBLISH_COURSE: "PUBLISH_COURSE",     // Make course live
+    UNPUBLISH_COURSE: "UNPUBLISH_COURSE", // Unpublish course
 
-    USER_CREATE: "user:create",   // e.g create a new user
-    USER_READ: "user:read",      // e.g view user profile
-    USER_UPDATE: "user:update",  // e.g update user profile
-    USER_DELETE: "user:delete",  // e.g delete user account
-    USER_MANAGE: "user:manage", // e.g manage user roles, permissions, etc.
-    USER_BAN: "user:ban",       // e.g ban a user
+    // ---------- Enrollment ----------
+    ENROLL_COURSE: "ENROLL_COURSE",       // Enroll student to course
+    UNENROLL_COURSE: "UNENROLL_COURSE",   // Remove enrollment
+    VIEW_ENROLLMENTS: "VIEW_ENROLLMENTS", // See enrollment stats
 
-    STUDENT_READ: "student:read",      // e.g view student profile
-    STUDENT_SUPPORT: "student:support", // e.g provide support to students
+    // ---------- Reporting / Analytics ----------
+    VIEW_REPORTS: "VIEW_REPORTS",         // See general reports
+    EXPORT_REPORTS: "EXPORT_REPORTS",     // Export data as CSV/PDF
+    VIEW_DASHBOARD: "VIEW_DASHBOARD",     // Access dashboard
 
-    SELF_READ: "self:read",    // e.g view own profile
-    SELF_UPDATE: "self:update", // e.g update own profile
-    SELF_DELETE: "self:delete", // e.g delete own account
+    // ---------- System / Settings ----------
+    MANAGE_SETTINGS: "MANAGE_SETTINGS",   // Change system-level settings
+    MANAGE_NOTIFICATIONS: "MANAGE_NOTIFICATIONS", // Send system notifications
+    VIEW_LOGS: "VIEW_LOGS",               // Access server/app logs
+
+    // ---------- Misc / Extra ----------
+    SEND_MESSAGES: "SEND_MESSAGES",       // Messaging capability
+    READ_MESSAGES: "READ_MESSAGES",
+    DELETE_MESSAGES: "DELETE_MESSAGES",
+    UPLOAD_FILES: "UPLOAD_FILES",
+    DOWNLOAD_FILES: "DOWNLOAD_FILES",
+    MANAGE_TAGS: "MANAGE_TAGS",           // For categorization
 } as const;
 
 export default app_permissions;

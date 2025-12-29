@@ -21,6 +21,8 @@ import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "./session.service.js";
 import e from "express";
 import { RoleModel } from "src/models/role.model.js";
+import { RolePermissionModel } from "src/models/rolePermission.model.js";
+import { PermissionModel } from "src/models/permission.model.js";
 
 
 export const authService = {
@@ -87,17 +89,17 @@ export const authService = {
 
         const profileData: any = {};
 
-        if (data.role === ROLES.INSTRUCTOR) {
+        if (data.role === ROLES.INSTRUCTOR.code) {
             profileData.instructorProfile = data.instructorProfile;
             profileData.isInstructorApproved = false;
         }
 
-        if (data.role === ROLES.MANAGER) {
+        if (data.role === ROLES.MANAGER.code) {
             profileData.managerProfile = data.managerProfile;
             profileData.isManagerApproved = false;
         }
 
-        if (data.role === ROLES.SUPPORT) {
+        if (data.role === ROLES.SUPPORT.code) {
             profileData.supportTeamProfile = data.supportTeamProfile;
             profileData.isSupportTeamApproved = false;
         }
@@ -114,7 +116,7 @@ export const authService = {
             ...profileData,
         });
 
-        if (roleDoc.name === ROLES.STUDENT) {
+        if (roleDoc.name === ROLES.STUDENT.code) {
             await addEmailJob(emailQueue, EMAIL_JOB_Names.REGISTER_OTP, {
                 email: user.email,
                 otp,
@@ -123,7 +125,7 @@ export const authService = {
 
         return {
             message:
-                roleDoc.name === ROLES.STUDENT
+                roleDoc.name === ROLES.STUDENT.code
                     ? "OTP sent to your email"
                     : "Registration successful. Awaiting approval from admin",
             userId: user._id,
@@ -237,41 +239,77 @@ export const authService = {
     // LOGIN
     // ============================
     loginUserService: async (email: string, password: string) => {
-        const user =
-            await authRepository.findUserForLogin(email);
+        const user = await authRepository.findUserForLogin(email);
 
         CheckUserEmailAndBanned(user);
         checkUserEmailVerified(user);
-        const isPasswordValid =
-            await user.comparePassword(password);
 
+        const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
             throw new AppError(
                 "Invalid password",
                 STATUSCODE.UNAUTHORIZED,
-                ERROR_CODE.UNAUTHORIZED, [{ path: 'password', message: 'Invalid password' }]
+                ERROR_CODE.UNAUTHORIZED,
+                [{ path: "password", message: "Invalid password" }]
             );
         }
 
         const sessionId = uuidv4();
 
+        // 1️⃣ Fetch role name
         const role = await RoleModel
             .findById(user.roleId)
             .select("name")
             .lean();
 
         if (!role) {
-            throw new AppError("Role not found", 500);
+            throw new AppError("Role not found", STATUSCODE.INTERNAL_SERVER_ERROR);
         }
 
-        const accessToken =
-            await user.generateAccessToken(sessionId, role.name);
+        // 2️⃣ Fetch role permissions
+        const rolePermissions = await RolePermissionModel
+            .find({ roleId: user.roleId })
+            .populate("permissionId", "code")
+            .lean();
 
-        await sessionService.createSession(
-            String(user._id),
-            sessionId,
+        const rolePermissionCodes = rolePermissions.map(
+            (rp: any) => rp.permissionId.code
         );
 
+        // 3️⃣ Fetch user-specific permissions (rare)
+        let userPermissionCodes: string[] = [];
+
+        if (user.permissions?.length) {
+            const perms = await PermissionModel
+                .find({ _id: { $in: user.permissions } })
+                .select("code")
+                .lean();
+
+            userPermissionCodes = perms.map(p => p.code);
+        }
+
+        // 4️⃣ Merge & dedupe permissions
+        const permissions = [...new Set([
+            ...rolePermissionCodes,
+            ...userPermissionCodes,
+        ])];
+
+        
+
+        // 5️⃣ Generate JWT (single source of truth)
+        const accessToken = await user.generateAccessToken(
+            sessionId,
+            role.name,
+            permissions
+        );
+
+        // 6️⃣ Create session (for revocation)
+        await sessionService.createSession(
+            String(user._id),
+            sessionId
+        );
+
+        // 7️⃣ Clear cached profile
         await cacheManager.del(
             cacheKeyFactory.user.byId(String(user._id))
         );

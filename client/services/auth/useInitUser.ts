@@ -8,7 +8,6 @@ export const useInitUser = () => {
 
     useEffect(() => {
         if (isSuccess && data?.data) {
-            console.log("Session data:", data);
             setUser({
                 userId: data.data.userId,
                 actualRoleId: data.data.roleId,

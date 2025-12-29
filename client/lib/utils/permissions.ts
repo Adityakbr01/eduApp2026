@@ -1,7 +1,15 @@
 import type { User } from "@/services/auth";
+type PermissionLike = string | { code: string };
 
-export type PermissionCarrier = User | string[] | Set<string> | null | undefined;
+export type PermissionCarrier =
+    | User
+    | PermissionLike[]   // 👈 yahin fix
+    | Set<string>
+    | null
+    | undefined;
+
 export type PermissionRequirement = string | string[];
+
 
 const ensureArray = (value?: PermissionRequirement): string[] => {
     if (!value) return [];
@@ -20,10 +28,25 @@ const fromUser = (user?: User | null): string[] => {
 
 export const collectPermissions = (carrier?: PermissionCarrier): Set<string> => {
     if (!carrier) return new Set();
-    if (carrier instanceof Set) return new Set(carrier);
-    if (Array.isArray(carrier)) return new Set(carrier.filter(Boolean));
+
+    if (carrier instanceof Set) {
+        return new Set(carrier);
+    }
+
+    if (Array.isArray(carrier)) {
+        return new Set(
+            carrier
+                .map((p: PermissionLike) =>
+                    typeof p === "string" ? p : p.code
+                )
+                .filter((code): code is string => Boolean(code))
+        );
+    }
+
     return new Set(fromUser(carrier));
 };
+
+
 
 export const hasAllPermissions = (carrier: PermissionCarrier, requirement: PermissionRequirement): boolean => {
     const available = collectPermissions(carrier);

@@ -48,8 +48,8 @@ export const authRepository = {
 
     findUserMinimalById: async (userId: string) => {
         return User.findById(userId)
-            .select("name email roleId isEmailVerified approvalStatus isBanned phone")
+            .select("name email roleId isEmailVerified approvalStatus isBanned phone permissions")
             .populate<{ roleId: PopulatedRole }>("roleId", "name")
-            .lean<UserWithRole>();
+            .lean<UserWithRole>() 
     },
 };

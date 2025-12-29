@@ -12,5 +12,6 @@ export const QUERY_KEYS = {
         DETAIL: (id: string) => ["users", "detail", id],
         ROLES_PERMISSIONS: ["users", "roles-permissions"],
         ALL_ROLES_PERMISSIONS: ["users", "all-roles-permissions"],
+        MY_ROLES_PERMISSIONS: ["users", "my-roles-permissions"]
     },
 };

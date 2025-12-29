@@ -90,8 +90,8 @@ const authMiddleware = async (
             roleId: decoded.roleId,
             sessionId: decoded.sessionId,
             roleName: decoded.roleName,
+            permissions: decoded.permissions || [],
         };
-
         next();
     } catch (err: any) {
         if (err?.name === "TokenExpiredError") {

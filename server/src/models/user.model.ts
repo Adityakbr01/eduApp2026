@@ -131,7 +131,7 @@ userSchema.pre("save", async function (next) {
     const role = await RoleSchema.findById(this.roleId).select("name").lean();
     if (!role) return next();
 
-    const autoApprovedRoles: Role[] = [ROLES.STUDENT];
+    const autoApprovedRoles: Role[] = [ROLES.STUDENT.code];
 
     if (autoApprovedRoles.includes(role.name as Role)) {
         this.approvalStatus = approvalStatusEnum.APPROVED;
@@ -154,18 +154,26 @@ userSchema.methods.comparePassword = async function (plainPassword: string) {
     return bcrypt.compare(plainPassword, this.password);
 };
 
-userSchema.methods.generateAccessToken = async function (sessionId: string, roleName: string) {
+userSchema.methods.generateAccessToken = function (
+    sessionId: string,
+    roleName: string,
+    permissions: string[]
+) {
     return jwt.sign(
         {
             userId: this._id,
             roleId: this.roleId,
-            roleName: roleName,
+            roleName,
+            permissions,
             sessionId,
         },
         env.JWT_ACCESS_TOKEN_SECRET,
-        { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRES_IN as string } as SignOptions
+        {
+            expiresIn: env.JWT_ACCESS_TOKEN_EXPIRES_IN,
+        } as SignOptions
     );
 };
+
 
 const UserModel = model("User", userSchema);
 

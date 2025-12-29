@@ -1,4 +1,3 @@
-import { accessTokenCookieOptions, refreshTokenCookieOptions } from "src/configs/cookie.js";
 import { clearAuthCookies } from "src/middlewares/custom/clearAuthCookies.js";
 import { setAuthCookies } from "src/middlewares/custom/setAuthCookies.js";
 import type { RegisterSchemaInput } from "src/schemas/auth.schema.js";
