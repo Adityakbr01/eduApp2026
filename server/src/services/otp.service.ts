@@ -1,15 +1,7 @@
 import { env } from "src/configs/env.js";
 import { Resend } from "resend";
+import type { EmailType } from "src/constants/email-types.constants.js";
 import { templates } from "src/constants/EmailTemplates.js";
-
-export enum EmailType {
-    VERIFY_OTP = "VERIFY_OTP",
-    LOGIN_OTP = "LOGIN_OTP",
-    WELCOME = "WELCOME",
-    PASSWORD_RESET_OTP = "PASSWORD_RESET_OTP",
-    USER_APPROVAL = "USER_APPROVAL",
-    USER_BAN = "USER_BAN",
-}
 
 
 type EmailPayload =

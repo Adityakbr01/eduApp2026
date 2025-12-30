@@ -1,10 +1,10 @@
-import emailService, { EmailType } from "src/services/otp.service.js";
-
+import { EMAIL_TYPES } from "src/constants/email-types.constants.js";
+import emailService from "src/services/otp.service.js";
 
 export default async function registerOtpProcessor(job: { data: { email: string; otp: string } }) {
     const { email, otp } = job.data;
 
-    await emailService.sendEmail(EmailType.VERIFY_OTP, {
+    await emailService.sendEmail(EMAIL_TYPES.VERIFY_OTP, {
         email,
         otp,
     });

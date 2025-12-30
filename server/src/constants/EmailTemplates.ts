@@ -1,7 +1,8 @@
-import { EmailType } from "src/services/otp.service.js";
+import { EMAIL_TYPES, type EmailType }
+    from "src/constants/email-types.constants.js";
 
-export const templates = {
-    [EmailType.VERIFY_OTP]: (data: any) => ({
+export const templates: Record<EmailType, any> = {
+    [EMAIL_TYPES.VERIFY_OTP]: (data: any) => ({
         subject: "Verify Your Email Address",
         text: `Your verification code is ${data.otp}. It expires in 5 minutes.`,
         html: `
@@ -53,7 +54,7 @@ export const templates = {
         `,
     }),
 
-    [EmailType.LOGIN_OTP]: (data: any) => ({
+    [EMAIL_TYPES.LOGIN_OTP]: (data: any) => ({
         subject: "Your Login Security Code",
         text: `Your login code is ${data.otp}. It is valid for 5 minutes only.`,
         html: `
@@ -105,7 +106,7 @@ export const templates = {
         `,
     }),
 
-    [EmailType.WELCOME]: (data: any) => ({
+    [EMAIL_TYPES.WELCOME]: (data: any) => ({
         subject: "Welcome to Your Company!",
         text: `Welcome ${data.name}! Your account is ready to use.`,
         html: `
@@ -161,7 +162,7 @@ export const templates = {
         `,
     }),
 
-    [EmailType.PASSWORD_RESET_OTP]: (data: any) => ({
+    [EMAIL_TYPES.PASSWORD_RESET_OTP]: (data: any) => ({
         subject: "Password Reset Request",
         text: `Your password reset code is ${data.otp}. It expires in 5 minutes.`,
         html: `
@@ -213,7 +214,7 @@ export const templates = {
         `,
     }),
 
-    [EmailType.USER_APPROVAL]: (data: { email: string; }) => ({
+    [EMAIL_TYPES.USER_APPROVAL]: (data: { email: string; }) => ({
         subject: "Your Account Has Been Approved ✅",
         text: `Your account has been approved. You can now log in and access your dashboard.`,
         html: `
@@ -269,7 +270,7 @@ export const templates = {
         `,
     }),
 
-    [EmailType.USER_BAN]: (data: { email: string; }) => ({
+    [EMAIL_TYPES.USER_BAN]: (data: { email: string; }) => ({
         subject: "Important: Your Account Has Been Suspended",
         text: `Your account has been suspended due to a violation of our terms. Please contact support if you believe this is an error.`,
         html: `
