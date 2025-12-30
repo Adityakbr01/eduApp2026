@@ -5,8 +5,8 @@ const isProd = env.NODE_ENV === "production";
 
 export const accessTokenCookieOptions: CookieOptions = {
     httpOnly: true,
-    secure: false,             // localhost dev ke liye
-    sameSite: "lax",           // dev me safe
+    secure: isProd,             // localhost dev ke liye
+    sameSite: isProd ? "none" : "lax",
     maxAge: env.JWT_ACCESS_TOKEN_EXPIRES_IN_SECONDS * 1000,
     path: "/",                    // accessible everywhere
 };
