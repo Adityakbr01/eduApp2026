@@ -4,7 +4,13 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth";
 import { checkRole } from "@/lib/utils/permissions";
 import type { ReactNode } from "react";
@@ -17,26 +23,64 @@ export type RoleGateProps = {
     showFallback?: boolean;
 };
 
-const formatRoleLabel = (role: Role) => role.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+const formatRoleLabel = (role: Role) =>
+    role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-function RoleGate({ allowed, children, redirectPath = "/", showFallback = true }: RoleGateProps) {
+function RoleGate({
+    allowed,
+    children,
+    redirectPath = "/",
+    showFallback = true,
+}: RoleGateProps) {
     const router = useRouter();
-    const user = useAuthStore((state) => state.user);
+    const { user, hydrated, isLoggedIn } = useAuthStore();
 
+
+    /**
+     * ✅ Hooks MUST be called unconditionally
+     */
     const hasAccess = useMemo(() => {
-        if (!user) return false;
+        if (!hydrated || !user) return false;
         return allowed.some((role) => checkRole(user, role));
-    }, [allowed, user]);
+    }, [hydrated, allowed, user]);
+
+    console.log("RoleGate debug:", {
+        allowed,
+        userRole: user?.roleName,
+        userRoleName: user?.roleName,
+        userRoleId: user?.roleId,
+        hasAccess,
+    });
+
 
     useEffect(() => {
-        if (!user) return;
-        if (hasAccess) return;
-        if (showFallback) return;
-        router.replace(redirectPath);
-    }, [user, hasAccess, showFallback, redirectPath, router]);
+        if (!hydrated) return;
 
-    if (!user) {
-        return (
+        // not logged in
+        if (!isLoggedIn || !user) {
+            if (!showFallback) {
+                router.replace("/signin");
+            }
+            return;
+        }
+
+        // logged in but role not allowed
+        if (!hasAccess && !showFallback) {
+            router.replace(redirectPath);
+        }
+    }, [
+        hydrated,
+        isLoggedIn,
+        user,
+        hasAccess,
+        showFallback,
+        redirectPath,
+        router,
+    ]);
+
+    if (!hydrated) return null;
+    if (!isLoggedIn || !user) {
+        return showFallback ? (
             <FallbackCard
                 icon={ShieldAlert}
                 title="Sign in required"
@@ -44,28 +88,31 @@ function RoleGate({ allowed, children, redirectPath = "/", showFallback = true }
                 actionLabel="Go to sign in"
                 onAction={() => router.replace("/signin")}
             />
-        );
+        ) : null;
     }
-
     if (!hasAccess) {
-        if (!showFallback) {
-            return null;
-        }
-        return (
+        return showFallback ? (
             <FallbackCard
                 icon={ShieldCheck}
                 title="Access restricted"
-                description={`This dashboard is limited to: ${allowed.map(formatRoleLabel).join(", ")}.`}
+                description={`This dashboard is limited to: ${allowed
+                    .map(formatRoleLabel)
+                    .join(", ")}.`}
                 actionLabel="Go home"
                 onAction={() => router.replace(redirectPath)}
             />
-        );
+        ) : null;
     }
 
+    /**
+     * ✅ authorized
+     */
     return <>{children}</>;
 }
 
 export default RoleGate;
+
+/* ------------------------------------------------------------------ */
 
 type FallbackCardProps = {
     icon: typeof ShieldAlert;
@@ -75,7 +122,13 @@ type FallbackCardProps = {
     onAction: () => void;
 };
 
-function FallbackCard({ icon: Icon, title, description, actionLabel, onAction }: FallbackCardProps) {
+function FallbackCard({
+    icon: Icon,
+    title,
+    description,
+    actionLabel,
+    onAction,
+}: FallbackCardProps) {
     return (
         <div className="flex min-h-[60vh] items-center justify-center px-4">
             <Card className="w-full max-w-lg border-dashed">

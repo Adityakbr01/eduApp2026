@@ -72,6 +72,9 @@ export const useLogin = (
             qc.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
             mutationHandlers.success("Login successful");
         },
+        onError: (error) => {
+            mutationHandlers.error(error);
+        },
         ...options,
     });
 };

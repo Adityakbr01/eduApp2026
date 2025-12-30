@@ -1,3 +1,4 @@
+import type { Types } from "mongoose";
 import { ROLES } from "src/constants/roles.js";
 import { RoleModel } from "src/models/role.model.js";
 import User from "src/models/user.model.js";
@@ -62,5 +63,9 @@ export const authRepository = {
 
         const role = await RoleModel.findById(user.roleId).exec();
         return role?.name === ROLES.ADMIN.code;
+    },
+    getRoleNameById: async (roleId: Types.ObjectId): Promise<string | null> => {
+        const role = await RoleModel.findById(roleId).exec();
+        return role ? role.name : null;
     },
 }

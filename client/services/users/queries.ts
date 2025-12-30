@@ -26,7 +26,6 @@ export interface ApiResponse<T> {
 }
 
 
-
 interface UsersApiResult {
     users: User[];
     pagination: {
@@ -39,14 +38,10 @@ interface UsersApiResult {
     };
 }
 
-
 export type UsersQueryParams = {
     page?: number;
     limit?: number;
 };
-
-
-
 
 
 const usersApi = {

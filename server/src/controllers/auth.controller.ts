@@ -33,6 +33,7 @@ const authController = {
             isEmailVerified: result.isEmailVerified,
             approvalStatus: result.approvalStatus,
             accessToken: result.accessToken,
+            roleName: result.roleName,
         });
     }),
     sendResetPassOtp: catchAsync<{}, any, EmailBody>(async (req, res) => {

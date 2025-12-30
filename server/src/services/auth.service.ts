@@ -45,6 +45,17 @@ export const authService = {
                 );
             }
 
+            if (existingUser.phone === data.phone) {
+                throw new AppError(
+                    "Phone number already exists.",
+                    STATUSCODE.BAD_REQUEST,
+                    ERROR_CODE.DUPLICATE_RESOURCE,
+                    [
+                        { path: 'phone', message: 'Account with this phone number already exists' }
+                    ]
+                );
+            }
+
             if (!existingUser.isEmailVerified) {
                 // OTP resend flow
                 const { otp, hashedOtp, expiry } = await generateOtp();
@@ -60,6 +71,7 @@ export const authService = {
                     userId: existingUser._id,
                 };
             }
+
 
             throw new AppError(
                 "Account already exists. Please login.",
@@ -280,11 +292,9 @@ export const authService = {
             _id: { $in: allPermissionIds },
         }).select("_id code description").lean();
 
-        const roleName =
-            typeof user.roleId === "object" && "name" in user.roleId
-                ? user.roleId.name
-                : undefined;
 
+
+        const roleName = await authRepository.getRoleNameById(user.roleId._id);
 
         const permissionsDTO: PermissionDTO[] = permissions.map((p) => ({
             _id: p._id.toString(),
@@ -311,6 +321,7 @@ export const authService = {
             isEmailVerified: user.isEmailVerified,
             approvalStatus: user.approvalStatus,
             accessToken,
+            roleName,
         };
     },
     // ============================
