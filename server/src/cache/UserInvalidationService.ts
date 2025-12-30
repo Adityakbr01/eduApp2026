@@ -1,6 +1,7 @@
 import sessionService from "src/services/session.service.js";
 import { cacheInvalidation } from "./cacheInvalidation.js";
 import logger from "src/utils/logger.js";
+import userPermissionService from "src/services/userPermission.service.js";
 
 class UserInvalidationService {
     /**
@@ -12,10 +13,13 @@ class UserInvalidationService {
             await sessionService.deleteSession(userId);
 
             // 2️⃣ Clear session permissions
-            await sessionService.clearSessionPermissions(userId);
+            await userPermissionService.clearAllPermissions(userId);
 
             // 3️⃣ Clear user-related caches
             await cacheInvalidation.invalidateUser(userId);
+
+            // 4️⃣ Invalidate users with the same role (if applicable)
+            await cacheInvalidation.invalidateUsersWithRole(userId)
 
             logger.info(`✅ User fully invalidated | userId=${userId}`);
         } catch (err) {

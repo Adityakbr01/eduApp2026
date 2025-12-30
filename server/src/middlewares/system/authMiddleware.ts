@@ -21,7 +21,6 @@ const authMiddleware = async (
     next: NextFunction
 ) => {
     try {
-        // 1️⃣ Extract access token
         const accessToken =
             req.cookies?.accessToken ||
             req.headers.authorization?.replace("Bearer ", "");
@@ -35,7 +34,6 @@ const authMiddleware = async (
             ]);
         }
 
-        // 2️⃣ Verify JWT
         const decoded = jwt.verify(
             accessToken,
             env.JWT_ACCESS_TOKEN_SECRET
@@ -50,11 +48,12 @@ const authMiddleware = async (
             ]);
         }
 
-        // 3️⃣ Validate Redis session (single-device)
         const isValidSession = await sessionService.validateSession(
             decoded.userId,
             decoded.sessionId
         );
+
+
 
         if (!isValidSession) {
             throw new AppError(
@@ -69,9 +68,8 @@ const authMiddleware = async (
                 ]
             );
         }
-
-        // 4️⃣ Fetch session snapshot (permissions)
         const session = await sessionService.getSession(decoded.userId);
+
 
         if (!session) {
             logger.warn("❌ Session not found in Redis after validation", {
@@ -84,7 +82,6 @@ const authMiddleware = async (
                 }
             ]);
         }
-        // 5️⃣ Attach minimal user context
         req.user = {
             id: decoded.userId,
             roleId: decoded.roleId,
@@ -104,7 +101,6 @@ const authMiddleware = async (
                 }
             ]));
         }
-
         return next(new AppError(ERROR_CODE.UNAUTHORIZED, STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED, [
             {
                 path: "",

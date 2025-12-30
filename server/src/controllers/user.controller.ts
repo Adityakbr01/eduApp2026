@@ -2,7 +2,6 @@ import { STATUSCODE } from "src/constants/statusCodes.js";
 import { SUCCESS_CODE } from "src/constants/successCodes.js";
 import userService from "src/services/user.service.js";
 import { catchAsync } from "src/utils/catchAsync.js";
-import { sendPaginatedResponse } from "src/utils/sendPaginatedResponse.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 
 const userController = {
@@ -15,9 +14,15 @@ const userController = {
         });
     }),
     getMyRoleANDPermission: catchAsync(async (req, res) => {
+        if (!req.user?.id) {
+            return sendResponse(res, STATUSCODE.UNAUTHORIZED, "Unauthorized");
+        }
         const result = await userService.getMyRoleANDPermission(req.user!.id);
         sendResponse(res, 200, "User roles and permissions fetched successfully", {
-            data: result.data,
+            message: result.message,
+            customPermissions: result.customPermissions,
+            rolePermissions: result.rolePermissions,
+            effectivePermissions: result.effectivePermissions,
         });
     }),
     // getUserById: catchAsync(async (req, res) => {

@@ -5,11 +5,13 @@ class CacheManager {
     async set(key: string, value: any, ttl?: number) {
         try {
             const data = JSON.stringify(value);
-            ttl
+            const result = ttl
                 ? await redisClient.set(key, data, "EX", ttl)
                 : await redisClient.set(key, data);
+            return result;
         } catch (err) {
-            logger.error("Cache SET error:", err);
+            logger.error("❌ Cache SET error:", err);
+            throw err;
         }
     }
 
@@ -18,25 +20,30 @@ class CacheManager {
             const raw = await redisClient.get(key);
             return raw ? JSON.parse(raw) : null;
         } catch (err) {
-            logger.error("Cache GET error:", err);
+            logger.error("❌ Cache GET error:", err);
             return null;
         }
     }
 
     async del(key: string) {
         try {
-            await redisClient.del(key);
+            const result = await redisClient.del(key);
+            logger.info("✅ Redis DEL result:", { key, result });
+            return result;
         } catch (err) {
-            logger.error("Cache DEL error:", err);
+            logger.error("❌ Cache DEL error:", err);
         }
     }
 
     async delPattern(pattern: string) {
         try {
             const keys = await redisClient.keys(pattern);
-            if (keys.length > 0) await redisClient.del(keys);
+            if (keys.length > 0) {
+                const result = await redisClient.del(keys);
+                logger.info("✅ Redis DEL pattern result:", { pattern, result });
+            }
         } catch (err) {
-            logger.error("Cache DEL PATTERN error:", err);
+            logger.error("❌ Cache DEL PATTERN error:", err);
         }
     }
 }

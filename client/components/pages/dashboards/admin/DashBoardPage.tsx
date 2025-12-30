@@ -29,32 +29,21 @@ import { UserRow } from "../common/types";
 import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
 // import OverviewWidgets from "./OverviewWidgets";
 import { useLogout } from "@/services/auth/mutations";
-import { Permission } from "@/services/users/types";
 import UsersPage from "../../UsersPage";
 
 function DashBoardPage() {
     const logout = useLogout();
-    const { data: userPermissionsData } = usersQueries.useGetMyRoleANDPermission();
-    const finalUserPermissions = useMemo(() => {
-        if (!userPermissionsData) return [];
+    const { data: userPermissionsData } =
+        usersQueries.useGetMyRoleANDPermission();
 
-        const rolePerms = userPermissionsData.rolePermissions ?? [];
-        const customPerms = userPermissionsData.customPermissions ?? [];
-
-        const map = new Map<string, Permission>();
-
-        [...rolePerms, ...customPerms].forEach((perm) => {
-            map.set(perm.code, perm); // duplicate codes auto removed
-        });
-
-        return Array.from(map.values());
-    }, [userPermissionsData]);
-
+    const effectivePermissions =
+        userPermissionsData?.effectivePermissions ?? [];
 
     const CanManageUser = CheckPermission({
-        carrier: finalUserPermissions,
+        carrier: effectivePermissions,
         requirement: app_permissions.MANAGE_USER,
     });
+
 
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);

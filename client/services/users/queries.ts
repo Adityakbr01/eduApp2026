@@ -69,16 +69,15 @@ const usersApi = {
         return res.data.data?.data ?? [];
     },
     getMyRoleANDPermission: async (): Promise<UserPermissionsPayload> => {
-        const res = await api.get<ApiResponse<{ data: UserPermissionsPayload }>>(
+        const res = await api.get<ApiResponse<UserPermissionsPayload>>(
             `/users/getMyRoleANDPermission`
         );
 
-        const payload = res?.data?.data?.data;
+        const payload = res?.data.data
 
         if (!payload) {
             throw new Error("User permissions payload not found");
         }
-
         return payload;
     }
 

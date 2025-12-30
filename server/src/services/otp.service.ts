@@ -2,6 +2,7 @@ import { env } from "src/configs/env.js";
 import { Resend } from "resend";
 import type { EmailType } from "src/constants/email-types.constants.js";
 import { templates } from "src/constants/EmailTemplates.js";
+import logger from "src/utils/logger.js";
 
 
 type EmailPayload =
@@ -28,9 +29,9 @@ const emailService = {
                 html,
             });
 
-            console.log(`✅ Email sent to ${payload.email}:`);
+            logger.info(`✅ Email sent to ${payload.email}:`);
         } catch (error) {
-            console.error(`❌ Failed to send email to ${payload.email}:`, error);
+            logger.error(`❌ Failed to send email to ${payload.email}:`, error);
             throw error;
         }
 

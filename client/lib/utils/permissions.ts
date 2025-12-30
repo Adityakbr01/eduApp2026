@@ -3,7 +3,7 @@ type PermissionLike = string | { code: string };
 
 export type PermissionCarrier =
     | User
-    | PermissionLike[]   // 👈 yahin fix
+    | PermissionLike[]
     | Set<string>
     | null
     | undefined;
@@ -83,6 +83,7 @@ export const CheckPermission = (props: {
     requirement: PermissionRequirement;
 }): boolean => {
     const { carrier, requirement } = props;
+    console.log("Checking permissions:", { carrier, requirement });
     return hasAllPermissions(carrier, requirement);
 }
 

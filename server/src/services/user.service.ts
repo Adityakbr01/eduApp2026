@@ -1,6 +1,4 @@
-import { appendFile } from "fs";
 import { Types } from "mongoose";
-import path from "path";
 import emailQueue from "src/bull/queues/email.queue.js";
 import { addEmailJob } from "src/bull/workers/email.worker.js";
 import cacheInvalidation from "src/cache/cacheInvalidation.js";
@@ -10,7 +8,6 @@ import { TTL } from "src/cache/cacheTTL.js";
 import UserInvalidationService from "src/cache/UserInvalidationService.js";
 import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
-import { ROLES } from "src/constants/roles.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { attachPermissionsToUser, type RolePermissionCache } from "src/helpers/attachUserPermissionHelper.js";
 import { RoleModel } from "src/models/role.model.js";
@@ -19,6 +16,7 @@ import { authRepository } from "src/repositories/auth.repository.js";
 import { approvalStatusEnum } from "src/types/user.model.type.js";
 import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
+import userPermissionService from "./userPermission.service.js";
 
 
 const userService = {
@@ -119,10 +117,16 @@ const userService = {
             }]);
         }
 
-        const enrichedUser = await attachPermissionsToUser(user);
+
+        const rolePermissions = await userPermissionService.getRolePermissions(userId);
+        const customPermissions = await userPermissionService.getCustomPermissions(userId);
+        const effectivePermissions = await userPermissionService.getEffectivePermissions(userId);
+
         return {
             message: "User fetched successfully",
-            data: enrichedUser,
+            rolePermissions,
+            customPermissions,
+            effectivePermissions,
         };
     },
     // getUserById: async (userId: string) => {
@@ -253,7 +257,6 @@ const userService = {
         // 4️⃣ Invalidate caches & sessions
         await Promise.all([
             cacheInvalidation.invalidateUser(userId),
-            cacheInvalidation.invalidateUserSession(userId),
             UserInvalidationService.invalidateUserEverything(userId),
         ]);
 
@@ -457,7 +460,6 @@ const userService = {
         // 4️⃣ Invalidate caches & sessions
         await Promise.all([
             cacheInvalidation.invalidateUser(userId),
-            cacheInvalidation.invalidateUserSession(userId),
             UserInvalidationService.invalidateUserEverything(userId),
         ]);
 
@@ -522,7 +524,6 @@ const userService = {
         // 4️⃣ Invalidate caches & sessions
         await Promise.all([
             cacheInvalidation.invalidateUser(userId),
-            cacheInvalidation.invalidateUserSession(userId),
             UserInvalidationService.invalidateUserEverything(userId),
         ]);
 

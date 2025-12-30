@@ -48,20 +48,11 @@ export interface Permission {
 
 
 export interface UserPermissionsPayload {
-    _id: string;
-    name: string;
-    email: string;
-    roleId: {
-        _id: string;
-        name: string;
-    };
-    permissions: string[];
-    customPermissions: Permission[];
+    message: string;
     rolePermissions: Permission[];
+    customPermissions: Permission[];
+    effectivePermissions: Permission[];
 }
-
-
-
 
 export interface UserPermissionsResponse {
     rolePermissions: PermissionSummary[];

@@ -65,17 +65,6 @@ export const cacheInvalidation = {
             logger.warn("Failed to invalidate users with role cache:", err);
         }
     },
-
-    /**
-     * Invalidate session cache for a user
-     */
-    async invalidateUserSession(userId: string): Promise<void> {
-        try {
-            await cacheManager.del(cacheKeyFactory.session.byUserId(userId));
-        } catch (err) {
-            logger.warn("Failed to invalidate user session cache:", err);
-        }
-    }
 };
 
 export default cacheInvalidation;

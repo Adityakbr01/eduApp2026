@@ -1,81 +1,102 @@
-import cacheInvalidation from "src/cache/cacheInvalidation.js";
 import cacheManager from "src/cache/cacheManager.js";
 import { env } from "src/configs/env.js";
-import type { PermissionDTO } from "src/types/auth.type.js";
-import logger from "src/utils/logger.js";
 
 export interface SessionData {
     sessionId: string;
     userId: string;
+    roleId?: string;
+    roleName?: string;
     createdAt: number;
     expiresAt: number;
-    permissions?: PermissionDTO[];
 }
 
 class SessionService {
+    // 🔑 single session per user
     private getSessionKey(userId: string): string {
-        return `session:user:${userId}`;
+        const key = `session:user:${userId}`;
+        return key;
+    }
+    // 🔹 save / overwrite session
+    private async saveSession(session: SessionData): Promise<void> {
+        const ttl = Math.floor(
+            (session.expiresAt - Date.now()) / 1000
+        );
+
+        if (ttl <= 0) {
+            console.error("❌ Invalid session TTL", {
+                expiresAt: session.expiresAt,
+                now: Date.now(),
+            });
+            return;
+        }
+
+
+        const result = await cacheManager.set(
+            this.getSessionKey(session.userId),
+            session,
+        );
+
     }
 
-    private async saveSession(userId: string, session: SessionData): Promise<void> {
-        const ttl = Math.floor((session.expiresAt - Date.now()) / 1000);
-        await cacheManager.set(this.getSessionKey(userId), session, ttl);
-    }
-
-    async createSession(userId: string, sessionId: string): Promise<void> {
+    // 🔹 create session (old one auto replaced)
+    async createSession(
+        userId: string,
+        sessionId: string,
+        roleId: string,
+        roleName: string
+    ): Promise<void> {
         const now = Date.now();
+
         const session: SessionData = {
-            sessionId,
-            userId,
+            sessionId: String(sessionId),
+            userId: String(userId),      // 🔹 already done
+            roleId: String(roleId),
+            roleName,
             createdAt: now,
             expiresAt: now + env.JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000,
         };
-        await this.saveSession(userId, session);
+        await this.saveSession(session);
     }
 
-    async validateSession(userId: string, sessionId: string): Promise<boolean> {
+
+    // 🔹 get active session
+    async getSession(userId: string): Promise<SessionData | null> {
+        return (await cacheManager.get(
+            this.getSessionKey(userId)
+        )) as SessionData | null;
+    }
+
+    // 🔹 validate session (JWT guard)
+    async validateSession(
+        userId: string,
+        sessionId: string
+    ): Promise<boolean> {
         const session = await this.getSession(userId);
-        if (!session || session.expiresAt < Date.now() || session.sessionId !== sessionId) {
-            if (session?.expiresAt < Date.now()) await this.deleteSession(userId);
+
+        if (!session) return false;
+
+        // 🔥 single-device enforcement
+        if (session.sessionId !== sessionId) {
             return false;
         }
+
+        if (session.expiresAt < Date.now()) {
+            await this.deleteSession(userId);
+            return false;
+        }
+
         return true;
     }
 
-    async getSession(userId: string): Promise<SessionData | null> {
-        return (await cacheManager.get(this.getSessionKey(userId))) as SessionData | null;
-    }
-
+    // 🔹 logout (user or admin)
     async deleteSession(userId: string): Promise<void> {
         await cacheManager.del(this.getSessionKey(userId));
     }
 
+    // 🔹 optional helper
     async hasActiveSession(userId: string): Promise<boolean> {
         const session = await this.getSession(userId);
         return !!session && session.expiresAt > Date.now();
-    }
-
-    // Permissions helpers
-    private async updateSessionPermissions(userId: string, permissions?: PermissionDTO[]): Promise<void> {
-        const session = await this.getSession(userId);
-        if (!session) return;
-
-        const updatedSession: SessionData = { ...session, permissions };
-        await this.saveSession(userId, updatedSession);
-    }
-
-    async setSessionPermissions(userId: string, permissions: PermissionDTO[]): Promise<void> {
-        await this.updateSessionPermissions(userId, permissions);
-    }
-
-    async getSessionPermissions(userId: string): Promise<PermissionDTO[]> {
-        const session = await this.getSession(userId);
-        return session?.permissions || [];
-    }
-
-    async clearSessionPermissions(userId: string): Promise<void> {
-        await this.updateSessionPermissions(userId, undefined);
-        await cacheInvalidation.invalidateUserSession(userId);
     }
 }
 

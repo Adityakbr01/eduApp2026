@@ -25,6 +25,7 @@ import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "./session.service.js";
 import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
+import userPermissionService from "./userPermission.service.js";
 
 
 export const authService = {
@@ -243,7 +244,6 @@ export const authService = {
         // 4️⃣ Invalidate caches & sessions
         await Promise.all([
             cacheInvalidation.invalidateUser(String(user._id)),
-            cacheInvalidation.invalidateUserSession(String(user._id)),
             UserInvalidationService.invalidateUserEverything(String(user._id)),
         ]);
 
@@ -259,10 +259,11 @@ export const authService = {
     loginUserService: async (email: string, password: string) => {
         // 1️⃣ Fetch user
         const user = await authRepository.findUserForLogin(email);
+        if (!user) {
+            throw new AppError("User not found", STATUSCODE.NOT_FOUND);
+        }
 
-        if (!user) throw new AppError("User not found", STATUSCODE.NOT_FOUND);
-
-        // 2️⃣ Run standard checks
+        // 2️⃣ Standard checks
         CheckUserEmailAndBanned(user);
         checkUserEmailVerified(user);
 
@@ -277,50 +278,86 @@ export const authService = {
             );
         }
 
+        // 4️⃣ Create sessionId
         const sessionId = uuidv4();
+
+        // 5️⃣ Fetch role permissions (IDs)
         const rolePermissions = await RolePermissionModel
             .find({ roleId: user.roleId })
+            .select("permissionId")
             .lean();
 
-        const rolePermissionIds = rolePermissions.map(
-            rp => rp.permissionId
+        const rolePermissionIds = rolePermissions.map(rp =>
+            rp.permissionId.toString()
         );
 
-        // 5️⃣ Merge role + custom permission IDs
-        const allPermissionIds = [
-            ...new Set([
-                ...rolePermissionIds.map(String),
-                ...(user.permissions || []).map(String),
-            ]),
-        ];
+        // 6️⃣ Fetch custom permissions (IDs from user)
+        const customPermissionIds = (user.permissions ?? []).map(String);
 
-        // 6️⃣ Fetch FULL permission objects
+        // 7️⃣ Fetch FULL permission objects (once)
         const permissions = await PermissionModel.find({
-            _id: { $in: allPermissionIds },
-        }).select("_id code description").lean();
+            _id: { $in: [...new Set([...rolePermissionIds, ...customPermissionIds])] },
+        })
+            .select("_id code description")
+            .lean();
 
+        // 8️⃣ Split role vs custom permissions
+        const rolePermissionSet = new Set(rolePermissionIds);
 
+        const rolePermissionsDTO: PermissionDTO[] = [];
+        const customPermissionsDTO: PermissionDTO[] = [];
 
-        const roleName = await authRepository.getRoleNameById(user.roleId._id);
+        for (const perm of permissions) {
+            const dto: PermissionDTO = {
+                _id: perm._id.toString(),
+                code: perm.code,
+                description: perm.description,
+            };
 
-        const permissionsDTO: PermissionDTO[] = permissions.map((p) => ({
-            _id: p._id.toString(),
-            code: p.code,
-            description: p.description,
-        }));
+            if (rolePermissionSet.has(perm._id.toString())) {
+                rolePermissionsDTO.push(dto);
+            } else {
+                customPermissionsDTO.push(dto);
+            }
+        }
 
-        // 6️⃣ Generate JWT
+        // 9️⃣ Resolve role name
+        const roleName = await authRepository.getRoleNameById(
+            user.roleId._id
+        );
+
+        // 🔟 Generate access token
         const accessToken = await user.generateAccessToken(
             sessionId,
-            roleName,
+            roleName
         );
-        // 7️⃣ Create session for revocation
-        await sessionService.createSession(String(user._id), sessionId);
-        await sessionService.setSessionPermissions(String(user._id), permissionsDTO);
 
-        // 8️⃣ Clear cached profile
-        await cacheManager.del(cacheKeyFactory.user.byId(String(user._id)));
 
+
+        // 1️⃣3️⃣ Clear cached user profile
+        await sessionService.deleteSession(String(user._id));
+        await userPermissionService.clearAllPermissions(String(user._id));
+
+        // 1️⃣1️⃣ Create session (NO permissions here)
+        await sessionService.createSession(
+            String(user._id),
+            sessionId,
+            String(user.roleId._id),
+            roleName
+        );
+
+        // 1️⃣2️⃣ Store permissions in Redis (clean separation)
+        await userPermissionService.setRolePermissions(
+            String(user._id),
+            rolePermissionsDTO
+        );
+
+        await userPermissionService.setCustomPermissions(
+            String(user._id),
+            customPermissionsDTO
+        );
+
+        // 1️⃣4️⃣ Final response
         return {
             message: "Login successful",
             userId: user._id,
@@ -331,6 +368,7 @@ export const authService = {
             roleName,
         };
     },
+
     // ============================
     // SEND RESET PASSWORD OTP
     // ============================

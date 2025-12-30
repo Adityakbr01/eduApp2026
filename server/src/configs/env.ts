@@ -17,8 +17,8 @@ const envSchema = z.object({
     // JWT
     JWT_ACCESS_TOKEN_SECRET: z.string().min(10),
     JWT_REFRESH_TOKEN_SECRET: z.string().min(10),
-    JWT_ACCESS_TOKEN_EXPIRES_IN: z.string().default("15m"),
-    JWT_REFRESH_TOKEN_EXPIRES_IN: z.string().default("7d"),
+    JWT_ACCESS_TOKEN_EXPIRES_IN: z.string().default("7d"),
+    JWT_REFRESH_TOKEN_EXPIRES_IN: z.string().default("7d"), // future use
     JWT_ACCESS_TOKEN_EXPIRES_IN_SECONDS: z.coerce.number().default(900),
     JWT_REFRESH_TOKEN_EXPIRES_IN_SECONDS: z.coerce.number().default(604800),
     BCRYPT_SALT_ROUNDS: z.coerce.number().default(10),
