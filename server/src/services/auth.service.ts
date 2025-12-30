@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 
 import emailQueue from "src/bull/queues/email.queue.js";
-import { addEmailJob, EMAIL_JOB_Names } from "src/bull/workers/email.worker.js";
+import { addEmailJob } from "src/bull/workers/email.worker.js";
 import cacheInvalidation from "src/cache/cacheInvalidation.js";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
@@ -24,6 +24,7 @@ import logger from "src/utils/logger.js";
 import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "./session.service.js";
+import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
 
 
 export const authService = {
@@ -62,7 +63,7 @@ export const authService = {
                 // OTP resend flow
                 const { otp, hashedOtp, expiry } = await generateOtp();
                 await authRepository.updateOtpByEmail(existingUser.email, hashedOtp, expiry);
-                await addEmailJob(emailQueue, EMAIL_JOB_Names.REGISTER_OTP, {
+                await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
                     email: existingUser.email,
                     otp,
                 });
@@ -130,7 +131,7 @@ export const authService = {
         });
 
         if (roleDoc.name === ROLES.STUDENT.code) {
-            await addEmailJob(emailQueue, EMAIL_JOB_Names.REGISTER_OTP, {
+            await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
                 email: user.email,
                 otp,
             });
@@ -176,7 +177,7 @@ export const authService = {
         user.verifyOtpExpiry = expiry;
         await authRepository.saveUser(user);
 
-        await addEmailJob(emailQueue, EMAIL_JOB_Names.REGISTER_OTP, {
+        await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
             email: user.email,
             otp,
         });
@@ -353,7 +354,7 @@ export const authService = {
         user.verifyOtpExpiry = expiry;
         await authRepository.saveUser(user);
 
-        await addEmailJob(emailQueue, EMAIL_JOB_Names.RESET_PASS_OTP, {
+        await addEmailJob(emailQueue, EMAIL_JOB_NAMES.RESET_PASS_OTP, {
             email: user.email,
             otp,
         });

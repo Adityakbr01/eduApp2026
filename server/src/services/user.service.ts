@@ -2,12 +2,13 @@ import { appendFile } from "fs";
 import { Types } from "mongoose";
 import path from "path";
 import emailQueue from "src/bull/queues/email.queue.js";
-import { addEmailJob, EMAIL_JOB_Names } from "src/bull/workers/email.worker.js";
+import { addEmailJob } from "src/bull/workers/email.worker.js";
 import cacheInvalidation from "src/cache/cacheInvalidation.js";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
 import UserInvalidationService from "src/cache/UserInvalidationService.js";
+import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { ROLES } from "src/constants/roles.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
@@ -446,7 +447,7 @@ const userService = {
             }]);
         }
 
-        await addEmailJob(emailQueue, EMAIL_JOB_Names.ACCOUNT_APPROVAL, {
+        await addEmailJob(emailQueue, EMAIL_JOB_NAMES.ACCOUNT_APPROVAL, {
             to: user.email,
         });
         user.approvalStatus = approvalStatusEnum.APPROVED;
@@ -507,7 +508,7 @@ const userService = {
 
             // Send email if required
             if (options?.banEmail) {
-                await addEmailJob(emailQueue, EMAIL_JOB_Names.ACCOUNT_BAN, {
+                await addEmailJob(emailQueue, EMAIL_JOB_NAMES.ACCOUNT_BAN, {
                     to: user.email,
                 });
             }

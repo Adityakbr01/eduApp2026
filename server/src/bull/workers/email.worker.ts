@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { env } from "src/configs/env.js";
-import JOB_PRIORITIES from "src/configs/JOB_PRIORITIES.js";
+import JOB_PRIORITIES from "src/configs/job-priorities.ts.js";
 import EMAIL_LIMITS from "src/configs/queueRateLimits.js";
 import { bullMQConnection } from "src/configs/redis.js";
 import logger from "src/utils/logger.js";
@@ -9,22 +9,22 @@ import accountBanProcessor from "../jobs/email/accountBan.job.js";
 import registerOtpProcessor from "../jobs/email/registerOtp.job.js";
 import resetPasswordOtpProcessor from "../jobs/email/resetPasswordOtp.job.js";
 import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
+import { EMAIL_JOB_NAMES, type EmailJobName } from "src/constants/email-jobs.constants.js";
 
-export const EMAIL_JOB_Names = {
-    REGISTER_OTP: "register-otp",
-    RESET_PASS_OTP: "reset-pass-otp",
-    ACCOUNT_APPROVAL: "account-approval",
-    ACCOUNT_BAN: "account-ban",
+const EMAIL_RATE_LIMITS: Partial<Record<EmailJobName, any>> = {
+    [EMAIL_JOB_NAMES.REGISTER_OTP]: EMAIL_LIMITS?.["register-otp"] ?? null,
+    [EMAIL_JOB_NAMES.RESET_PASS_OTP]: EMAIL_LIMITS?.["reset-pass-otp"] ?? null,
+    [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: EMAIL_LIMITS?.["account-approval"] ?? null,
+    [EMAIL_JOB_NAMES.ACCOUNT_BAN]: EMAIL_LIMITS?.["account-ban"] ?? null,
 };
 
-const EMAIL_RATE_LIMITS = {
-    [EMAIL_JOB_Names.REGISTER_OTP]: EMAIL_LIMITS?.["register-otp"] || null,
-    [EMAIL_JOB_Names.RESET_PASS_OTP]: EMAIL_LIMITS?.["reset-pass-otp"] || null,
-    [EMAIL_JOB_Names.ACCOUNT_APPROVAL]: EMAIL_LIMITS?.["account-approval"] || null,
-    [EMAIL_JOB_Names.ACCOUNT_BAN]: EMAIL_LIMITS?.["account-ban"] || null,
-};
 
-export async function addEmailJob(queue: any, jobName: string, data: any, customPriority?: number) {
+export async function addEmailJob(
+    queue: any,
+    jobName: EmailJobName,
+    data: any,
+    customPriority?: number
+) {
     const limiter = EMAIL_RATE_LIMITS[jobName];
     const priority = customPriority ?? JOB_PRIORITIES[jobName];
 
@@ -33,15 +33,17 @@ export async function addEmailJob(queue: any, jobName: string, data: any, custom
         ...(priority !== undefined && { priority }),
     });
 }
+
+
 // ✅ WORKER (same)
 export const emailWorker = new Worker(
     EMAIL_QUEUE_NAME,
     async job => {
         const processors = {
-            [EMAIL_JOB_Names.REGISTER_OTP]: registerOtpProcessor,
-            [EMAIL_JOB_Names.RESET_PASS_OTP]: resetPasswordOtpProcessor,
-            [EMAIL_JOB_Names.ACCOUNT_APPROVAL]: accountApproveProcessor,
-            [EMAIL_JOB_Names.ACCOUNT_BAN]: accountBanProcessor, // To be implemented
+            [EMAIL_JOB_NAMES.REGISTER_OTP]: registerOtpProcessor,
+            [EMAIL_JOB_NAMES.RESET_PASS_OTP]: resetPasswordOtpProcessor,
+            [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: accountApproveProcessor,
+            [EMAIL_JOB_NAMES.ACCOUNT_BAN]: accountBanProcessor, // To be implemented
         };
 
         const processor = processors[job.name];
