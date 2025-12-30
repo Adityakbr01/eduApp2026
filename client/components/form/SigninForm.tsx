@@ -25,7 +25,7 @@ import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 import links from "@/constants/links";
 import { secureLocalStorage } from "@/lib/utils/encryption";
-import { authMutations } from "@/services/auth/mutations";
+import { authMutations, useSendRegisterOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
 
 type SigninForm = SigninFormInput;
@@ -35,6 +35,8 @@ export default function SigninForm() {
     const [rememberMe, setRememberMe] = useState(false);
     const router = useRouter();
     const loginMutation = authMutations.useLogin();
+    const sendOtpMutation = useSendRegisterOtp();
+
 
     const form = useForm<SigninForm>({
         resolver: zodResolver(loginSchema),
@@ -75,6 +77,32 @@ export default function SigninForm() {
             secureLocalStorage.removeItem("rememberMe");
         }
         router.push(links.HOME);
+    };
+
+    const HandleResendOtp = () => {
+        const email = form.getValues("email");
+
+        if (!email) {
+            form.setError("email", {
+                type: "manual",
+                message: "Email is required to verify",
+            });
+            return;
+        }
+
+        sendOtpMutation.mutate(
+            { email },
+            {
+                onSuccess: () => {
+                    router.push(
+                        links.AUTH.EMAIL_NOT_VERIFIED + `?email=${encodeURIComponent(email)}`
+                    );
+                },
+                onError: (error) => {
+                    handleMutationError(error, form.setError);
+                },
+            }
+        );
     };
 
 
@@ -151,14 +179,28 @@ export default function SigninForm() {
                             Remember me for 30 days
                         </label>
                     </div>
-                    {/* Reset password */}
-                    <div className="text-right">
-                        <a
-                            href={links.AUTH.RESET_PASSWORD}
-                            className="text-sm text-primary hover:underline"
+                    {/* Reset password && reVerify */}
+
+                    <div className="flex flex-col">
+                        <div className="text-right">
+                            <a
+                                href={links.AUTH.RESET_PASSWORD}
+                                className="text-sm text-primary hover:underline"
+                            >
+                                Forgot password?
+                            </a>
+                        </div>
+
+                        <Button
+                            type="button"
+                            onClick={HandleResendOtp}
+                            variant="link"
+                            className="text-right p-0"
+                            disabled={!form.watch("email") || sendOtpMutation.isPending}
+
                         >
-                            Forgot password?
-                        </a>
+                            {sendOtpMutation.isPending ? "Sending..." : "Verify Email"}
+                        </Button>
                     </div>
 
                 </div>
@@ -167,7 +209,8 @@ export default function SigninForm() {
 
                 <Button
                     type="submit"
-                    disabled={loginMutation.isPending}
+                    disabled={!form.watch("email") || loginMutation.isPending}
+
                     className="w-full h-11 font-semibold rounded-lg"
                 >
                     {loginMutation.isPending ? (
@@ -180,6 +223,6 @@ export default function SigninForm() {
                     )}
                 </Button>
             </form>
-        </Form>
+        </Form >
     );
 }

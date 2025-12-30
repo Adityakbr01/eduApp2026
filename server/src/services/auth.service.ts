@@ -3,8 +3,10 @@ import { v4 as uuidv4 } from "uuid";
 
 import emailQueue from "src/bull/queues/email.queue.js";
 import { addEmailJob, EMAIL_JOB_Names } from "src/bull/workers/email.worker.js";
+import cacheInvalidation from "src/cache/cacheInvalidation.js";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
+import UserInvalidationService from "src/cache/UserInvalidationService.js";
 import { env } from "src/configs/env.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { ROLES } from "src/constants/roles.js";
@@ -16,12 +18,12 @@ import { getUserPermissions } from "src/middlewares/custom/getUserPermissions.js
 import { PermissionModel } from "src/models/permission.model.js";
 import { RolePermissionModel } from "src/models/rolePermission.model.js";
 import type { RegisterSchemaInput } from "src/schemas/auth.schema.js";
+import type { PermissionDTO } from "src/types/auth.type.js";
 import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
 import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "./session.service.js";
-import type { PermissionDTO } from "src/types/auth.type.js";
 
 
 export const authService = {
@@ -198,6 +200,7 @@ export const authService = {
 
         CheckUserEmailAndBanned(user);
 
+
         if (user.isEmailVerified) {
             throw new AppError(
                 "Email is already verified",
@@ -236,9 +239,12 @@ export const authService = {
 
         await authRepository.saveUser(user);
 
-        await cacheManager.del(
-            cacheKeyFactory.user.byId(String(user._id))
-        );
+        // 4️⃣ Invalidate caches & sessions
+        await Promise.all([
+            cacheInvalidation.invalidateUser(String(user._id)),
+            cacheInvalidation.invalidateUserSession(String(user._id)),
+            UserInvalidationService.invalidateUserEverything(String(user._id)),
+        ]);
 
         return {
             message: "Email verified successfully",

@@ -22,12 +22,12 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Loader2, User, Mail, Lock, Phone, MapPin } from "lucide-react";
+import links from "@/constants/links";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { useRegister } from "@/services/auth/mutations";
-import { AxiosError } from "axios";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
-import links from "@/constants/links";
+import { AxiosError } from "axios";
+import { Eye, EyeOff, Loader2, Lock, Mail, MapPin, Phone, User } from "lucide-react";
 
 type RegisterFormData = RegisterSchemaInput;
 

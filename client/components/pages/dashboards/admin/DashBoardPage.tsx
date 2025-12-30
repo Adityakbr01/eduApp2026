@@ -28,11 +28,12 @@ import usersQueries, { UsersQueryParams } from "@/services/users/queries";
 import { UserRow } from "../common/types";
 import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
 // import OverviewWidgets from "./OverviewWidgets";
+import { useLogout } from "@/services/auth/mutations";
 import { Permission } from "@/services/users/types";
 import UsersPage from "../../UsersPage";
 
 function DashBoardPage() {
-
+    const logout = useLogout();
     const { data: userPermissionsData } = usersQueries.useGetMyRoleANDPermission();
     const finalUserPermissions = useMemo(() => {
         if (!userPermissionsData) return [];
@@ -201,7 +202,7 @@ function DashBoardPage() {
                         <Bell className="h-4 w-4" />
                         Notifications
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start gap-2 text-destructive" size="sm">
+                    <Button onClick={() => logout.mutate()} variant="ghost" className="w-full justify-start gap-2 text-destructive" size="sm">
                         <LogOut className="h-4 w-4" />
                         Log out
                     </Button>

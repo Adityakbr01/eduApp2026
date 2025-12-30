@@ -44,15 +44,6 @@ function RoleGate({
         return allowed.some((role) => checkRole(user, role));
     }, [hydrated, allowed, user]);
 
-    console.log("RoleGate debug:", {
-        allowed,
-        userRole: user?.roleName,
-        userRoleName: user?.roleName,
-        userRoleId: user?.roleId,
-        hasAccess,
-    });
-
-
     useEffect(() => {
         if (!hydrated) return;
 
