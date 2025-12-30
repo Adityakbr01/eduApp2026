@@ -8,10 +8,11 @@ export const defaultJobOptions = {
     backoff: { type: "exponential", delay: 3000 },
     removeOnComplete: true,
     removeOnFail: false, // Important for DLQ
-}
+};
 
 const emailQueue = new Queue(EMAIL_QUEUE_NAME, {
     connection: bullMQConnection,
     defaultJobOptions,
 });
+
 export default emailQueue;

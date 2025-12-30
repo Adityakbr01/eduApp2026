@@ -1,13 +1,14 @@
 import { Worker } from "bullmq";
+import { env } from "src/configs/env.js";
+import JOB_PRIORITIES from "src/configs/JOB_PRIORITIES.js";
 import EMAIL_LIMITS from "src/configs/queueRateLimits.js";
 import { bullMQConnection } from "src/configs/redis.js";
-import registerOtpProcessor from "../jobs/email/registerOtp.job.js";
-import resetPasswordOtpProcessor from "../jobs/email/resetPasswordOtp.job.js";
-import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 import logger from "src/utils/logger.js";
 import accountApproveProcessor from "../jobs/email/accountApprove.job.js";
 import accountBanProcessor from "../jobs/email/accountBan.job.js";
-import { env } from "src/configs/env.js";
+import registerOtpProcessor from "../jobs/email/registerOtp.job.js";
+import resetPasswordOtpProcessor from "../jobs/email/resetPasswordOtp.job.js";
+import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 
 export const EMAIL_JOB_Names = {
     REGISTER_OTP: "register-otp",
@@ -16,7 +17,6 @@ export const EMAIL_JOB_Names = {
     ACCOUNT_BAN: "account-ban",
 };
 
-// ✅ SAFER centralized rate map
 const EMAIL_RATE_LIMITS = {
     [EMAIL_JOB_Names.REGISTER_OTP]: EMAIL_LIMITS?.["register-otp"] || null,
     [EMAIL_JOB_Names.RESET_PASS_OTP]: EMAIL_LIMITS?.["reset-pass-otp"] || null,
@@ -24,19 +24,15 @@ const EMAIL_RATE_LIMITS = {
     [EMAIL_JOB_Names.ACCOUNT_BAN]: EMAIL_LIMITS?.["account-ban"] || null,
 };
 
-// ✅ AUTO-LIMITER JOB HELPER
-export async function addEmailJob(queue, jobName, data) {
+export async function addEmailJob(queue: any, jobName: string, data: any, customPriority?: number) {
     const limiter = EMAIL_RATE_LIMITS[jobName];
+    const priority = customPriority ?? JOB_PRIORITIES[jobName];
 
-    return queue.add(
-        jobName,
-        data,
-        {
-            ...(limiter && { limiter })
-        }
-    );
+    return queue.add(jobName, data, {
+        ...(limiter && { limiter }),
+        ...(priority !== undefined && { priority }),
+    });
 }
-
 // ✅ WORKER (same)
 export const emailWorker = new Worker(
     EMAIL_QUEUE_NAME,
