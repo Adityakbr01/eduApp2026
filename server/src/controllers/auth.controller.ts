@@ -60,6 +60,8 @@ const authController = {
     }),
     logoutUser: catchAsync<{}, any, RefreshTokenBody>(async (req, res) => {
         clearAuthCookies(res);
+        const userId = req.user.id
+        await authService.logoutUserService(userId);
         sendResponse(res, 200, "User logged out successfully");
     }),
     getCurrentUser: catchAsync(async (req, res) => {

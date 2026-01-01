@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
-import cacheManager from "src/cache/cacheManager.js";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
+import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
-import { RolePermissionModel } from "src/models/rolePermission.model.js";
+import { PermissionModel } from "src/models/permission.model.js";
 import logger from "src/utils/logger.js";
 
 export interface PermissionSummary {
@@ -14,17 +14,21 @@ export interface PermissionSummary {
 export const getUserExtraPermissions = async (
     permissionsIds: string[] | Types.ObjectId[]
 ): Promise<PermissionSummary[]> => {
-    // 🔒 HARD GUARD — prevents runtime crash
+    // Guard - prevents runtime crash
     if (!permissionsIds || permissionsIds.length === 0) {
         return [];
     }
 
     const objectIds = permissionsIds.map(id => new Types.ObjectId(id));
-    const cacheKey = cacheKeyFactory.user.permissions(objectIds.map(id => id.toString()).sort().join("_"));
+
+    // Create cache key from sorted permission IDs
+    const cacheKey = cacheKeyFactory.permissions.extra(
+        objectIds.map(oid => oid.toString())
+    );
 
     // Try to get from cache first
     try {
-        const cached = await cacheManager.get(cacheKey);
+        const cached = await cacheManager.get<PermissionSummary[]>(cacheKey);
         if (cached) {
             return cached;
         }
@@ -32,42 +36,25 @@ export const getUserExtraPermissions = async (
         logger.warn("cache.get failed in getUserExtraPermissions:", err);
     }
 
-    const result = await RolePermissionModel.aggregate([
-        // 1️⃣ Filter by permissionIds
-        { $match: { permissionId: { $in: objectIds } } },
-        // 2️⃣ Join with permissions
-        {
-            $lookup: {
-                from: "permissions",
-                localField: "permissionId",
-                foreignField: "_id",
-                as: "permissionDetails"
-            }
-        },
-        { $unwind: "$permissionDetails" },
-        // 3️⃣ Group to deduplicate permissions, push full object
-        {
-            $group: {
-                _id: null,
-                permissions: {
-                    $addToSet: {
-                        _id: "$permissionDetails._id",
-                        code: "$permissionDetails.code",
-                        description: "$permissionDetails.description"
-                    }
-                }
-            }
-        },
-    ]);
+    // Direct query on Permission model (simpler than aggregation)
+    const permissions = await PermissionModel.find({
+        _id: { $in: objectIds }
+    })
+        .select("_id code description")
+        .lean();
 
-    const permissions: PermissionSummary[] = result[0]?.permissions || [];
+    const result: PermissionSummary[] = permissions.map(p => ({
+        _id: String(p._id),
+        code: p.code,
+        description: p.description
+    }));
 
     // Cache the result
     try {
-        await cacheManager.set(cacheKey, permissions, TTL.USER_PERMISSIONS);
+        await cacheManager.set(cacheKey, result, TTL.USER_PERMISSIONS);
     } catch (err) {
         logger.warn("cache.set failed in getUserExtraPermissions:", err);
     }
 
-    return permissions;
+    return result;
 };

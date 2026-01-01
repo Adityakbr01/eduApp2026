@@ -6,8 +6,9 @@ import { RolePermissionModel } from "src/models/rolePermission.model.js";
 import logger from "src/utils/logger.js";
 
 export const getUserRolePermissions = async (roleId: string | Types.ObjectId) => {
+    const roleIdStr = String(roleId);
     const roleObjectId = new Types.ObjectId(roleId);
-    const cacheKey = cacheKeyFactory.role.permissions(String(roleId));
+    const cacheKey = cacheKeyFactory.role.permissions(roleIdStr);
 
     // Try to get from cache first
     try {
@@ -16,7 +17,7 @@ export const getUserRolePermissions = async (roleId: string | Types.ObjectId) =>
             return cached;
         }
     } catch (err) {
-        logger.warn("cache.get failed in getUserPermissions:", err);
+        logger.warn("cache.get failed in getUserRolePermissions:", err);
     }
 
     const result = await RolePermissionModel.aggregate([
@@ -73,11 +74,11 @@ export const getUserRolePermissions = async (roleId: string | Types.ObjectId) =>
     // Aggregation returns single doc per role
     const permissions = result[0] || { role: null, permissions: [] };
 
-    // Cache the result
+    // Cache the result (1 hour TTL - roles rarely change)
     try {
         await cacheManager.set(cacheKey, permissions, TTL.ROLE_PERMISSIONS);
     } catch (err) {
-        logger.warn("cache.set failed in getUserPermissions:", err);
+        logger.warn("cache.set failed in getUserRolePermissions:", err);
     }
 
     return permissions;

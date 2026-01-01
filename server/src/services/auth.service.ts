@@ -1,31 +1,23 @@
-import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 
 import emailQueue from "src/bull/queues/email.queue.js";
 import { addEmailJob } from "src/bull/workers/email.worker.js";
 import cacheInvalidation from "src/cache/cacheInvalidation.js";
-import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
-import cacheManager from "src/cache/cacheManager.js";
-import UserInvalidationService from "src/cache/UserInvalidationService.js";
-import { env } from "src/configs/env.js";
+import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { ROLES } from "src/constants/roles.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import CheckUserEmailAndBanned from "src/helpers/checkUserEmailAndBanned.js";
 import checkUserEmailVerified from "src/helpers/checkUserEmailVerified.js";
-import invalidateUserAuth from "src/helpers/invalidateUserAuth.js";
-import { getUserPermissions } from "src/middlewares/custom/getUserPermissions.js";
 import { PermissionModel } from "src/models/permission.model.js";
 import { RolePermissionModel } from "src/models/rolePermission.model.js";
 import type { RegisterSchemaInput } from "src/schemas/auth.schema.js";
 import type { PermissionDTO } from "src/types/auth.type.js";
 import AppError from "src/utils/AppError.js";
-import logger from "src/utils/logger.js";
 import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
-import sessionService from "./session.service.js";
-import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
-import userPermissionService from "./userPermission.service.js";
+import sessionService from "../cache/userCache.js";
+import userCache from "../cache/userCache.js";
 
 
 export const authService = {
@@ -63,6 +55,7 @@ export const authService = {
             if (!existingUser.isEmailVerified) {
                 // OTP resend flow
                 const { otp, hashedOtp, expiry } = await generateOtp();
+                //add otp in redis not in db
                 await authRepository.updateOtpByEmail(existingUser.email, hashedOtp, expiry);
                 await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
                     email: existingUser.email,
@@ -151,6 +144,7 @@ export const authService = {
     // SEND REGISTER OTP
     // ============================
     sendRegisterOtpService: async (email: string) => {
+        // add otp in redis not in db
         const user =
             await authRepository.findUserByEmailWithOtp(email);
 
@@ -174,6 +168,7 @@ export const authService = {
 
         const { otp, hashedOtp, expiry } = await generateOtp();
 
+        // add otp in redis not in db
         user.verifyOtp = hashedOtp;
         user.verifyOtpExpiry = expiry;
         await authRepository.saveUser(user);
@@ -182,11 +177,7 @@ export const authService = {
             email: user.email,
             otp,
         });
-
-        await cacheManager.del(
-            cacheKeyFactory.user.byId(String(user._id))
-        );
-
+        await cacheInvalidation.invalidateUserEverything(String(user._id));
         return {
             message: "OTP sent successfully",
             userId: user._id,
@@ -197,6 +188,7 @@ export const authService = {
     // VERIFY REGISTER OTP
     // ============================
     verifyRegisterOtpService: async (email: string, otp: string) => {
+        // add otp in redis not in db
         const user =
             await authRepository.findUserByEmailWithOtp(email);
 
@@ -234,19 +226,14 @@ export const authService = {
             );
         }
 
+        // add otp in redis not in db
         user.isEmailVerified = true;
         user.verifyOtp = undefined;
         user.verifyOtpExpiry = undefined;
         user.approvedBy = undefined;
 
         await authRepository.saveUser(user);
-
-        // 4️⃣ Invalidate caches & sessions
-        await Promise.all([
-            cacheInvalidation.invalidateUser(String(user._id)),
-            UserInvalidationService.invalidateUserEverything(String(user._id)),
-        ]);
-
+        await cacheInvalidation.invalidateUserEverything(String(user._id));
         return {
             message: "Email verified successfully",
             userId: user._id,
@@ -255,19 +242,16 @@ export const authService = {
     },
     // ============================
     // LOGIN
-    // ============================
+    // ===========================
     loginUserService: async (email: string, password: string) => {
-        // 1️⃣ Fetch user
         const user = await authRepository.findUserForLogin(email);
         if (!user) {
             throw new AppError("User not found", STATUSCODE.NOT_FOUND);
         }
 
-        // 2️⃣ Standard checks
         CheckUserEmailAndBanned(user);
         checkUserEmailVerified(user);
 
-        // 3️⃣ Verify password
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
             throw new AppError(
@@ -278,10 +262,8 @@ export const authService = {
             );
         }
 
-        // 4️⃣ Create sessionId
         const sessionId = uuidv4();
 
-        // 5️⃣ Fetch role permissions (IDs)
         const rolePermissions = await RolePermissionModel
             .find({ roleId: user.roleId })
             .select("permissionId")
@@ -291,17 +273,13 @@ export const authService = {
             rp.permissionId.toString()
         );
 
-        // 6️⃣ Fetch custom permissions (IDs from user)
         const customPermissionIds = (user.permissions ?? []).map(String);
-
-        // 7️⃣ Fetch FULL permission objects (once)
         const permissions = await PermissionModel.find({
             _id: { $in: [...new Set([...rolePermissionIds, ...customPermissionIds])] },
         })
             .select("_id code description")
             .lean();
 
-        // 8️⃣ Split role vs custom permissions
         const rolePermissionSet = new Set(rolePermissionIds);
 
         const rolePermissionsDTO: PermissionDTO[] = [];
@@ -321,24 +299,17 @@ export const authService = {
             }
         }
 
-        // 9️⃣ Resolve role name
         const roleName = await authRepository.getRoleNameById(
             user.roleId._id
         );
 
-        // 🔟 Generate access token
         const accessToken = await user.generateAccessToken(
             sessionId,
             roleName
         );
 
+        await cacheInvalidation.invalidateUserEverything(String(user._id));
 
-
-        // 1️⃣3️⃣ Clear cached user profile
-        await sessionService.deleteSession(String(user._id));
-        await userPermissionService.clearAllPermissions(String(user._id));
-
-        // 1️⃣1️⃣ Create session (NO permissions here)
         await sessionService.createSession(
             String(user._id),
             sessionId,
@@ -346,18 +317,16 @@ export const authService = {
             roleName
         );
 
-        // 1️⃣2️⃣ Store permissions in Redis (clean separation)
-        await userPermissionService.setRolePermissions(
+        await userCache.setRolePermissions(
             String(user._id),
             rolePermissionsDTO
         );
 
-        await userPermissionService.setCustomPermissions(
+        await userCache.setCustomPermissions(
             String(user._id),
             customPermissionsDTO
         );
 
-        // 1️⃣4️⃣ Final response
         return {
             message: "Login successful",
             userId: user._id,
@@ -397,14 +366,7 @@ export const authService = {
             otp,
         });
 
-        // invalidate cache
-        try {
-            await cacheManager.del(
-                cacheKeyFactory.user.byId(String(user._id))
-            );
-        } catch (err) {
-            logger.warn("cache.del failed during sendResetPassOtpService", err);
-        }
+        await cacheInvalidation.invalidateUserEverything(String(user._id));
 
         return {
             message: "Password reset otp sent successfully",
@@ -447,27 +409,7 @@ export const authService = {
         user.password = newPassword;
         await authRepository.saveUser(user);
 
-        // invalidate all sessions
-        try {
-            await invalidateUserAuth(userId);
-        } catch (err) {
-            logger.error(
-                "Failed to delete session after password change",
-                err
-            );
-        }
-
-        // clear cache
-        try {
-            await cacheManager.del(
-                cacheKeyFactory.user.byId(String(user._id))
-            );
-        } catch (err) {
-            logger.warn(
-                "cache.del failed during changePasswordService",
-                err
-            );
-        }
+        await cacheInvalidation.invalidateUserEverything(String(user._id));
 
         return {
             message:
@@ -525,28 +467,7 @@ export const authService = {
         user.verifyOtpExpiry = undefined;
 
         await authRepository.saveUser(user);
-
-        // invalidate all active sessions
-        try {
-            await invalidateUserAuth(String(user._id));
-        } catch (err) {
-            logger.error(
-                "Failed to invalidate sessions after reset password",
-                err
-            );
-        }
-
-        // clear cache
-        try {
-            await cacheManager.del(
-                cacheKeyFactory.user.byId(String(user._id))
-            );
-        } catch (err) {
-            logger.warn(
-                "cache.del failed during verifyResetPassOtpService",
-                err
-            );
-        }
+        await cacheInvalidation.invalidateUserEverything(String(user._id));
 
         return {
             message:
@@ -558,33 +479,8 @@ export const authService = {
     // ============================
     // LOGOUT
     // ============================
-    logoutUserService: async (refreshToken: string) => {
-        if (!refreshToken) {
-            throw new AppError(
-                "Refresh token missing",
-                STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED, [{ path: 'refreshToken', message: 'Refresh token is required for logout' }]
-            );
-        }
-
-        let decoded: { userId: string };
-        try {
-            decoded = jwt.verify(
-                refreshToken,
-                env.JWT_REFRESH_TOKEN_SECRET!
-            ) as { userId: string };
-        } catch {
-            throw new AppError(
-                "Invalid refresh token",
-                STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED, [{ path: 'refreshToken', message: 'Invalid refresh token' }]
-            );
-        }
-
-        await invalidateUserAuth(decoded.userId);
-
-        await cacheManager.del(
-            cacheKeyFactory.user.byId(decoded.userId)
-        );
-
+    logoutUserService: async (userId: string) => {
+        await cacheInvalidation.invalidateUserEverything(userId);
         return { message: "Logout successful" };
     },
     // ============================
@@ -592,10 +488,10 @@ export const authService = {
     // ============================
     getCurrentUserService: async (req: any) => {
         const userId = req.user.id;
-        const cacheKey = cacheKeyFactory.user.byId(userId);
-
-        const cached = await cacheManager.get(cacheKey);
-        if (cached) return { user: cached };
+        const cachedUser = await sessionService.getUserProfile(userId);
+        if (cachedUser) {
+            return { user: cachedUser };
+        }
 
         const user =
             await authRepository.findUserMinimalById(userId);
@@ -607,13 +503,9 @@ export const authService = {
             );
         }
 
-        const rolePerms =
-            await getUserPermissions(user.roleId._id);
-        const permissions = [
-            ...new Set([
-                ...rolePerms.permissions,
-            ]),
-        ];
+        const customPermissions = await userCache.getCustomPermissions(String(user._id));
+        const rolePermissions = await userCache.getRolePermissions(String(user._id));
+        const EffectivePermissions = await userCache.getEffectivePermissions(String(user._id));
 
         const responseUser = {
             id: user._id,
@@ -624,11 +516,13 @@ export const authService = {
             approvalStatus: user.approvalStatus,
             isEmailVerified: user.isEmailVerified,
             isBanned: user.isBanned,
-            permissions,
+            customPermissions,
+            rolePermissions,
+            EffectivePermissions,
             phone: user.phone,
         };
 
-        await cacheManager.set(cacheKey, responseUser, 120);
+        await sessionService.createUserProfile(userId, responseUser);
 
         return { user: responseUser };
     },

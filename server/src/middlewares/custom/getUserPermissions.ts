@@ -1,23 +1,24 @@
 import { Types } from "mongoose";
 import { RolePermissionModel } from "src/models/rolePermission.model.js";
 import cacheManager from "src/cache/cacheManager.js";
-import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
+// import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import { TTL } from "src/cache/cacheTTL.js";
 import logger from "src/utils/logger.js";
 
 export const getUserPermissions = async (roleId: string | Types.ObjectId) => {
     const roleObjectId = new Types.ObjectId(roleId);
-    const cacheKey = cacheKeyFactory.role.permissions(String(roleId));
+    // const cacheKey = cacheKeyFactory.role.permissions(String(roleId));
 
     // Try to get from cache first
-    try {
-        const cached = await cacheManager.get(cacheKey);
-        if (cached) {
-            return cached;
-        }
-    } catch (err) {
-        logger.warn("cache.get failed in getUserPermissions:", err);
-    }
+    // try {
+    //     // const cached = await cacheManager.get(cacheKey);
+    //     if (cached) {
+    //         logger.log("Cache hit for role permissions:", cacheKey);
+    //         return cached;
+    //     }
+    // } catch (err) {
+    //     logger.warn("cache.get failed in getUserPermissions:", err);
+    // }
 
     const result = await RolePermissionModel.aggregate([
         // 1️⃣ Filter by roleId (indexed for performance)
@@ -68,7 +69,7 @@ export const getUserPermissions = async (roleId: string | Types.ObjectId) => {
 
     // Cache the result
     try {
-        await cacheManager.set(cacheKey, permissions, TTL.ROLE_PERMISSIONS);
+        // await cacheManager.set(cacheKey, permissions, TTL.ROLE_PERMISSIONS);
     } catch (err) {
         logger.warn("cache.set failed in getUserPermissions:", err);
     }

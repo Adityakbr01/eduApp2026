@@ -1,6 +1,6 @@
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { SUCCESS_CODE } from "src/constants/successCodes.js";
-import userService from "src/services/user.service.js";
+import userService from "src/services/users.service.js";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 

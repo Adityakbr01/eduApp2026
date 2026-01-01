@@ -2,7 +2,7 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import AppError from "src/utils/AppError.js";
 import { env } from "src/configs/env.js";
-import sessionService from "src/services/session.service.js";
+import sessionService from "src/cache/userCache.js";
 import logger from "src/utils/logger.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
