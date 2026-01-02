@@ -4,6 +4,7 @@ const app_permissions = {
     READ_SELF: "READ_SELF",           // Read own profile
     WRITE_USER: "WRITE_USER",         // Create new users
     UPDATE_USER: "UPDATE_USER",       // Update any user
+    READ_USERS: "READ_USERS",         // Read list of users
     UPDATE_SELF: "UPDATE_SELF",       // Update own profile
     DELETE_USER: "DELETE_USER",       // Delete any user
     DELETE_SELF: "DELETE_SELF",       // Delete own account

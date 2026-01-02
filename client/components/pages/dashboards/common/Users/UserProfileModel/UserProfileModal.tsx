@@ -21,6 +21,7 @@ import { uniqueList, extractCustomPermissionItems } from "./Utils";
 import { UserRow } from "../../types";
 import { CheckPermission } from "@/lib/utils/permissions";
 import app_permissions from "@/constants/permissions";
+import { useEffectivePermissions } from "@/store/myPermission";
 
 
 type UserProfileModalProps = {
@@ -36,9 +37,9 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
     const dialogContentRef = useRef<HTMLDivElement | null>(null);
     const tabPanelsRef = useRef<Record<string, HTMLDivElement | null>>({});
     const { data: allRolesAndPermissions, error, isLoading } = usersQueries.useGetAllRoleANDPermission();
-    const { data: userPermissionsData } = usersQueries.useGetMyRoleANDPermission();
 
-    const myEffectivePermissions = userPermissionsData?.effectivePermissions ?? [];
+    // Access permissions from global Zustand store
+    const myEffectivePermissions = useEffectivePermissions();
 
     const canManageUser = CheckPermission({
         carrier: myEffectivePermissions,

@@ -27,7 +27,7 @@ router.post("/user-ban-unban/:id", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.cod
 // //Todo : --> add assign permission
 
 // CRUD Users
-router.get("/", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code, ROLES.INSTRUCTOR.code), checkPermission(PERMISSIONS.READ_USER.code), userController.getAllUsers);
+router.get("/", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code, ROLES.INSTRUCTOR.code), checkPermission(PERMISSIONS.READ_USERS.code), userController.getAllUsers);
 // router.get("/:id", checkRole(ROLES.ADMIN, ROLES.MANAGER, ROLES.SUPPORT), checkPermission(PERMISSIONS.USER_READ), userController.getUserById);
 // router.put("/:id", validateSchema(updateUserSchema), checkRole(ROLES.ADMIN, ROLES.MANAGER, ROLES.SUPPORT), checkPermission(PERMISSIONS.USER_UPDATE), userController.updateUserById);
 router.delete("/:id", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code, ROLES.INSTRUCTOR.code), checkPermission(PERMISSIONS.DELETE_USER.code), userController.deleteUserById);

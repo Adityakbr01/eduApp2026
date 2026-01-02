@@ -28,22 +28,31 @@ import usersQueries, { UsersQueryParams } from "@/services/users/queries";
 import { UserRow } from "../common/types";
 import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
 // import OverviewWidgets from "./OverviewWidgets";
-import { useLogout } from "@/services/auth/mutations";
-import UsersPage from "../../UsersPage";
+import PermissionDeniedOverlay from "@/components/PermissionDenidOverlay";
+import { useSyncPermissionsToStore } from "@/hooks/useSyncPermissionsToStore";
 import { approvalStatusEnum, User } from "@/services/auth";
+import { useLogout } from "@/services/auth/mutations";
+import { useEffectivePermissions } from "@/store/myPermission";
+import UsersPage from "../../UsersPage";
 import OverviewWidgets from "./OverviewWidgets";
 
 function DashBoardPage() {
     const logout = useLogout();
-    const { data: userPermissionsData } =
-        usersQueries.useGetMyRoleANDPermission();
 
-    const effectivePermissions =
-        userPermissionsData?.effectivePermissions ?? [];
+    // Sync permissions from API to Zustand store
+    useSyncPermissionsToStore();
+
+    // Access permissions from global Zustand store
+    const effectivePermissions = useEffectivePermissions();
 
     const CanManageUser = CheckPermission({
         carrier: effectivePermissions,
         requirement: app_permissions.MANAGE_USER,
+    });
+
+    const CanReadUser = CheckPermission({
+        carrier: effectivePermissions,
+        requirement: app_permissions.READ_USERS,
     });
 
 
@@ -57,7 +66,9 @@ function DashBoardPage() {
         isLoading: isLoadingUsers,
         isError: isUsersError,
         error: usersError,
-    } = usersQueries.useGetUsers(queryParams);
+    } = usersQueries.useGetUsers(queryParams, {
+        enabled: Boolean(CanReadUser),
+    });
 
     const [activeSection, setActiveSection] = useState(adminUtils.sidebarItems[1].value);
     const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(adminUtils.initialRolePermissions);
@@ -74,7 +85,6 @@ function DashBoardPage() {
     useEffect(() => {
         if (!data?.users || data.users.length === 0) return;
         if (process.env.NODE_ENV === "production") return;
-        console.debug("[AdminDashboard] Users payload", data.users);
     }, [data?.users]);
     const pagination = useMemo(
         () =>
@@ -134,7 +144,8 @@ function DashBoardPage() {
     const banSummary = useMemo(() => adminUtils.buildBanSummary(userRows), [userRows]);
 
     const shouldFallbackToMock = !users?.length && !isLoadingUsers && !isUsersError;
-    let rowsToRender: UserRow[] = shouldFallbackToMock ? adminUtils.mockUsers : userRows;
+    const noPermissionToReadUsers = !CanReadUser;
+    let rowsToRender: UserRow[] = (shouldFallbackToMock || noPermissionToReadUsers) ? adminUtils.mockUsers : userRows;
 
     // Apply search and role filter
     if (searchQuery.trim() || filterRole) {
@@ -229,31 +240,45 @@ function DashBoardPage() {
                 </header>
                 <div className="space-y-6 px-4 py-6 md:px-8">
                     {activeSection === "overview" && (
-                        <OverviewWidgets
-                            stats={stats}
-                            recentUsers={recentUsers}
-                            activityFeed={activityFeed}
-                            courseInsights={courseInsights}
-                            banSummary={banSummary}
-                            titlePrefix="Admin "
-                        />
+                        <div className="relative">
+                            {noPermissionToReadUsers && (
+                                <PermissionDeniedOverlay />
+                            )}
+                            <div className={cn(noPermissionToReadUsers && "pointer-events-none select-none")}>
+                                <OverviewWidgets
+                                    stats={stats}
+                                    recentUsers={recentUsers}
+                                    activityFeed={activityFeed}
+                                    courseInsights={courseInsights}
+                                    banSummary={banSummary}
+                                    titlePrefix="Admin "
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {activeSection === "users" && (
-                        <UsersPage
-                            filterRole={filterRole}
-                            setFilterRole={setFilterRole}
-                            page={page}
-                            setPage={setPage}
-                            limit={limit}
-                            setLimit={setLimit}
-                            pagination={pagination}
-                            rowsToRender={rowsToRender}
-                            isLoadingUsers={isLoadingUsers}
-                            isUsersError={isUsersError}
-                            usersError={usersError}
-                            CanManageUser={CanManageUser}
-                        />
+                        <div className="relative">
+                            {noPermissionToReadUsers && (
+                                <PermissionDeniedOverlay />
+                            )}
+                            <div className={cn(noPermissionToReadUsers && "pointer-events-none select-none")}>
+                                <UsersPage
+                                    filterRole={filterRole}
+                                    setFilterRole={setFilterRole}
+                                    page={page}
+                                    setPage={setPage}
+                                    limit={limit}
+                                    setLimit={setLimit}
+                                    pagination={pagination}
+                                    rowsToRender={rowsToRender}
+                                    isLoadingUsers={isLoadingUsers}
+                                    isUsersError={isUsersError}
+                                    usersError={usersError}
+                                    CanManageUser={CanManageUser}
+                                />
+                            </div>
+                        </div>
                     )}
 
 

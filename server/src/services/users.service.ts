@@ -323,7 +323,9 @@ const userService = {
                 [{ path: "permission", message: "This permission is not assigned to the user" }]
             );
         }
-        user.permissions = user.permissions.filter((perm) => perm !== permission);
+        console.log("Before deletion, user permissions:", user.permissions);
+        console.log("Deleting permission:", permission);
+        user.permissions = user.permissions.filter((perm) => perm.toString() !== permission.toString());
         await user.save();
 
         await Promise.all([
