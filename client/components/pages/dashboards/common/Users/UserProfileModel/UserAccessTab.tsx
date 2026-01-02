@@ -38,6 +38,7 @@ export type ManualOverridesProps = {
     isRemoveActionDisabled: boolean;
     assignPending: boolean;
     deletePending: boolean;
+    canManageUserPermission?: boolean;
 };
 
 type UserAccessTabProps = {
@@ -46,19 +47,16 @@ type UserAccessTabProps = {
     permissionCollections: PermissionCollection[];
     manualOverrides: ManualOverridesProps;
     debuggerPayload: unknown;
+    canManageUser?: boolean;
 };
 
-const UserAccessTab = ({ panelRef, activeRoles, permissionCollections, manualOverrides, debuggerPayload }: UserAccessTabProps) => {
-    console.log("Rendering UserAccessTab");
-    console.log("Active Roles:", activeRoles);
-    console.log("Permission Collections:", permissionCollections);
-    console.log("Manual Overrides Props:", manualOverrides);
-    console.log("Debugger Payload:", debuggerPayload);
+const UserAccessTab = ({ panelRef, activeRoles, permissionCollections, manualOverrides, debuggerPayload, canManageUser }: UserAccessTabProps) => {
+
     return (
         <div ref={panelRef} className="space-y-4 rounded-2xl border border-border/60 bg-muted/10 p-4">
             <ActiveRolesSection activeRoles={activeRoles} />
             <PermissionCollectionsSection permissionCollections={permissionCollections} />
-            <ManualOverridesSection {...manualOverrides} />
+            {canManageUser && <ManualOverridesSection {...manualOverrides} />}
 
             <PermissionDebuggerSection payload={debuggerPayload} />
         </div>

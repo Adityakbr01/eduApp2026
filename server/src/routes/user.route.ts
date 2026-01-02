@@ -17,9 +17,9 @@ router.use(authMiddleware);
 router.get("/getAllRoleANDPermission", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code), userController.getAllRoleANDPermission);
 router.get("/getMyRoleANDPermission", userController.getMyRoleANDPermission);
 // //@desc ASSIGN PERMISSIONS
-router.post("/roles-permissions", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code), checkPermission(PERMISSIONS.MANAGE_USER.code), userController.assignPermissions);
+router.post("/roles-permissions", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code), checkPermission(PERMISSIONS.MANAGE_PERMISSIONS.code), userController.assignPermissions);
 // @desc DELETE PERMISSIONS
-router.delete("/roles-permissions", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code), checkPermission(PERMISSIONS.MANAGE_USER.code), userController.deletePermissions);
+router.delete("/roles-permissions", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code), checkPermission(PERMISSIONS.MANAGE_PERMISSIONS.code), userController.deletePermissions);
 // //@desc APPROVE USER,  
 router.post("/approved-user/:id", checkRole(ROLES.ADMIN.code, ROLES.MANAGER.code), checkPermission(PERMISSIONS.MANAGE_USER.code), userController.approveUser);
 // //@ban USER ,  

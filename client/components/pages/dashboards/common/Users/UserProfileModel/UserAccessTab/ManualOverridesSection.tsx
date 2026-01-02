@@ -18,9 +18,8 @@ const ManualOverridesSection = ({
     isRemoveActionDisabled,
     assignPending,
     deletePending,
+    canManageUserPermission,
 }: ManualOverridesProps) => {
-    // Filter to show only custom permissions that are not already included in role permissions
-    // customPermissions already contains only the user's custom permissions
     return (
         <div>
             <div>
@@ -84,7 +83,7 @@ const ManualOverridesSection = ({
                                     </FormItem>
                                 )}
                             />
-                            <Button type="submit" disabled={isPermissionActionDisabled} className="sm:self-end">
+                            <Button type="submit" disabled={isPermissionActionDisabled || !canManageUserPermission} className="sm:self-end">
                                 {assignPending ? "Adding..." : "Add Permission"}
                             </Button>
                         </form>
@@ -136,7 +135,7 @@ const ManualOverridesSection = ({
                                         </FormItem>
                                     )}
                                 />
-                                <Button type="submit" variant="destructive" disabled={isRemoveActionDisabled} className="sm:self-end">
+                                <Button type="submit" variant="destructive" disabled={isRemoveActionDisabled || !canManageUserPermission} className="sm:self-end">
                                     {deletePending ? "Removing..." : "Remove Permission"}
                                 </Button>
                             </form>

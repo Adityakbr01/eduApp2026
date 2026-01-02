@@ -19,6 +19,8 @@ import { permissionFormSchema, type PermissionFormValues, type PermissionOption 
 import { buildInfoItems, buildPermissionCollections } from "./userProfileUtils";
 import { uniqueList, extractCustomPermissionItems } from "./Utils";
 import { UserRow } from "../../types";
+import { CheckPermission } from "@/lib/utils/permissions";
+import app_permissions from "@/constants/permissions";
 
 
 type UserProfileModalProps = {
@@ -34,6 +36,20 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
     const dialogContentRef = useRef<HTMLDivElement | null>(null);
     const tabPanelsRef = useRef<Record<string, HTMLDivElement | null>>({});
     const { data: allRolesAndPermissions, error, isLoading } = usersQueries.useGetAllRoleANDPermission();
+    const { data: userPermissionsData } = usersQueries.useGetMyRoleANDPermission();
+
+    const myEffectivePermissions = userPermissionsData?.effectivePermissions ?? [];
+
+    const canManageUser = CheckPermission({
+        carrier: myEffectivePermissions,
+        requirement: app_permissions.MANAGE_USER,
+    });
+
+    const canManageUserPermission = CheckPermission({
+        carrier: myEffectivePermissions,
+        requirement: app_permissions.MANAGE_PERMISSIONS,
+    });
+
 
 
     useEffect(() => {
@@ -326,6 +342,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
                             activeRoles={activeRoles}
                             permissionCollections={permissionCollections}
                             debuggerPayload={debuggerPayload}
+                            canManageUser={canManageUser}
                             manualOverrides={{
                                 targetUserId,
                                 isLoadingPermissions: isLoading,
@@ -340,6 +357,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
                                 isRemoveActionDisabled,
                                 assignPending: assignPermissionsMutation.isPending,
                                 deletePending: deletePermissionsMutation.isPending,
+                                canManageUserPermission,
                             }}
                         />
                     </TabsContent>
