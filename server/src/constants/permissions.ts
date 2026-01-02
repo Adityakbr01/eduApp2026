@@ -5,6 +5,7 @@ export const PERMISSIONS = {
     READ_SELF: { code: "READ_SELF", description: "Read own profile" },
     WRITE_USER: { code: "WRITE_USER", description: "Create new users" },
     UPDATE_USER: { code: "UPDATE_USER", description: "Update any user" },
+    READ_USERS: { code: "READ_USERS", description: "Read multiple users" },
     UPDATE_SELF: { code: "UPDATE_SELF", description: "Update own profile" },
     DELETE_USER: { code: "DELETE_USER", description: "Delete any user" },
     DELETE_SELF: { code: "DELETE_SELF", description: "Delete own account" },
