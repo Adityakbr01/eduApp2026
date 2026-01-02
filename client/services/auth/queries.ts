@@ -8,7 +8,6 @@ const authApi = {
     getCurrentUser: async (): Promise<UserProfileResponse> => {
         try {
             const { data } = await api.get<ApiResponse<UserProfileResponse>>("/auth/me");
-            console.log("✅ /auth/me success:", data);
             return data.data!;
         } catch (error) {
             console.error("❌ /auth/me failed:", error);

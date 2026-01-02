@@ -40,18 +40,12 @@ export interface RoleWithPermissions {
     permissions: PermissionSummary[];
 }
 
-export interface Permission {
-    _id: string;
-    code: string;
-    description: string;
-}
-
 
 export interface UserPermissionsPayload {
     message: string;
-    rolePermissions: Permission[];
-    customPermissions: Permission[];
-    effectivePermissions: Permission[];
+    rolePermissions: PermissionSummary[];
+    customPermissions: PermissionSummary[];
+    effectivePermissions: PermissionSummary[];
 }
 
 export interface UserPermissionsResponse {
@@ -87,7 +81,7 @@ export interface ApproveUserPayload {
 
 export interface PermissionMutationPayload {
     userId: string;
-    permission: string[];
+    permission: string; // Permission _id
 }
 
 export type AssignPermissionsPayload = PermissionMutationPayload;

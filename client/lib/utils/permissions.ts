@@ -18,12 +18,17 @@ const ensureArray = (value?: PermissionRequirement): string[] => {
 
 const fromUser = (user?: User | null): string[] => {
     if (!user) return [];
-    return [
-        ...(user.effectivePermissions ?? []),
-        ...(user.permissions ?? []),
-        ...(user.rolePermissions ?? []),
-        ...(user.customPermissions ?? []),
-    ];
+
+    return Array.from(
+        new Set(
+            [
+                ...(user.effectivePermissions ?? []),
+                ...(user.permissions ?? []),
+                ...(user.rolePermissions ?? []),
+                ...(user.customPermissions ?? []),
+            ].map((p) => p.code)
+        )
+    );
 };
 
 export const collectPermissions = (carrier?: PermissionCarrier): Set<string> => {

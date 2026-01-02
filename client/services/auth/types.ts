@@ -1,3 +1,4 @@
+import { PermissionSummary } from "../users/types";
 
 // Auth Types
 interface roleIdInterface {
@@ -7,7 +8,6 @@ interface roleIdInterface {
     updatedAt: string
     _id: string
 }
-
 
 export interface User {
     userId?: string;
@@ -20,10 +20,10 @@ export interface User {
     isEmailVerified?: boolean;
     approvalStatus?: approvalStatusEnum | string;
     isBanned?: boolean;
-    permissions?: string[];
-    rolePermissions?: string[];
-    customPermissions?: string[];
-    effectivePermissions?: string[];
+    permissions?: PermissionSummary[];
+    rolePermissions?: PermissionSummary[];
+    customPermissions?: PermissionSummary[];
+    effectivePermissions?: PermissionSummary[];
     address?: string;
     createdAt?: string;
     updatedAt?: string;

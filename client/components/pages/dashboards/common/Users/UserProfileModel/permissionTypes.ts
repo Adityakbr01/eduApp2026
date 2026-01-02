@@ -7,6 +7,7 @@ export const permissionFormSchema = z.object({
 export type PermissionFormValues = z.infer<typeof permissionFormSchema>;
 
 export type PermissionOption = {
+    _id: string;
     code: string;
     description?: string;
     roles: string[];

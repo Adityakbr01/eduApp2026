@@ -68,7 +68,14 @@ export const useLogin = (
     return useMutation({
         mutationFn: authApi.login,
         onSuccess: (data) => {
-            setUser(data);
+            setUser({
+                userId: data.userId!,
+                name: data.name!,
+                roleId: data.roleId,
+                phone: data.phone,
+                email: data.email,
+                isEmailVerified: data.isEmailVerified,
+            });
             qc.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
             mutationHandlers.success("Login successful");
         },

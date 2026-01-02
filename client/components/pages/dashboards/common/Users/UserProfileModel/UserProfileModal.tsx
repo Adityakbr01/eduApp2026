@@ -14,11 +14,12 @@ import userMutations from "@/services/users/mutations";
 import usersQueries from "@/services/users/queries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import UserInfoTab, { type InfoItem } from "./UserInfoTab";
-import UserAccessTab from "./UserAccessTab";
+import UserAccessTab, { type CustomPermissionItem } from "./UserAccessTab";
 import { permissionFormSchema, type PermissionFormValues, type PermissionOption } from "./permissionTypes";
 import { buildInfoItems, buildPermissionCollections } from "./userProfileUtils";
-import { uniqueList } from "./Utils";
-import { UserRow } from "../../common/types";
+import { uniqueList, extractCustomPermissionItems } from "./Utils";
+import { UserRow } from "../../types";
+
 
 type UserProfileModalProps = {
     open: boolean;
@@ -67,6 +68,13 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
         [user.rolePermissions, user.sourceUser?.rolePermissions]
     );
 
+    // Extract custom permissions as objects with { _id, code } for API calls
+    const derivedCustomPermissionItems = useMemo(
+        () => extractCustomPermissionItems(user.customPermissions ?? user.sourceUser?.customPermissions ?? []),
+        [user.customPermissions, user.sourceUser?.customPermissions]
+    );
+
+    // Extract custom permission codes for display/filtering
     const derivedCustomPermissions = useMemo(
         () => uniqueList(user.customPermissions ?? user.sourceUser?.customPermissions ?? []),
         [user.customPermissions, user.sourceUser?.customPermissions]
@@ -87,12 +95,13 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
         derivedCustomPermissions,
     ]);
 
-    const [customPermissionSnapshot, setCustomPermissionSnapshot] = useState<string[]>(derivedCustomPermissions);
+    // Track custom permissions with their _id for removal operations
+    const [customPermissionSnapshot, setCustomPermissionSnapshot] = useState<CustomPermissionItem[]>(derivedCustomPermissionItems);
     const [effectivePermissionSnapshot, setEffectivePermissionSnapshot] = useState<string[]>(derivedEffectivePermissions);
 
     useEffect(() => {
-        setCustomPermissionSnapshot(derivedCustomPermissions);
-    }, [derivedCustomPermissions]);
+        setCustomPermissionSnapshot(derivedCustomPermissionItems);
+    }, [derivedCustomPermissionItems]);
 
     useEffect(() => {
         setEffectivePermissionSnapshot(derivedEffectivePermissions);
@@ -109,17 +118,20 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
     const assignPermissionsMutation = userMutations.useAssignPermissions({
         onSuccess: (_, variables) => {
             resetPermissionForm();
-            if (variables?.permission?.length) {
-                setCustomPermissionSnapshot((prev) => {
-                    const next = new Set(prev);
-                    variables.permission.forEach((perm) => next.add(perm));
-                    return Array.from(next);
-                });
-                setEffectivePermissionSnapshot((prev) => {
-                    const next = new Set(prev);
-                    variables.permission.forEach((perm) => next.add(perm));
-                    return Array.from(next);
-                });
+            if (variables?.permission) {
+                // Find the permission option to get its code for updating effective permissions
+                const addedOption = permissionOptions.find((opt) => opt._id === variables.permission);
+                if (addedOption) {
+                    setCustomPermissionSnapshot((prev) => [
+                        ...prev,
+                        { _id: addedOption._id, code: addedOption.code },
+                    ]);
+                    setEffectivePermissionSnapshot((prev) => {
+                        const next = new Set(prev);
+                        next.add(addedOption.code);
+                        return Array.from(next);
+                    });
+                }
             }
         },
     });
@@ -137,15 +149,20 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
     const deletePermissionsMutation = userMutations.useDeletePermissions({
         onSuccess: (_, variables) => {
             resetRemovePermissionForm();
-            if (variables?.permission?.length) {
-                const removalSet = new Set(variables.permission);
-                setCustomPermissionSnapshot((prev) => prev.filter((perm) => !removalSet.has(perm)));
-                setEffectivePermissionSnapshot((prev) =>
-                    prev.filter((perm) => {
-                        if (!removalSet.has(perm)) return true;
-                        return derivedRolePermissions.includes(perm);
-                    })
-                );
+            if (variables?.permission) {
+                const removedId = variables.permission;
+                // Find the removed permission to get its code
+                const removedItem = customPermissionSnapshot.find((p) => p._id === removedId);
+                setCustomPermissionSnapshot((prev) => prev.filter((perm) => perm._id !== removedId));
+                if (removedItem) {
+                    // Only remove from effective if it's not also a role permission
+                    setEffectivePermissionSnapshot((prev) =>
+                        prev.filter((code) => {
+                            if (code !== removedItem.code) return true;
+                            return derivedRolePermissions.includes(code);
+                        })
+                    );
+                }
             }
         },
     });
@@ -167,7 +184,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
         if (!targetUserId) return;
         assignPermissionsMutation.mutate({
             userId: targetUserId,
-            permission: [values.permission],
+            permission: values.permission, // _id of the permission
         });
     };
 
@@ -175,7 +192,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
         if (!targetUserId) return;
         deletePermissionsMutation.mutate({
             userId: targetUserId,
-            permission: [values.permission],
+            permission: values.permission, // _id of the permission
         });
     };
 
@@ -228,7 +245,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
 
         allRolesAndPermissions.forEach((role) => {
             role.permissions.forEach((permission) => {
-                if (!permission?.code || assigned.has(permission.code)) return;
+                if (!permission?.code || !permission?._id || assigned.has(permission.code)) return;
                 const existing = map.get(permission.code);
                 if (existing) {
                     if (role.name && !existing.roles.includes(role.name)) {
@@ -236,6 +253,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
                     }
                 } else {
                     map.set(permission.code, {
+                        _id: permission._id,
                         code: permission.code,
                         description: permission.description,
                         roles: role.name ? [role.name] : [],

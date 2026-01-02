@@ -30,6 +30,8 @@ import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
 // import OverviewWidgets from "./OverviewWidgets";
 import { useLogout } from "@/services/auth/mutations";
 import UsersPage from "../../UsersPage";
+import { approvalStatusEnum, User } from "@/services/auth";
+import OverviewWidgets from "./OverviewWidgets";
 
 function DashBoardPage() {
     const logout = useLogout();
@@ -87,49 +89,49 @@ function DashBoardPage() {
         [data?.pagination, page, limit],
     );
 
-    // const stats = useMemo(() => {
-    //     if (!users || users.length === 0) {
-    //         return adminUtils.quickStats;
-    //     }
-    //     const totalUsers = users.length;
-    //     const verifiedUsers = users.filter((user: User) => user.isEmailVerified).length;
-    //     const pendingApprovals = users.filter((user: User) => user.approvalStatus === approvalStatusEnum.PENDING).length;
-    //     const bannedUsers = users.filter((user: User) => user.isBanned).length;
+    const stats = useMemo(() => {
+        if (!users || users.length === 0) {
+            return adminUtils.quickStats;
+        }
+        const totalUsers = users.length;
+        const verifiedUsers = users.filter((user: User) => user.isEmailVerified).length;
+        const pendingApprovals = users.filter((user: User) => user.approvalStatus === approvalStatusEnum.PENDING).length;
+        const bannedUsers = users.filter((user: User) => user.isBanned).length;
 
-    //     return [
-    //         {
-    //             label: "Total Users",
-    //             value: totalUsers?.toLocaleString(),
-    //             trend: `${verifiedUsers} verified accounts`,
-    //             bgColor: "bg-primary/10",
-    //             border: "border-primary/10",
-    //         },
-    //         {
-    //             label: "Pending Approval",
-    //             value: pendingApprovals?.toLocaleString(),
-    //             trend: pendingApprovals ? "Needs review" : "All approved",
-    //             bgColor: "bg-yellow-500/10",
-    //             border: "border-yellow-500/10",
-    //         },
-    //         {
-    //             label: "Banned Accounts",
-    //             value: bannedUsers?.toLocaleString(),
-    //             trend: bannedUsers ? "Action required" : "No bans active",
-    //             bgColor: "bg-red-500/10",
-    //             border: "border-red-500/10",
-    //         },
-    //     ];
-    // }, [users]);
+        return [
+            {
+                label: "Total Users",
+                value: totalUsers?.toLocaleString(),
+                trend: `${verifiedUsers} verified accounts`,
+                bgColor: "bg-primary/10",
+                border: "border-primary/10",
+            },
+            {
+                label: "Pending Approval",
+                value: pendingApprovals?.toLocaleString(),
+                trend: pendingApprovals ? "Needs review" : "All approved",
+                bgColor: "bg-yellow-500/10",
+                border: "border-yellow-500/10",
+            },
+            {
+                label: "Banned Accounts",
+                value: bannedUsers?.toLocaleString(),
+                trend: bannedUsers ? "Action required" : "No bans active",
+                bgColor: "bg-red-500/10",
+                border: "border-red-500/10",
+            },
+        ];
+    }, [users]);
 
     const userRows = useMemo<UserRow[]>(() => {
         if (!users) return [];
         return users.map(adminUtils.mapApiUserToRow);
     }, [users]);
 
-    // const recentUsers = useMemo(() => adminUtils.buildRecentUsers(userRows), [userRows]);
-    // const activityFeed = useMemo(() => adminUtils.buildActivityFeed(userRows), [userRows]);
-    // const courseInsights = useMemo(() => adminUtils.buildCourseInsights(userRows), [userRows]);
-    // const banSummary = useMemo(() => adminUtils.buildBanSummary(userRows), [userRows]);
+    const recentUsers = useMemo(() => adminUtils.buildRecentUsers(userRows), [userRows]);
+    const activityFeed = useMemo(() => adminUtils.buildActivityFeed(userRows), [userRows]);
+    const courseInsights = useMemo(() => adminUtils.buildCourseInsights(userRows), [userRows]);
+    const banSummary = useMemo(() => adminUtils.buildBanSummary(userRows), [userRows]);
 
     const shouldFallbackToMock = !users?.length && !isLoadingUsers && !isUsersError;
     let rowsToRender: UserRow[] = shouldFallbackToMock ? adminUtils.mockUsers : userRows;
@@ -226,7 +228,7 @@ function DashBoardPage() {
                     </div>
                 </header>
                 <div className="space-y-6 px-4 py-6 md:px-8">
-                    {/* {activeSection === "overview" && (
+                    {activeSection === "overview" && (
                         <OverviewWidgets
                             stats={stats}
                             recentUsers={recentUsers}
@@ -235,7 +237,7 @@ function DashBoardPage() {
                             banSummary={banSummary}
                             titlePrefix="Admin "
                         />
-                    )} */}
+                    )}
 
                     {activeSection === "users" && (
                         <UsersPage

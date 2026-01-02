@@ -24,7 +24,8 @@ import { usersMutations } from "@/services/users/index";
 import { CheckCircle, MoreVertical, ShieldBan, Trash2, User } from "lucide-react";
 import type { UserRow } from "./types";
 import { useState } from "react";
-import UserProfileModal from "../admin/UserProfileModel/UserProfileModal";
+import UserProfileModal from "./Users/UserProfileModel/UserProfileModal";
+
 
 type UserActionsMenuProps = {
     user: UserRow;

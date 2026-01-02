@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { InfoItem } from "./UserInfoTab";
-import type { PermissionCollection } from "./UserAccessTab";
-import { UserRow } from "../../common/types";
+import type { PermissionCollection, CustomPermissionItem } from "./UserAccessTab";
+import { UserRow } from "../../types";
 
 type InfoItemsParams = {
     user: UserRow;
@@ -13,7 +13,7 @@ type InfoItemsParams = {
 
 type PermissionCollectionsParams = {
     rolePermissions: string[];
-    customPermissions: string[];
+    customPermissions: CustomPermissionItem[];
     effectivePermissions: string[];
 };
 
@@ -68,7 +68,7 @@ export const buildPermissionCollections = ({
         {
             title: "Custom overrides",
             description: "Explicit overrides applied to this user",
-            permissions: customPermissions,
+            permissions: customPermissions.map((p) => p.code),
             emptyLabel: "No custom overrides",
         },
         {
