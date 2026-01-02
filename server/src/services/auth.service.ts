@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import emailQueue from "src/bull/queues/email.queue.js";
 import { addEmailJob } from "src/bull/workers/email.worker.js";
 import cacheInvalidation from "src/cache/cacheInvalidation.js";
+import otpCache from "src/cache/otpCache.js";
 import { EMAIL_JOB_NAMES } from "src/constants/email-jobs.constants.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { ROLES } from "src/constants/roles.js";
@@ -54,9 +55,9 @@ export const authService = {
 
             if (!existingUser.isEmailVerified) {
                 // OTP resend flow
-                const { otp, hashedOtp, expiry } = await generateOtp();
-                //add otp in redis not in db
-                await authRepository.updateOtpByEmail(existingUser.email, hashedOtp, expiry);
+                const { otp, hashedOtp } = await generateOtp();
+                // Store OTP in Redis
+                await otpCache.setOtp(existingUser.email, hashedOtp, "register");
                 await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
                     email: existingUser.email,
                     otp,
@@ -93,7 +94,7 @@ export const authService = {
             );
         }
 
-        const { otp, hashedOtp, expiry } = await generateOtp();
+        const { otp, hashedOtp } = await generateOtp();
 
         const profileData: any = {};
 
@@ -119,10 +120,11 @@ export const authService = {
             roleId: roleDoc._id,
             phone: data.phone,
             address: data.address,
-            verifyOtp: hashedOtp,
-            verifyOtpExpiry: expiry,
             ...profileData,
         });
+
+        // Store OTP in Redis
+        await otpCache.setOtp(user.email, hashedOtp, "register");
 
         if (roleDoc.name === ROLES.STUDENT.code) {
             await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
@@ -144,9 +146,8 @@ export const authService = {
     // SEND REGISTER OTP
     // ============================
     sendRegisterOtpService: async (email: string) => {
-        // add otp in redis not in db
         const user =
-            await authRepository.findUserByEmailWithOtp(email);
+            await authRepository.findUserByEmail(email);
 
         if (!user) {
             throw new AppError(
@@ -166,18 +167,16 @@ export const authService = {
             );
         }
 
-        const { otp, hashedOtp, expiry } = await generateOtp();
+        const { otp, hashedOtp } = await generateOtp();
 
-        // add otp in redis not in db
-        user.verifyOtp = hashedOtp;
-        user.verifyOtpExpiry = expiry;
-        await authRepository.saveUser(user);
+        // Store OTP in Redis
+        await otpCache.setOtp(user.email, hashedOtp, "register");
 
         await addEmailJob(emailQueue, EMAIL_JOB_NAMES.REGISTER_OTP, {
             email: user.email,
             otp,
         });
-        await cacheInvalidation.invalidateUserEverything(String(user._id));
+
         return {
             message: "OTP sent successfully",
             userId: user._id,
@@ -188,12 +187,18 @@ export const authService = {
     // VERIFY REGISTER OTP
     // ============================
     verifyRegisterOtpService: async (email: string, otp: string) => {
-        // add otp in redis not in db
         const user =
-            await authRepository.findUserByEmailWithOtp(email);
+            await authRepository.findUserByEmail(email);
+
+        if (!user) {
+            throw new AppError(
+                "User not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND, [{ path: 'email', message: 'User with this email does not exist' }]
+            );
+        }
 
         CheckUserEmailAndBanned(user);
-
 
         if (user.isEmailVerified) {
             throw new AppError(
@@ -204,19 +209,18 @@ export const authService = {
             );
         }
 
-        if (
-            !user.verifyOtpExpiry ||
-            user.verifyOtpExpiry < new Date()
-        ) {
+        // Get OTP from Redis
+        const otpData = await otpCache.getOtp(email, "register");
+
+        if (!otpData) {
             throw new AppError(
-                "OTP expired",
+                "OTP expired or not found",
                 STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR, [{ path: 'otp', message: 'OTP has expired' }]
+                ERROR_CODE.VALIDATION_ERROR, [{ path: 'otp', message: 'OTP has expired or not found' }]
             );
         }
 
-        const isValidOtp =
-            await verifyOtpHash(otp, user.verifyOtp);
+        const isValidOtp = await verifyOtpHash(otp, otpData.hashedOtp);
 
         if (!isValidOtp) {
             throw new AppError(
@@ -226,14 +230,14 @@ export const authService = {
             );
         }
 
-        // add otp in redis not in db
+        // Update user and delete OTP from Redis
         user.isEmailVerified = true;
-        user.verifyOtp = undefined;
-        user.verifyOtpExpiry = undefined;
         user.approvedBy = undefined;
 
         await authRepository.saveUser(user);
+        await otpCache.deleteOtp(email, "register");
         await cacheInvalidation.invalidateUserEverything(String(user._id));
+
         return {
             message: "Email verified successfully",
             userId: user._id,
@@ -342,7 +346,7 @@ export const authService = {
     // SEND RESET PASSWORD OTP
     // ============================
     sendResetPassOtpService: async (email: string) => {
-        const user = await authRepository.findUserByEmailWithOtp(email);
+        const user = await authRepository.findUserByEmail(email);
 
         if (!user) {
             throw new AppError(
@@ -355,18 +359,15 @@ export const authService = {
         CheckUserEmailAndBanned(user);
         checkUserEmailVerified(user);
 
-        const { otp, hashedOtp, expiry } = await generateOtp();
+        const { otp, hashedOtp } = await generateOtp();
 
-        user.verifyOtp = hashedOtp;
-        user.verifyOtpExpiry = expiry;
-        await authRepository.saveUser(user);
+        // Store OTP in Redis
+        await otpCache.setOtp(user.email, hashedOtp, "resetPassword");
 
         await addEmailJob(emailQueue, EMAIL_JOB_NAMES.RESET_PASS_OTP, {
             email: user.email,
             otp,
         });
-
-        await cacheInvalidation.invalidateUserEverything(String(user._id));
 
         return {
             message: "Password reset otp sent successfully",
@@ -426,7 +427,7 @@ export const authService = {
         otp: string,
         newPassword: string
     ) => {
-        const user = await authRepository.findUserByEmailWithOtp(email);
+        const user = await authRepository.findUserByEmailWithPassword(email);
 
         if (!user) {
             throw new AppError(
@@ -438,21 +439,18 @@ export const authService = {
 
         CheckUserEmailAndBanned(user);
 
-        if (
-            !user.verifyOtpExpiry ||
-            user.verifyOtpExpiry < new Date()
-        ) {
+        // Get OTP from Redis
+        const otpData = await otpCache.getOtp(email, "resetPassword");
+
+        if (!otpData) {
             throw new AppError(
-                "OTP expired",
+                "OTP expired or not found",
                 STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR, [{ path: 'otp', message: 'OTP has expired' }]
+                ERROR_CODE.VALIDATION_ERROR, [{ path: 'otp', message: 'OTP has expired or not found' }]
             );
         }
 
-        const isValidOtp = await verifyOtpHash(
-            otp,
-            user.verifyOtp
-        );
+        const isValidOtp = await verifyOtpHash(otp, otpData.hashedOtp);
 
         if (!isValidOtp) {
             throw new AppError(
@@ -463,10 +461,9 @@ export const authService = {
         }
 
         user.password = newPassword;
-        user.verifyOtp = undefined;
-        user.verifyOtpExpiry = undefined;
 
         await authRepository.saveUser(user);
+        await otpCache.deleteOtp(email, "resetPassword");
         await cacheInvalidation.invalidateUserEverything(String(user._id));
 
         return {

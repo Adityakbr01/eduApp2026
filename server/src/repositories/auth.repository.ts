@@ -12,9 +12,13 @@ export const authRepository = {
         return User.findOne({ $or: orConditions });
     },
 
-    findUserByEmailWithOtp: async (email: string) => {
+    findUserByEmail: async (email: string) => {
+        return User.findOne({ email });
+    },
+
+    findUserByEmailWithPassword: async (email: string) => {
         return User.findOne({ email }).select(
-            "+verifyOtp +verifyOtpExpiry +approvalStatus +password"
+            "+password +isEmailVerified +isBanned +approvalStatus"
         );
     },
 
@@ -32,13 +36,6 @@ export const authRepository = {
 
     createUser: async (data: any) => {
         return User.create(data);
-    },
-
-    updateOtpByEmail: async (email: string, otp: string, expiry: Date) => {
-        return User.updateOne(
-            { email },
-            { verifyOtp: otp, verifyOtpExpiry: expiry }
-        );
     },
 
     saveUser: async (user: any) => {

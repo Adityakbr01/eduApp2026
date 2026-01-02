@@ -35,9 +35,6 @@ export interface IUser {
     password: string;
     roleId: Types.ObjectId | PopulatedRole;
 
-    verifyOtp?: string;
-    verifyOtpExpiry?: Date;
-
     isEmailVerified: boolean;
     phone?: string;
     address?: string;

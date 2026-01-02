@@ -23,18 +23,6 @@ const userSchema = new Schema<IUser>(
             required: true,
         },
 
-        //! OTP store and expiry , e.g for verify email , reset password etc.
-        verifyOtp: {
-            type: String,
-            select: false,
-            required: false,
-        },
-        verifyOtpExpiry: {
-            type: Date,
-            select: false,
-            required: false,
-        },
-
         isEmailVerified: { type: Boolean, default: false },
 
         //! Contact Information
