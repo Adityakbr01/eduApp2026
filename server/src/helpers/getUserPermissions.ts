@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import cacheManager from "src/cache/cacheManager.js";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
+import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
 import { RolePermissionModel } from "src/models/rolePermission.model.js";
 import logger from "src/utils/logger.js";

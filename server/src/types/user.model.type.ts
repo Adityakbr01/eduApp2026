@@ -1,6 +1,5 @@
 import type { Types } from "mongoose";
-import type { PermissionSummary } from "src/helpers/getUserExtraPermissions.js";
-import type { PermissionDTO, PopulatedRole } from "./auth.type.js";
+import type { PopulatedRole } from "./auth.type.js";
 
 export enum approvalStatusEnum {
     PENDING = "PENDING",

@@ -95,6 +95,7 @@ const userService = {
             users.map((user) => attachPermissionsToUser(user, rolePermissionsCache))
         );
 
+
         // Cache result (fire and forget)
         userCacheService
             .setPaginatedUsers(

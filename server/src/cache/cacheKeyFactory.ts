@@ -40,7 +40,7 @@ export const cacheKeyFactory = {
         byId: (roleId: string) => `role:id:${roleId}`,
         byName: (name: string) => `role:name:${name}`,
         permissions: (roleId: string) => `role:permissions:${roleId}`,
-        all: () => `roles:all`,
+        all: () => `role:permissions:all`,
     },
 
     // =====================

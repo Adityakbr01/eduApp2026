@@ -141,7 +141,8 @@ class UserCacheService {
     // =====================
 
     private getPermissionKey(userId: string, type: PermissionType): string {
-        return cacheKeyFactory.permissions.byUserId(userId, type);
+        // return cacheKeyFactory.permissions.byUserId(userId, type);
+        return `permissions:user:${userId}:${type}`;
     }
 
     /**
