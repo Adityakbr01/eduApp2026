@@ -75,6 +75,7 @@ export const useLogin = (
                 phone: data.phone,
                 email: data.email,
                 isEmailVerified: data.isEmailVerified,
+                roleName: data.roleName,
             });
             qc.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
             mutationHandlers.success("Login successful");

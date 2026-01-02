@@ -88,6 +88,7 @@ export interface AuthResponse {
     userId?: string;
     name?: string;
     roleId: roleIdInterface;
+    roleName?: string;
     phone?: string,
     email?: string;
     isEmailVerified?: boolean;
