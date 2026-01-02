@@ -242,6 +242,101 @@ const userService = {
         };
     },
     // ============================
+    // ASSIGN PERMISSIONS TO USER
+    // ============================
+    assignPermissions: async (data: { userId: string; permission: string }, assignBy: string) => {
+        const { userId, permission } = data;
+
+        const user = await authRepository.findUserById(userId);
+
+        if (!user) {
+            throw new AppError(
+                "User not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+                [{ path: "user", message: "No user found with the given ID" }]
+            );
+        }
+        if (userId.toString() === assignBy.toString()) {
+            throw new AppError(
+                "Permission assignment denied",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN,
+                [{ path: "user", message: "You cannot assign permissions to yourself" }]
+            );
+        }
+        // Add permission to user
+        if (!user.permissions) {
+            user.permissions = [];
+        }
+        if (user.permissions.includes(permission)) {
+            throw new AppError(
+                "Permission already assigned",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.PERMISSION_ALREADY_ASSIGNED,
+                [{ path: "permission", message: "This permission is already assigned to the user" }]
+            );
+        }
+        // Add permission to user
+        user.permissions.push(permission);
+        await user.save();
+
+        await Promise.all([
+            userCacheService.invalidateUser(userId),
+            userCacheService.invalidateUserEverything(userId),
+        ]);
+
+        return {
+            message: "Permission assigned successfully",
+            data: user,
+        };
+    },
+    // ============================
+    // delete PERMISSIONS TO USER
+    // ============================
+    deletePermissions: async (data: { userId: string; permission: string }, deleteBy: string) => {
+        const { userId, permission } = data;
+        const user = await authRepository.findUserById(userId);
+
+        if (!user) {
+            throw new AppError(
+                "User not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+                [{ path: "user", message: "No user found with the given ID" }]
+            );
+        }
+        if (userId.toString() === deleteBy.toString()) {
+            throw new AppError(
+                "Permission deletion denied",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.PERMISSION_DENIED,
+                [{ path: "user", message: "You cannot delete permissions from yourself" }]
+            );
+        }
+        // Remove permission from user
+        if (!user.permissions || !user.permissions.includes(permission)) {
+            throw new AppError(
+                "Permission not found",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.PERMISSION_NOT_FOUND,
+                [{ path: "permission", message: "This permission is not assigned to the user" }]
+            );
+        }
+        user.permissions = user.permissions.filter((perm) => perm !== permission);
+        await user.save();
+
+        await Promise.all([
+            userCacheService.invalidateUser(userId),
+            userCacheService.invalidateUserEverything(userId),
+        ]);
+
+        return {
+            message: "Permission deleted successfully",
+            data: user,
+        };
+    },
+    // ============================
     // APPROVE USER
     // ============================
     approveUser: async (userId: string, approvedBy: string) => {

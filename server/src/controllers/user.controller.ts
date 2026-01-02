@@ -53,16 +53,16 @@ const userController = {
             data: result.data,
         });
     }),
-    // assignPermissions: catchAsync(async (req, res) => {
-    //     const assignBy = req.user!.id;
-    //     const result = await userService.assignPermissions({ ...req.body }, assignBy);
-    //     sendResponse(res, 200, result.message, result.data);
-    // }),
-    // deletePermissions: catchAsync(async (req, res) => {
-    //     const deleteBy = req.user!.id;
-    //     const result = await userService.deletePermissions({ ...req.body }, deleteBy);
-    //     sendResponse(res, 200, result.message, result.data);
-    // }),
+    assignPermissions: catchAsync(async (req, res) => {
+        const assignBy = req.user!.id;
+        const result = await userService.assignPermissions({ ...req.body }, assignBy);
+        sendResponse(res, 200, result.message, result.data);
+    }),
+    deletePermissions: catchAsync(async (req, res) => {
+        const deleteBy = req.user!.id;
+        const result = await userService.deletePermissions({ ...req.body }, deleteBy);
+        sendResponse(res, 200, result.message, result.data);
+    }),
     approveUser: catchAsync(async (req, res) => {
         const userId = req.params.id;
         const result = await userService.approveUser(userId, req.user!.id);
