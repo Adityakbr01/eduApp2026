@@ -12,3 +12,13 @@ const APP_info = {
 };
 
 export default APP_info;
+
+
+
+// 💡 Frontend (FYI – short)
+
+// Use react-beautiful-dnd / dnd-kit
+
+// On drop → send reordered array to API
+
+// Backend is source of truth

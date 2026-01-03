@@ -40,7 +40,13 @@ const envSchema = z.object({
     CLOUDINARY_API_KEY: z.string().min(6),
     CLOUDINARY_API_SECRET: z.string().min(6),
 
+    // Resend Email Service
     RESEND_API_KEY: z.string().min(10),
+
+    // Razorpay
+    RAZORPAY_KEY_ID: z.string().min(10),
+    RAZORPAY_KEY_SECRET: z.string().min(10),
+
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

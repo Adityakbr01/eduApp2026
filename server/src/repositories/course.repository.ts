@@ -1,464 +1,487 @@
-import { Types } from "mongoose";
-import { CourseModel } from "src/models/course/course.model.js";
-import type { ICourse, CourseFilterDTO, CoursePaginationDTO } from "src/types/course.type.js";
-import { CourseStatus } from "src/types/course.type.js";
+import mongoose, { Types } from "mongoose";
+import type { FilterQuery, UpdateQuery } from "mongoose";
+import Course from "src/models/course/course.model.js";
+import Section from "src/models/course/section.model.js";
+import Lesson from "src/models/course/lesson.model.js";
+import LessonContent from "src/models/course/lessonContent.model.js";
+import ContentAttempt from "src/models/course/contentAttempt.model.js";
 
+// ============================================
+// COURSE REPOSITORY
+// ============================================
 export const courseRepository = {
-    // ==================== CREATE ====================
-    create: async (data: Partial<ICourse>) => {
-        return CourseModel.create(data);
-    },
 
-    // ==================== FIND BY ID ====================
-    findById: async (courseId: string) => {
-        return CourseModel.findById(courseId);
-    },
-
-    findByIdPopulated: async (courseId: string) => {
-        return CourseModel.findById(courseId)
-            .populate("instructor", "name email instructorProfile")
-            .populate("coInstructors", "name email instructorProfile")
-            .populate("category", "name slug icon")
-            .populate("subCategory", "name slug icon");
-    },
-
-    findByIdLean: async (courseId: string) => {
-        return CourseModel.findById(courseId).lean();
-    },
-
-    // ==================== FIND BY SLUG ====================
-    findBySlug: async (slug: string) => {
-        return CourseModel.findOne({ slug })
-            .populate("instructor", "name email instructorProfile")
-            .populate("coInstructors", "name email instructorProfile")
-            .populate("category", "name slug icon")
-            .populate("subCategory", "name slug icon");
-    },
-
-    findPublishedBySlug: async (slug: string) => {
-        return CourseModel.findOne({ slug, isPublished: true, status: CourseStatus.PUBLISHED })
-            .populate("instructor", "name email instructorProfile")
-            .populate("coInstructors", "name email instructorProfile")
-            .populate("category", "name slug icon")
-            .populate("subCategory", "name slug icon");
-    },
-
-    // ==================== FIND MANY ====================
-    findAll: async (
-        filter: CourseFilterDTO = {},
-        pagination: CoursePaginationDTO = {}
+    // Find all published courses
+    findAllPublished: async (
+        query: {
+            page?: number;
+            limit?: number;
+            search?: string;
+            category?: string;
+            subCategory?: string;
+        } = {}
     ) => {
-        const {
-            category,
-            subCategory,
-            level,
-            deliveryMode,
-            language,
-            minPrice,
-            maxPrice,
-            minRating,
-            instructor,
-            isFeatured,
-            status,
-            search,
-        } = filter;
-
-        const {
-            page = 1,
-            limit = 10,
-            sortBy = "createdAt",
-            sortOrder = "desc",
-        } = pagination;
-
-        const query: Record<string, any> = {};
-
-        // Text search
-        if (search) {
-            query.$text = { $search: search };
-        }
-
-        // Filters
-        if (category) query.category = new Types.ObjectId(category);
-        if (subCategory) query.subCategory = new Types.ObjectId(subCategory);
-        if (level) query.level = level;
-        if (deliveryMode) query.deliveryMode = deliveryMode;
-        if (language) query.language = { $regex: language, $options: "i" };
-        if (instructor) query.instructor = new Types.ObjectId(instructor);
-        if (typeof isFeatured === "boolean") query.isFeatured = isFeatured;
-        if (status) query.status = status;
-
-        // Price range
-        if (minPrice !== undefined || maxPrice !== undefined) {
-            query["pricing.finalPrice"] = {};
-            if (minPrice !== undefined) query["pricing.finalPrice"].$gte = minPrice;
-            if (maxPrice !== undefined) query["pricing.finalPrice"].$lte = maxPrice;
-        }
-
-        // Rating filter
-        if (minRating !== undefined) {
-            query["rating.averageRating"] = { $gte: minRating };
-        }
-
+        const { page = 1, limit = 10, search, category, subCategory } = query;
         const skip = (page - 1) * limit;
+        const filter: FilterQuery<any> = { isPublished: true };
 
-        // Sort options
-        const sortOptions: Record<string, 1 | -1> = {};
-        switch (sortBy) {
-            case "price":
-                sortOptions["pricing.finalPrice"] = sortOrder === "asc" ? 1 : -1;
-                break;
-            case "rating":
-                sortOptions["rating.averageRating"] = sortOrder === "asc" ? 1 : -1;
-                break;
-            case "enrollments":
-                sortOptions.totalEnrollments = sortOrder === "asc" ? 1 : -1;
-                break;
-            case "title":
-                sortOptions.title = sortOrder === "asc" ? 1 : -1;
-                break;
-            default:
-                sortOptions.createdAt = sortOrder === "asc" ? 1 : -1;
+        if (search) {
+            filter.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+            ];
         }
-
-        const [courses, totalItems] = await Promise.all([
-            CourseModel.find(query)
-                .populate("instructor", "name email instructorProfile")
-                .populate("category", "name slug icon")
-                .populate("subCategory", "name slug icon")
-                .sort(sortOptions)
+        if (category) filter.category = category;
+        if (subCategory) filter.subCategory = subCategory;
+        const [courses, total] = await Promise.all([
+            Course.find(filter)
+                .sort({ publishedAt: -1, createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
+                .populate("instructor", "name avatar")
+                .populate("category", "name slug")
+                .populate("subCategory", "name slug")
                 .lean(),
-            CourseModel.countDocuments(query),
+            Course.countDocuments(filter),
+        ]);
+        return {
+            courses,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    },
+
+    // Find published course by ID
+    findPublishedById: async (id: string | Types.ObjectId) => {
+        return Course.findOne({ _id: id, isPublished: true })
+            .populate("instructor", "name email avatar")
+            .populate("category", "name slug")
+            .populate("subCategory", "name slug");
+    },
+
+
+
+    // Create
+    create: async (data: any) => {
+        return Course.create(data);
+    },
+
+    // Find by ID
+    findById: async (id: string | Types.ObjectId) => {
+        return Course.findById(id);
+    },
+
+    // Find by ID with populate
+    findByIdWithDetails: async (id: string | Types.ObjectId) => {
+        return Course.findById(id)
+            .populate("instructor", "name email avatar")
+            .populate("category", "name slug")
+            .populate("subCategory", "name slug");
+    },
+
+    // Find by slug
+    findBySlug: async (slug: string) => {
+        return Course.findOne({ slug });
+    },
+
+    // Find all courses by instructor
+    findByInstructor: async (
+        instructorId: string | Types.ObjectId,
+        query: {
+            page?: number;
+            limit?: number;
+            status?: string;
+            search?: string;
+        } = {}
+    ) => {
+        const { page = 1, limit = 10, status, search } = query;
+        const skip = (page - 1) * limit;
+
+        const filter: FilterQuery<any> = { instructor: instructorId };
+
+        if (status) filter.status = status;
+        if (search) {
+            filter.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        const [courses, total] = await Promise.all([
+            Course.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate("category", "name slug")
+                .lean(),
+            Course.countDocuments(filter),
         ]);
 
         return {
             courses,
             pagination: {
-                currentPage: page,
-                totalPages: Math.ceil(totalItems / limit),
-                totalItems,
-                itemsPerPage: limit,
-                hasNextPage: page < Math.ceil(totalItems / limit),
-                hasPrevPage: page > 1,
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
             },
         };
     },
 
-    // ==================== FIND PUBLISHED COURSES ====================
-    findPublished: async (pagination: CoursePaginationDTO = {}) => {
-        return courseRepository.findAll(
-            { status: CourseStatus.PUBLISHED },
-            pagination
-        );
+    // Update by ID
+    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
+        return Course.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     },
 
-    // ==================== FIND FEATURED COURSES ====================
-    findFeatured: async (limit = 10) => {
-        return CourseModel.find({ isFeatured: true, isPublished: true })
-            .populate("instructor", "name email instructorProfile")
-            .populate("category", "name slug icon")
-            .sort({ totalEnrollments: -1 })
-            .limit(limit)
-            .lean();
+    // Delete by ID
+    deleteById: async (id: string | Types.ObjectId) => {
+        return Course.findByIdAndDelete(id);
     },
 
-    // ==================== FIND BY INSTRUCTOR ====================
-    findByInstructor: async (instructorId: string, includeUnpublished = false) => {
-        const query: Record<string, any> = {
-            $or: [
-                { instructor: new Types.ObjectId(instructorId) },
-                { coInstructors: new Types.ObjectId(instructorId) },
-            ],
-        };
+    // Check if slug exists
+    slugExists: async (slug: string, excludeId?: string | Types.ObjectId) => {
+        const filter: FilterQuery<any> = { slug };
+        if (excludeId) filter._id = { $ne: excludeId };
+        return Course.exists(filter);
+    },
 
-        if (!includeUnpublished) {
-            query.isPublished = true;
+    // Publish/Unpublish course
+    updatePublishStatus: async (id: string | Types.ObjectId, isPublished: boolean) => {
+        const updateData: any = { isPublished };
+        if (isPublished) {
+            updateData.publishedAt = new Date();
+            updateData.status = "published";
+        } else {
+            updateData.status = "draft";
         }
+        return Course.findByIdAndUpdate(id, updateData, { new: true });
+    },
 
-        return CourseModel.find(query)
-            .populate("category", "name slug icon")
-            .sort({ createdAt: -1 })
+    // Check ownership
+    isOwner: async (courseId: string | Types.ObjectId, instructorId: string | Types.ObjectId) => {
+        const course = await Course.findOne({
+            _id: courseId,
+            $or: [
+                { instructor: instructorId },
+                { coInstructors: instructorId }
+            ]
+        });
+        return !!course;
+    },
+};
+
+// ============================================
+// SECTION REPOSITORY
+// ============================================
+export const sectionRepository = {
+    // Create
+    create: async (data: any) => {
+        return Section.create(data);
+    },
+
+    // Find by ID
+    findById: async (id: string | Types.ObjectId) => {
+        return Section.findById(id);
+    },
+
+    // Find all sections by course
+    findByCourse: async (courseId: string | Types.ObjectId) => {
+        return Section.find({ courseId })
+            .sort({ order: 1 })
             .lean();
     },
 
-    // ==================== FIND BY CATEGORY ====================
-    findByCategory: async (categoryId: string, pagination: CoursePaginationDTO = {}) => {
-        return courseRepository.findAll(
-            { category: categoryId, status: CourseStatus.PUBLISHED },
-            pagination
-        );
+    // Get max order in course
+    getMaxOrder: async (courseId: string | Types.ObjectId) => {
+        const lastSection = await Section.findOne({ courseId })
+            .sort({ order: -1 })
+            .select("order")
+            .lean();
+        return lastSection?.order ?? 0;
     },
 
-    // ==================== UPDATE ====================
-    updateById: async (courseId: string, data: Partial<ICourse>) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $set: data },
-            { new: true, runValidators: true }
-        );
+    // Update by ID
+    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
+        return Section.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     },
 
-    // ==================== DELETE ====================
-    deleteById: async (courseId: string) => {
-        return CourseModel.findByIdAndDelete(courseId);
+    // Delete by ID
+    deleteById: async (id: string | Types.ObjectId) => {
+        return Section.findByIdAndDelete(id);
     },
 
-    softDeleteById: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $set: { status: CourseStatus.ARCHIVED, isPublished: false } },
-            { new: true }
-        );
+    // Bulk reorder sections
+    bulkReorder: async (sections: { id: string; order: number }[]) => {
+        const bulkOps = sections.map(({ id, order }) => ({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(id) },
+                update: { $set: { order } },
+            },
+        }));
+        return Section.bulkWrite(bulkOps);
     },
 
-    // ==================== STATUS UPDATES ====================
-    publishCourse: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
+    // Toggle visibility
+    toggleVisibility: async (id: string | Types.ObjectId) => {
+        const section = await Section.findById(id);
+        if (!section) return null;
+        section.isVisible = !section.isVisible;
+        return section.save();
+    },
+
+    // Delete all sections by course
+    deleteByCourse: async (courseId: string | Types.ObjectId) => {
+        return Section.deleteMany({ courseId });
+    },
+};
+
+// ============================================
+// LESSON REPOSITORY
+// ============================================
+export const lessonRepository = {
+    // Create
+    create: async (data: any) => {
+        return Lesson.create(data);
+    },
+
+    // Find by ID
+    findById: async (id: string | Types.ObjectId) => {
+        return Lesson.findById(id);
+    },
+
+    // Find all lessons by section
+    findBySection: async (sectionId: string | Types.ObjectId) => {
+        return Lesson.find({ sectionId })
+            .sort({ order: 1 })
+            .lean();
+    },
+
+    // Get max order in section
+    getMaxOrder: async (sectionId: string | Types.ObjectId) => {
+        const lastLesson = await Lesson.findOne({ sectionId })
+            .sort({ order: -1 })
+            .select("order")
+            .lean();
+        return lastLesson?.order ?? 0;
+    },
+
+    // Update by ID
+    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
+        return Lesson.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    },
+
+    // Delete by ID
+    deleteById: async (id: string | Types.ObjectId) => {
+        return Lesson.findByIdAndDelete(id);
+    },
+
+    // Bulk reorder lessons
+    bulkReorder: async (lessons: { id: string; order: number }[]) => {
+        const bulkOps = lessons.map(({ id, order }) => ({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(id) },
+                update: { $set: { order } },
+            },
+        }));
+        return Lesson.bulkWrite(bulkOps);
+    },
+
+    // Toggle visibility
+    toggleVisibility: async (id: string | Types.ObjectId) => {
+        const lesson = await Lesson.findById(id);
+        if (!lesson) return null;
+        lesson.isVisible = !lesson.isVisible;
+        return lesson.save();
+    },
+
+    // Delete all lessons by section
+    deleteBySection: async (sectionId: string | Types.ObjectId) => {
+        return Lesson.deleteMany({ sectionId });
+    },
+
+    // Delete all lessons by course
+    deleteByCourse: async (courseId: string | Types.ObjectId) => {
+        return Lesson.deleteMany({ courseId });
+    },
+};
+
+// ============================================
+// LESSON CONTENT REPOSITORY
+// ============================================
+export const lessonContentRepository = {
+    // Create
+    create: async (data: any) => {
+        return LessonContent.create(data);
+    },
+
+    // Find by ID
+    findById: async (id: string | Types.ObjectId) => {
+        return LessonContent.findById(id);
+    },
+
+    // Find all contents by lesson
+    findByLesson: async (lessonId: string | Types.ObjectId) => {
+        return LessonContent.find({ lessonId })
+            .sort({ order: 1 })
+            .lean();
+    },
+
+    // Get max order in lesson
+    getMaxOrder: async (lessonId: string | Types.ObjectId) => {
+        const lastContent = await LessonContent.findOne({ lessonId })
+            .sort({ order: -1 })
+            .select("order")
+            .lean();
+        return lastContent?.order ?? 0;
+    },
+
+    // Update by ID
+    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
+        return LessonContent.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    },
+
+    // Delete by ID
+    deleteById: async (id: string | Types.ObjectId) => {
+        return LessonContent.findByIdAndDelete(id);
+    },
+
+    // Bulk reorder contents
+    bulkReorder: async (contents: { id: string; order: number }[]) => {
+        const bulkOps = contents.map(({ id, order }) => ({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(id) },
+                update: { $set: { order } },
+            },
+        }));
+        return LessonContent.bulkWrite(bulkOps);
+    },
+
+    // Toggle visibility
+    toggleVisibility: async (id: string | Types.ObjectId) => {
+        const content = await LessonContent.findById(id);
+        if (!content) return null;
+        content.isVisible = !content.isVisible;
+        return content.save();
+    },
+
+    // Delete all contents by lesson
+    deleteByLesson: async (lessonId: string | Types.ObjectId) => {
+        return LessonContent.deleteMany({ lessonId });
+    },
+
+    // Delete all contents by course
+    deleteByCourse: async (courseId: string | Types.ObjectId) => {
+        return LessonContent.deleteMany({ courseId });
+    },
+};
+
+// ============================================
+// CONTENT ATTEMPT REPOSITORY (Student Progress)
+// ============================================
+export const contentAttemptRepository = {
+    // Upsert (create or update)
+    upsert: async (
+        userId: string | Types.ObjectId,
+        contentId: string | Types.ObjectId,
+        data: any
+    ) => {
+        return ContentAttempt.findOneAndUpdate(
+            { userId, contentId },
             {
                 $set: {
-                    status: CourseStatus.PUBLISHED,
-                    isPublished: true,
-                    publishedAt: new Date(),
+                    ...data,
+                    lastAccessedAt: new Date(),
                 },
             },
+            { upsert: true, new: true, runValidators: true }
+        );
+    },
+
+    // Find by user and content
+    findByUserAndContent: async (
+        userId: string | Types.ObjectId,
+        contentId: string | Types.ObjectId
+    ) => {
+        return ContentAttempt.findOne({ userId, contentId });
+    },
+
+    // Find all attempts by user and course
+    findByUserAndCourse: async (
+        userId: string | Types.ObjectId,
+        courseId: string | Types.ObjectId
+    ) => {
+        return ContentAttempt.find({ userId, courseId }).lean();
+    },
+
+    // Mark as completed
+    markCompleted: async (
+        userId: string | Types.ObjectId,
+        contentId: string | Types.ObjectId,
+        obtainedMarks?: number
+    ) => {
+        const updateData: any = { isCompleted: true, lastAccessedAt: new Date() };
+        if (obtainedMarks !== undefined) updateData.obtainedMarks = obtainedMarks;
+
+        return ContentAttempt.findOneAndUpdate(
+            { userId, contentId },
+            { $set: updateData },
             { new: true }
         );
     },
 
-    unpublishCourse: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            {
-                $set: {
-                    status: CourseStatus.DRAFT,
-                    isPublished: false,
-                },
-            },
-            { new: true }
+    // Update resume position
+    updateResumePosition: async (
+        userId: string | Types.ObjectId,
+        contentId: string | Types.ObjectId,
+        resumeAt: number,
+        totalDuration?: number
+    ) => {
+        const updateData: any = { resumeAt, lastAccessedAt: new Date() };
+        if (totalDuration !== undefined) updateData.totalDuration = totalDuration;
+
+        return ContentAttempt.findOneAndUpdate(
+            { userId, contentId },
+            { $set: updateData },
+            { upsert: true, new: true }
         );
     },
 
-    submitForReview: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $set: { status: CourseStatus.PENDING_REVIEW } },
-            { new: true }
-        );
+    // Delete all attempts by content
+    deleteByContent: async (contentId: string | Types.ObjectId) => {
+        return ContentAttempt.deleteMany({ contentId });
     },
 
-    rejectCourse: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $set: { status: CourseStatus.REJECTED, isPublished: false } },
-            { new: true }
-        );
+    // Delete all attempts by course
+    deleteByCourse: async (courseId: string | Types.ObjectId) => {
+        return ContentAttempt.deleteMany({ courseId });
     },
 
-    // ==================== FEATURE TOGGLE ====================
-    toggleFeatured: async (courseId: string) => {
-        const course = await CourseModel.findById(courseId);
-        if (!course) return null;
-
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $set: { isFeatured: !course.isFeatured } },
-            { new: true }
-        );
-    },
-
-    // ==================== ENROLLMENT COUNT ====================
-    incrementEnrollment: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $inc: { totalEnrollments: 1 } },
-            { new: true }
-        );
-    },
-
-    decrementEnrollment: async (courseId: string) => {
-        return CourseModel.findByIdAndUpdate(
-            courseId,
-            { $inc: { totalEnrollments: -1 } },
-            { new: true }
-        );
-    },
-
-    // ==================== OWNERSHIP CHECK ====================
-    isOwner: async (courseId: string, userId: string): Promise<boolean> => {
-        const course = await CourseModel.findById(courseId).select("instructor coInstructors").lean();
-        if (!course) return false;
-
-        const instructorId = course.instructor.toString();
-        const coInstructorIds = course.coInstructors?.map((id) => id.toString()) || [];
-
-        return instructorId === userId || coInstructorIds.includes(userId);
-    },
-
-    // ==================== STATS ====================
-    getInstructorStats: async (instructorId: string) => {
-        const stats = await CourseModel.aggregate([
+    // Get course progress aggregation
+    getCourseProgressAggregation: async (
+        userId: string | Types.ObjectId,
+        courseId: string | Types.ObjectId
+    ) => {
+        return ContentAttempt.aggregate([
             {
                 $match: {
-                    $or: [
-                        { instructor: new Types.ObjectId(instructorId) },
-                        { coInstructors: new Types.ObjectId(instructorId) },
-                    ],
+                    userId: userId,
+                    courseId: courseId,
                 },
             },
             {
                 $group: {
-                    _id: null,
-                    totalCourses: { $sum: 1 },
-                    publishedCourses: {
-                        $sum: { $cond: [{ $eq: ["$isPublished", true] }, 1, 0] },
+                    _id: "$courseId",
+                    totalObtainedMarks: { $sum: "$obtainedMarks" },
+                    completedCount: {
+                        $sum: { $cond: ["$isCompleted", 1, 0] },
                     },
-                    draftCourses: {
-                        $sum: { $cond: [{ $eq: ["$status", CourseStatus.DRAFT] }, 1, 0] },
-                    },
-                    totalEnrollments: { $sum: "$totalEnrollments" },
-                    averageRating: { $avg: "$rating.averageRating" },
+                    totalAttempts: { $sum: 1 },
                 },
             },
         ]);
-
-        return stats[0] || {
-            totalCourses: 0,
-            publishedCourses: 0,
-            draftCourses: 0,
-            totalEnrollments: 0,
-            averageRating: 0,
-        };
-    },
-
-    // Get detailed instructor metrics for dashboard
-    getInstructorMetrics: async (instructorId: string) => {
-        const now = new Date();
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-        const [basicStats, coursesByStatus, recentCourses, topCourses] = await Promise.all([
-            // Basic stats
-            CourseModel.aggregate([
-                {
-                    $match: {
-                        $or: [
-                            { instructor: new Types.ObjectId(instructorId) },
-                            { coInstructors: new Types.ObjectId(instructorId) },
-                        ],
-                    },
-                },
-                {
-                    $group: {
-                        _id: null,
-                        totalCourses: { $sum: 1 },
-                        publishedCourses: { $sum: { $cond: [{ $eq: ["$isPublished", true] }, 1, 0] } },
-                        draftCourses: { $sum: { $cond: [{ $eq: ["$status", CourseStatus.DRAFT] }, 1, 0] } },
-                        pendingReviewCourses: { $sum: { $cond: [{ $eq: ["$status", CourseStatus.PENDING_REVIEW] }, 1, 0] } },
-                        archivedCourses: { $sum: { $cond: [{ $eq: ["$status", CourseStatus.ARCHIVED] }, 1, 0] } },
-                        totalEnrollments: { $sum: "$totalEnrollments" },
-                        totalRatings: { $sum: "$rating.totalRatings" },
-                        averageRating: { $avg: "$rating.averageRating" },
-                    },
-                },
-            ]),
-
-            // Courses by status
-            CourseModel.aggregate([
-                {
-                    $match: {
-                        $or: [
-                            { instructor: new Types.ObjectId(instructorId) },
-                            { coInstructors: new Types.ObjectId(instructorId) },
-                        ],
-                    },
-                },
-                {
-                    $group: {
-                        _id: "$status",
-                        count: { $sum: 1 },
-                    },
-                },
-            ]),
-
-            // Recently updated courses
-            CourseModel.find({
-                $or: [
-                    { instructor: new Types.ObjectId(instructorId) },
-                    { coInstructors: new Types.ObjectId(instructorId) },
-                ],
-            })
-                .sort({ updatedAt: -1 })
-                .limit(5)
-                .select("_id title status totalEnrollments rating.averageRating updatedAt slug")
-                .lean(),
-
-            // Top performing courses by enrollments
-            CourseModel.find({
-                $or: [
-                    { instructor: new Types.ObjectId(instructorId) },
-                    { coInstructors: new Types.ObjectId(instructorId) },
-                ],
-                isPublished: true,
-            })
-                .sort({ totalEnrollments: -1 })
-                .limit(5)
-                .select("_id title totalEnrollments rating.averageRating pricing.finalPrice slug")
-                .lean(),
-        ]);
-
-        const stats = basicStats[0] || {
-            totalCourses: 0,
-            publishedCourses: 0,
-            draftCourses: 0,
-            pendingReviewCourses: 0,
-            archivedCourses: 0,
-            totalEnrollments: 0,
-            totalRatings: 0,
-            averageRating: 0,
-            totalLessons: 0,
-            totalDuration: 0,
-        };
-
-        // Format courses by status
-        const statusMap: Record<string, number> = {};
-        coursesByStatus.forEach((item: { _id: string; count: number }) => {
-            statusMap[item._id] = item.count;
-        });
-
-        return {
-            overview: {
-                totalCourses: stats.totalCourses,
-                publishedCourses: stats.publishedCourses,
-                draftCourses: stats.draftCourses,
-                pendingReviewCourses: stats.pendingReviewCourses,
-                archivedCourses: stats.archivedCourses,
-                totalEnrollments: stats.totalEnrollments,
-                totalRatings: stats.totalRatings,
-                averageRating: stats.averageRating || 0,
-                totalLessons: stats.totalLessons,
-                totalDuration: stats.totalDuration,
-                publishRate: stats.totalCourses > 0
-                    ? Math.round((stats.publishedCourses / stats.totalCourses) * 100)
-                    : 0,
-            },
-            coursesByStatus: statusMap,
-            recentCourses,
-            topCourses,
-        };
-    },
-
-    // ==================== CHECK EXISTS ====================
-    exists: async (courseId: string): Promise<boolean> => {
-        const count = await CourseModel.countDocuments({ _id: courseId });
-        return count > 0;
-    },
-
-    existsBySlug: async (slug: string): Promise<boolean> => {
-        const count = await CourseModel.countDocuments({ slug });
-        return count > 0;
     },
 };
-
-export default courseRepository;

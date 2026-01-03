@@ -1,646 +1,963 @@
 import { Types } from "mongoose";
+
+// Utility function to generate slug
+const generateSlug = (text: string): string => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+        .replace(/^-+/, '')             // Trim - from start of text
+        .replace(/-+$/, '');            // Trim - from end of text
+};
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
-import { courseRepository } from "src/repositories/course.repository.js";
-import { categoryRepository } from "src/repositories/category.repository.js";
-import type {
-    ICourse,
-    IChapter,
-    ILesson,
-    ILessonContent,
-    CreateCourseDTO,
-    UpdateCourseDTO,
-    CourseFilterDTO,
-    CoursePaginationDTO,
-} from "src/types/course.type.js";
-import { CourseStatus, Currency } from "src/types/course.type.js";
+import {
+    courseRepository,
+    sectionRepository,
+    lessonRepository,
+    lessonContentRepository,
+    contentAttemptRepository,
+} from "src/repositories/course.repository.js";
 import AppError from "src/utils/AppError.js";
-import logger from "src/utils/logger.js";
+import Course from "src/models/course/course.model.js";
+import Section from "src/models/course/section.model.js";
+import Lesson from "src/models/course/lesson.model.js";
+import LessonContent from "src/models/course/lessonContent.model.js";
+import mongoose from "mongoose";
 
-const courseService = {
-    // ==================== CREATE COURSE ====================
-    createCourse: async (data: CreateCourseDTO, userId: string) => {
-        // Validate category is a valid ObjectId
-        if (data.category && !Types.ObjectId.isValid(data.category)) {
-            throw new AppError(
-                "Invalid category ID",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR,
-                [{ path: "category", message: "Category must be a valid ID" }]
-            );
+// ============================================
+// COURSE SERVICE
+// ============================================
+export const courseService = {
+
+
+    // -------------------- GET ALL PUBLISHED COURSES --------------------
+    getAllPublishedCourses: async (query: { page?: number; limit?: number; search?: string; category?: string }) => {
+        return courseRepository.findAllPublished(query);
+    },
+
+    // -------------------- GET PUBLISHED COURSE BY ID --------------------
+    getPublishedCourseById: async (courseId: string) => {
+        const course = await courseRepository.findPublishedById(courseId);
+
+        if (!course) {
+            throw new AppError("Published course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
-        // Validate subCategory if provided
-        if (data.subCategory && !Types.ObjectId.isValid(data.subCategory)) {
-            throw new AppError(
-                "Invalid subcategory ID",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR,
-                [{ path: "subCategory", message: "Subcategory must be a valid ID" }]
-            );
-        }
+        return course;
+    },
 
-        // If category is provided, verify it exists
-        if (data.category) {
-            const categoryExists = await categoryRepository.exists(data.category);
-            if (!categoryExists) {
-                throw new AppError(
-                    "Category not found",
-                    STATUSCODE.BAD_REQUEST,
-                    ERROR_CODE.VALIDATION_ERROR,
-                    [{ path: "category", message: "Selected category does not exist" }]
-                );
-            }
-        }
 
-        // If subCategory is provided, validate it belongs to the category
-        if (data.subCategory) {
-            if (!data.category) {
-                throw new AppError(
-                    "Category required for subcategory",
-                    STATUSCODE.BAD_REQUEST,
-                    ERROR_CODE.VALIDATION_ERROR,
-                    [{ path: "category", message: "Category must be selected when using subcategory" }]
-                );
-            }
-
-            const isValidSubcategory = await categoryRepository.validateSubcategory(
-                data.category,
-                data.subCategory
-            );
-            if (!isValidSubcategory) {
-                throw new AppError(
-                    "Invalid subcategory",
-                    STATUSCODE.BAD_REQUEST,
-                    ERROR_CODE.VALIDATION_ERROR,
-                    [{ path: "subCategory", message: "Subcategory does not belong to the selected category" }]
-                );
-            }
-        }
-
+    // -------------------- CREATE COURSE --------------------
+    createCourse: async (instructorId: string, data: any) => {
         // Generate unique slug
-        const baseSlug = data.title
-            .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, "")
-            .replace(/\s+/g, "-")
-            .replace(/-+/g, "-")
-            .substring(0, 100);
+        let slug = generateSlug(data.title);
+        const existingSlug = await courseRepository.slugExists(slug);
+        if (existingSlug) {
+            slug = `${slug}-${Date.now()}`;
+        }
 
-        const slug = `${baseSlug}-${Date.now().toString(36)}`;
-
-        // Calculate final price
-        const originalPrice = data.originalPrice || 0;
-        const discountPercentage = data.discountPercentage || 0;
-        const finalPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
-
-        const courseData: Partial<ICourse> = {
-            title: data.title,
+        const courseData = {
+            ...data,
             slug,
-            subtitle: data.subtitle,
-            description: data.description,
-            shortDescription: data.shortDescription,
-            coverImage: data.coverImage,
-            previewVideoUrl: data.previewVideoUrl,
-            category: data.category ? new Types.ObjectId(data.category) : undefined,
-            subCategory: data.subCategory ? new Types.ObjectId(data.subCategory) : undefined,
-            tags: data.tags || [],
-            level: data.level,
-            language: data.language || "English",
-            deliveryMode: data.deliveryMode,
-            location: data.location,
-            accessDuration: data.accessDuration || 365,
-            pricing: {
-                originalPrice,
-                discountPercentage,
-                finalPrice,
-                currency: data.currency || Currency.INR,
-                isGstApplicable: data.isGstApplicable ?? true,
-                gstPercentage: 18,
-            },
-            instructor: new Types.ObjectId(data.instructor || userId),
-            coInstructors: data.coInstructors?.map((id) => new Types.ObjectId(id)),
-            status: CourseStatus.DRAFT,
-            isPublished: false,
-            isFeatured: false,
+            instructor: instructorId,
         };
 
         const course = await courseRepository.create(courseData);
-
-        logger.info(`Course created: ${course._id} by user: ${userId}`);
-
-        return {
-            message: "Course created successfully",
-            data: {
-                course: {
-                    _id: course._id,
-                    title: course.title,
-                    slug: course.slug,
-                    status: course.status,
-                },
-            },
-        };
+        return course;
     },
 
-    // ==================== GET COURSE BY ID ====================
-    getCourseById: async (courseId: string, includeUnpublished = false) => {
-        if (!Types.ObjectId.isValid(courseId)) {
-            throw new AppError(
-                "Invalid course ID",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR
-            );
-        }
-
-        const course = await courseRepository.findByIdPopulated(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND,
-                [{ path: "courseId", message: "No course found with the given ID" }]
-            );
-        }
-
-        // If not including unpublished, check status
-        if (!includeUnpublished && !course.isPublished) {
-            throw new AppError(
-                "Course not available",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND,
-                [{ path: "courseId", message: "This course is not published yet" }]
-            );
-        }
-
-        return {
-            message: "Course fetched successfully",
-            data: { course },
-        };
-    },
-
-    // ==================== GET COURSE BY SLUG ====================
-    getCourseBySlug: async (slug: string, includeUnpublished = false) => {
-        const course = includeUnpublished
-            ? await courseRepository.findBySlug(slug)
-            : await courseRepository.findPublishedBySlug(slug);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND,
-                [{ path: "slug", message: "No course found with the given slug" }]
-            );
-        }
-
-        return {
-            message: "Course fetched successfully",
-            data: { course },
-        };
-    },
-
-    // ==================== GET ALL COURSES ====================
-    getAllCourses: async (
-        filter: CourseFilterDTO = {},
-        pagination: CoursePaginationDTO = {},
-        isAdmin = false
+    // -------------------- GET INSTRUCTOR COURSES --------------------
+    getInstructorCourses: async (
+        instructorId: string,
+        query: { page?: number; limit?: number; status?: string; search?: string }
     ) => {
-        // If not admin, only show published courses
-        if (!isAdmin) {
-            filter.status = CourseStatus.PUBLISHED;
-        }
-
-        const result = await courseRepository.findAll(filter, pagination);
-
-        return {
-            message: "Courses fetched successfully",
-            data: {
-                courses: result.courses,
-                pagination: result.pagination,
-            },
-        };
+        return courseRepository.findByInstructor(instructorId, query);
     },
 
-    // ==================== GET PUBLISHED COURSES ====================
-    getPublishedCourses: async (pagination: CoursePaginationDTO = {}) => {
-        const result = await courseRepository.findPublished(pagination);
-
-        return {
-            message: "Published courses fetched successfully",
-            data: {
-                courses: result.courses,
-                pagination: result.pagination,
-            },
-        };
-    },
-
-    // ==================== GET FEATURED COURSES ====================
-    getFeaturedCourses: async (limit = 10) => {
-        const courses = await courseRepository.findFeatured(limit);
-
-        return {
-            message: "Featured courses fetched successfully",
-            data: { courses },
-        };
-    },
-
-    // ==================== GET INSTRUCTOR COURSES ====================
-    getInstructorCourses: async (instructorId: string, requesterId: string, isAdmin = false) => {
-        // Allow if admin or if requesting own courses
-        const includeUnpublished = isAdmin || instructorId === requesterId;
-
-        const [courses, stats] = await Promise.all([
-            courseRepository.findByInstructor(instructorId, includeUnpublished),
-            courseRepository.getInstructorStats(instructorId),
-        ]);
-
-        return {
-            message: "Instructor courses fetched successfully",
-            data: {
-                courses,
-                stats,
-            },
-        };
-    },
-
-    // ==================== GET MY COURSES (Instructor) ====================
-    getMyCourses: async (userId: string) => {
-        const [courses, stats] = await Promise.all([
-            courseRepository.findByInstructor(userId, true), // Include unpublished
-            courseRepository.getInstructorStats(userId),
-        ]);
-
-        return {
-            message: "Your courses fetched successfully",
-            data: {
-                courses,
-                stats,
-            },
-        };
-    },
-
-    // ==================== GET INSTRUCTOR METRICS ====================
-    getInstructorMetrics: async (userId: string) => {
-        const metrics = await courseRepository.getInstructorMetrics(userId);
-
-        return {
-            message: "Instructor metrics fetched successfully",
-            data: {
-                metrics,
-            },
-        };
-    },
-
-    // ==================== GET COURSES BY CATEGORY ====================
-    getCoursesByCategory: async (categoryId: string, pagination: CoursePaginationDTO = {}) => {
-        if (!Types.ObjectId.isValid(categoryId)) {
-            throw new AppError(
-                "Invalid category ID",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR
-            );
-        }
-
-        const result = await courseRepository.findByCategory(categoryId, pagination);
-
-        return {
-            message: "Courses fetched successfully",
-            data: {
-                courses: result.courses,
-                pagination: result.pagination,
-            },
-        };
-    },
-
-    // ==================== UPDATE COURSE ====================
-    updateCourse: async (
-        courseId: string,
-        data: UpdateCourseDTO,
-        userId: string,
-        isAdmin = false
-    ) => {
-        const course = await courseRepository.findById(courseId);
+    // -------------------- GET COURSE BY ID --------------------
+    getCourseById: async (courseId: string, instructorId: string) => {
+        const course = await courseRepository.findByIdWithDetails(courseId);
 
         if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
+            throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
-        // Check ownership (unless admin)
-        if (!isAdmin) {
-            const isOwner = await courseRepository.isOwner(courseId, userId);
-            if (!isOwner) {
-                throw new AppError(
-                    "You don't have permission to update this course",
-                    STATUSCODE.FORBIDDEN,
-                    ERROR_CODE.FORBIDDEN
-                );
-            }
-        }
-
-        // Prepare update data
-        const updateData: Partial<ICourse> = {};
-
-        if (data.title) updateData.title = data.title;
-        if (data.subtitle) updateData.subtitle = data.subtitle;
-        if (data.description) updateData.description = data.description;
-        if (data.shortDescription) updateData.shortDescription = data.shortDescription;
-        if (data.coverImage) updateData.coverImage = data.coverImage;
-        if (data.previewVideoUrl) updateData.previewVideoUrl = data.previewVideoUrl;
-        if (data.category) updateData.category = new Types.ObjectId(data.category);
-        if (data.subCategory) updateData.subCategory = new Types.ObjectId(data.subCategory);
-        if (data.tags) updateData.tags = data.tags;
-        if (data.level) updateData.level = data.level;
-        if (data.language) updateData.language = data.language;
-        if (data.deliveryMode) updateData.deliveryMode = data.deliveryMode;
-        if (data.location) updateData.location = data.location;
-        if (data.accessDuration) updateData.accessDuration = data.accessDuration;
-        if (data.curriculum) updateData.curriculum = data.curriculum;
-
-        // Update pricing if provided
-        if (data.originalPrice !== undefined || data.discountPercentage !== undefined) {
-            const originalPrice = data.originalPrice ?? course.pricing.originalPrice;
-            const discountPercentage = data.discountPercentage ?? course.pricing.discountPercentage;
-            const finalPrice = Math.round(originalPrice * (1 - discountPercentage / 100));
-
-            updateData.pricing = {
-                ...course.pricing,
-                originalPrice,
-                discountPercentage,
-                finalPrice,
-                currency: data.currency ?? course.pricing.currency,
-                isGstApplicable: data.isGstApplicable ?? course.pricing.isGstApplicable,
-            };
-        }
-
-        // Admin-only fields
-        if (isAdmin) {
-            if (data.status) updateData.status = data.status;
-            if (typeof data.isFeatured === "boolean") updateData.isFeatured = data.isFeatured;
-        }
-
-        const updatedCourse = await courseRepository.updateById(courseId, updateData);
-
-        logger.info(`Course updated: ${courseId} by user: ${userId}`);
-
-        return {
-            message: "Course updated successfully",
-            data: { course: updatedCourse },
-        };
-    },
-
-    // ==================== DELETE COURSE ====================
-    deleteCourse: async (courseId: string, userId: string, isAdmin = false) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        // Check ownership (unless admin)
-        if (!isAdmin) {
-            const isOwner = await courseRepository.isOwner(courseId, userId);
-            if (!isOwner) {
-                throw new AppError(
-                    "You don't have permission to delete this course",
-                    STATUSCODE.FORBIDDEN,
-                    ERROR_CODE.FORBIDDEN
-                );
-            }
-        }
-
-        // Soft delete (archive) instead of hard delete
-        await courseRepository.softDeleteById(courseId);
-
-        logger.info(`Course archived: ${courseId} by user: ${userId}`);
-
-        return {
-            message: "Course deleted successfully",
-            data: { courseId },
-        };
-    },
-
-    // ==================== HARD DELETE COURSE (Admin only) ====================
-    hardDeleteCourse: async (courseId: string, userId: string) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        await courseRepository.deleteById(courseId);
-
-        logger.warn(`Course permanently deleted: ${courseId} by admin: ${userId}`);
-
-        return {
-            message: "Course permanently deleted",
-            data: { courseId },
-        };
-    },
-
-    // ==================== PUBLISH COURSE ====================
-    publishCourse: async (courseId: string, userId: string, isAdmin = false) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        // Check ownership or admin
-        if (!isAdmin) {
-            const isOwner = await courseRepository.isOwner(courseId, userId);
-            if (!isOwner) {
-                throw new AppError(
-                    "You don't have permission to publish this course",
-                    STATUSCODE.FORBIDDEN,
-                    ERROR_CODE.FORBIDDEN
-                );
-            }
-        }
-
-        // Validate course has minimum required content
-        if (!course.curriculum || course.curriculum.length === 0) {
-            throw new AppError(
-                "Course must have at least one chapter before publishing",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR
-            );
-        }
-
-        const updatedCourse = await courseRepository.publishCourse(courseId);
-
-        logger.info(`Course published: ${courseId} by user: ${userId}`);
-
-        return {
-            message: "Course published successfully",
-            data: { course: updatedCourse },
-        };
-    },
-
-    // ==================== UNPUBLISH COURSE ====================
-    unpublishCourse: async (courseId: string, userId: string, isAdmin = false) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        // Check ownership or admin
-        if (!isAdmin) {
-            const isOwner = await courseRepository.isOwner(courseId, userId);
-            if (!isOwner) {
-                throw new AppError(
-                    "You don't have permission to unpublish this course",
-                    STATUSCODE.FORBIDDEN,
-                    ERROR_CODE.FORBIDDEN
-                );
-            }
-        }
-
-        const updatedCourse = await courseRepository.unpublishCourse(courseId);
-
-        logger.info(`Course unpublished: ${courseId} by user: ${userId}`);
-
-        return {
-            message: "Course unpublished successfully",
-            data: { course: updatedCourse },
-        };
-    },
-
-    // ==================== SUBMIT FOR REVIEW ====================
-    submitForReview: async (courseId: string, userId: string) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        const isOwner = await courseRepository.isOwner(courseId, userId);
+        // Check ownership
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
         if (!isOwner) {
             throw new AppError(
-                "You don't have permission to submit this course",
+                "You don't have permission to access this course",
                 STATUSCODE.FORBIDDEN,
                 ERROR_CODE.FORBIDDEN
             );
         }
 
-        // Validate minimum requirements
-        if (!course.curriculum || course.curriculum.length === 0) {
+        return course;
+    },
+
+    // -------------------- UPDATE COURSE --------------------
+    updateCourse: async (courseId: string, instructorId: string, data: any) => {
+        // Check ownership
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
             throw new AppError(
-                "Course must have at least one chapter before submission",
+                "You don't have permission to update this course",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // If title is being updated, regenerate slug
+        if (data.title) {
+            let slug = generateSlug(data.title);
+            const existingSlug = await courseRepository.slugExists(slug, courseId);
+            if (existingSlug) {
+                slug = `${slug}-${Date.now()}`;
+            }
+            data.slug = slug;
+        }
+
+        const course = await courseRepository.updateById(courseId, data);
+
+        if (!course) {
+            throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        return course;
+    },
+
+    // -------------------- DELETE COURSE --------------------
+    deleteCourse: async (courseId: string, instructorId: string) => {
+        // Check ownership
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to delete this course",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // Delete all related data
+        await Promise.all([
+            lessonContentRepository.deleteByCourse(courseId),
+            lessonRepository.deleteByCourse(courseId),
+            sectionRepository.deleteByCourse(courseId),
+            contentAttemptRepository.deleteByCourse(courseId),
+        ]);
+
+        const course = await courseRepository.deleteById(courseId);
+
+        if (!course) {
+            throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        return { message: "Course deleted successfully" };
+    },
+
+    // -------------------- PUBLISH COURSE --------------------
+    publishCourse: async (courseId: string, instructorId: string) => {
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to publish this course",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // Validate course has required content
+        const sections = await sectionRepository.findByCourse(courseId);
+        if (sections.length === 0) {
+            throw new AppError(
+                "Course must have at least one section to publish",
                 STATUSCODE.BAD_REQUEST,
                 ERROR_CODE.VALIDATION_ERROR
             );
         }
 
-        const updatedCourse = await courseRepository.submitForReview(courseId);
-
-        logger.info(`Course submitted for review: ${courseId} by user: ${userId}`);
-
-        return {
-            message: "Course submitted for review",
-            data: { course: updatedCourse },
-        };
+        const course = await courseRepository.updatePublishStatus(courseId, true);
+        return course;
     },
 
-    // ==================== APPROVE COURSE (Admin/Manager) ====================
-    approveCourse: async (courseId: string, userId: string) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
+    // -------------------- UNPUBLISH COURSE --------------------
+    unpublishCourse: async (courseId: string, instructorId: string) => {
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
             throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
+                "You don't have permission to unpublish this course",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
             );
         }
 
-        if (course.status !== CourseStatus.PENDING_REVIEW) {
-            throw new AppError(
-                "Only courses pending review can be approved",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR
-            );
-        }
-
-        const updatedCourse = await courseRepository.publishCourse(courseId);
-
-        logger.info(`Course approved and published: ${courseId} by admin: ${userId}`);
-
-        return {
-            message: "Course approved and published",
-            data: { course: updatedCourse },
-        };
-    },
-
-    // ==================== REJECT COURSE (Admin/Manager) ====================
-    rejectCourse: async (courseId: string, userId: string, reason?: string) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        const updatedCourse = await courseRepository.rejectCourse(courseId);
-
-        logger.info(`Course rejected: ${courseId} by admin: ${userId}. Reason: ${reason || "Not specified"}`);
-
-        return {
-            message: "Course rejected",
-            data: { course: updatedCourse },
-        };
-    },
-
-    // ==================== TOGGLE FEATURED ====================
-    toggleFeatured: async (courseId: string, userId: string) => {
-        const course = await courseRepository.findById(courseId);
-
-        if (!course) {
-            throw new AppError(
-                "Course not found",
-                STATUSCODE.NOT_FOUND,
-                ERROR_CODE.NOT_FOUND
-            );
-        }
-
-        const updatedCourse = await courseRepository.toggleFeatured(courseId);
-
-        logger.info(
-            `Course featured status toggled: ${courseId} to ${updatedCourse?.isFeatured} by admin: ${userId}`
-        );
-
-        return {
-            message: `Course ${updatedCourse?.isFeatured ? "marked as featured" : "removed from featured"}`,
-            data: { course: updatedCourse },
-        };
+        const course = await courseRepository.updatePublishStatus(courseId, false);
+        return course;
     },
 };
 
-export default courseService;
+// ============================================
+// SECTION SERVICE
+// ============================================
+export const sectionService = {
+    // -------------------- CREATE SECTION --------------------
+    createSection: async (courseId: string, instructorId: string, data: any) => {
+        // Check course ownership
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to add sections to this course",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // Get next order
+        const maxOrder = await sectionRepository.getMaxOrder(courseId);
+
+        const sectionData = {
+            ...data,
+            courseId,
+            order: maxOrder + 1,
+        };
+
+        const section = await sectionRepository.create(sectionData);
+        return section;
+    },
+
+    // -------------------- GET SECTIONS BY COURSE --------------------
+    getSectionsByCourse: async (courseId: string, instructorId: string) => {
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to view sections of this course",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return sectionRepository.findByCourse(courseId);
+    },
+
+    // -------------------- UPDATE SECTION --------------------
+    updateSection: async (sectionId: string, instructorId: string, data: any) => {
+        const section = await sectionRepository.findById(sectionId);
+        if (!section) {
+            throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(section.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to update this section",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return sectionRepository.updateById(sectionId, data);
+    },
+
+    // -------------------- DELETE SECTION --------------------
+    deleteSection: async (sectionId: string, instructorId: string) => {
+        const section = await sectionRepository.findById(sectionId);
+        if (!section) {
+            throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(section.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to delete this section",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // Delete all lessons and their contents in this section
+        const lessons = await lessonRepository.findBySection(sectionId);
+        const lessonIds = lessons.map((l: any) => l._id);
+
+        await Promise.all([
+            LessonContent.deleteMany({ lessonId: { $in: lessonIds } }),
+            lessonRepository.deleteBySection(sectionId),
+        ]);
+
+        await sectionRepository.deleteById(sectionId);
+        return { message: "Section deleted successfully" };
+    },
+
+    // -------------------- REORDER SECTIONS --------------------
+    reorderSections: async (
+        courseId: string,
+        instructorId: string,
+        sections: { id: string; order: number }[]
+    ) => {
+        const isOwner = await courseRepository.isOwner(courseId, instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to reorder sections",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        await sectionRepository.bulkReorder(sections);
+        return sectionRepository.findByCourse(courseId);
+    },
+
+    // -------------------- TOGGLE SECTION VISIBILITY --------------------
+    toggleVisibility: async (sectionId: string, instructorId: string) => {
+        const section = await sectionRepository.findById(sectionId);
+        if (!section) {
+            throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(section.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to update visibility",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return sectionRepository.toggleVisibility(sectionId);
+    },
+};
+
+// ============================================
+// LESSON SERVICE
+// ============================================
+export const lessonService = {
+    // -------------------- CREATE LESSON --------------------
+    createLesson: async (sectionId: string, instructorId: string, data: any) => {
+        const section = await sectionRepository.findById(sectionId);
+        if (!section) {
+            throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(section.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to add lessons",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        const maxOrder = await lessonRepository.getMaxOrder(sectionId);
+
+        const lessonData = {
+            ...data,
+            sectionId,
+            courseId: section.courseId,
+            order: maxOrder + 1,
+        };
+
+        return lessonRepository.create(lessonData);
+    },
+
+    // -------------------- GET LESSONS BY SECTION --------------------
+    getLessonsBySection: async (sectionId: string, instructorId: string) => {
+        const section = await sectionRepository.findById(sectionId);
+        if (!section) {
+            throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(section.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to view lessons",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return lessonRepository.findBySection(sectionId);
+    },
+
+    // -------------------- UPDATE LESSON --------------------
+    updateLesson: async (lessonId: string, instructorId: string, data: any) => {
+        const lesson = await lessonRepository.findById(lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to update this lesson",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return lessonRepository.updateById(lessonId, data);
+    },
+
+    // -------------------- DELETE LESSON --------------------
+    deleteLesson: async (lessonId: string, instructorId: string) => {
+        const lesson = await lessonRepository.findById(lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to delete this lesson",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // Delete all contents in this lesson
+        await lessonContentRepository.deleteByLesson(lessonId);
+        await lessonRepository.deleteById(lessonId);
+
+        return { message: "Lesson deleted successfully" };
+    },
+
+    // -------------------- REORDER LESSONS --------------------
+    reorderLessons: async (
+        sectionId: string,
+        instructorId: string,
+        lessons: { id: string; order: number }[]
+    ) => {
+        const section = await sectionRepository.findById(sectionId);
+        if (!section) {
+            throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(section.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to reorder lessons",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        await lessonRepository.bulkReorder(lessons);
+        return lessonRepository.findBySection(sectionId);
+    },
+
+    // -------------------- TOGGLE LESSON VISIBILITY --------------------
+    toggleVisibility: async (lessonId: string, instructorId: string) => {
+        const lesson = await lessonRepository.findById(lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to update visibility",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return lessonRepository.toggleVisibility(lessonId);
+    },
+};
+
+// ============================================
+// LESSON CONTENT SERVICE
+// ============================================
+export const lessonContentService = {
+    // -------------------- CREATE CONTENT --------------------
+    createContent: async (lessonId: string, instructorId: string, data: any) => {
+        const lesson = await lessonRepository.findById(lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to add content",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        const maxOrder = await lessonContentRepository.getMaxOrder(lessonId);
+
+        const contentData = {
+            ...data,
+            lessonId,
+            courseId: lesson.courseId,
+            order: maxOrder + 1,
+        };
+
+        return lessonContentRepository.create(contentData);
+    },
+
+    // -------------------- GET CONTENTS BY LESSON --------------------
+    getContentsByLesson: async (lessonId: string, instructorId: string) => {
+        const lesson = await lessonRepository.findById(lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to view contents",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return lessonContentRepository.findByLesson(lessonId);
+    },
+
+    // -------------------- UPDATE CONTENT --------------------
+    updateContent: async (contentId: string, instructorId: string, data: any) => {
+        const content = await lessonContentRepository.findById(contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(content.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to update this content",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return lessonContentRepository.updateById(contentId, data);
+    },
+
+    // -------------------- DELETE CONTENT --------------------
+    deleteContent: async (contentId: string, instructorId: string) => {
+        const content = await lessonContentRepository.findById(contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(content.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to delete this content",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        // Delete all attempts for this content
+        await contentAttemptRepository.deleteByContent(contentId);
+        await lessonContentRepository.deleteById(contentId);
+
+        return { message: "Content deleted successfully" };
+    },
+
+    // -------------------- REORDER CONTENTS --------------------
+    reorderContents: async (
+        lessonId: string,
+        instructorId: string,
+        contents: { id: string; order: number }[]
+    ) => {
+        const lesson = await lessonRepository.findById(lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to reorder contents",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        await lessonContentRepository.bulkReorder(contents);
+        return lessonContentRepository.findByLesson(lessonId);
+    },
+
+    // -------------------- TOGGLE CONTENT VISIBILITY --------------------
+    toggleVisibility: async (contentId: string, instructorId: string) => {
+        const content = await lessonContentRepository.findById(contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const isOwner = await courseRepository.isOwner(content.courseId.toString(), instructorId);
+        if (!isOwner) {
+            throw new AppError(
+                "You don't have permission to update visibility",
+                STATUSCODE.FORBIDDEN,
+                ERROR_CODE.FORBIDDEN
+            );
+        }
+
+        return lessonContentRepository.toggleVisibility(contentId);
+    },
+};
+
+// ============================================
+// CONTENT PROGRESS SERVICE (STUDENT SIDE)
+// ============================================
+export const contentProgressService = {
+    // -------------------- SAVE/UPDATE PROGRESS --------------------
+    saveProgress: async (
+        userId: string,
+        contentId: string,
+        data: {
+            resumeAt?: number;
+            totalDuration?: number;
+            obtainedMarks?: number;
+            isCompleted?: boolean;
+        }
+    ) => {
+        const content = await lessonContentRepository.findById(contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const progressData = {
+            ...data,
+            courseId: content.courseId,
+            lessonId: content.lessonId,
+            totalMarks: content.marks,
+        };
+
+        return contentAttemptRepository.upsert(userId, contentId, progressData);
+    },
+
+    // -------------------- GET PROGRESS --------------------
+    getProgress: async (userId: string, contentId: string) => {
+        return contentAttemptRepository.findByUserAndContent(userId, contentId);
+    },
+
+    // -------------------- MARK COMPLETED --------------------
+    markCompleted: async (userId: string, contentId: string, obtainedMarks?: number) => {
+        const content = await lessonContentRepository.findById(contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        return contentAttemptRepository.markCompleted(userId, contentId, obtainedMarks);
+    },
+
+    // -------------------- UPDATE RESUME POSITION --------------------
+    updateResumePosition: async (
+        userId: string,
+        contentId: string,
+        resumeAt: number,
+        totalDuration?: number
+    ) => {
+        return contentAttemptRepository.updateResumePosition(
+            userId,
+            contentId,
+            resumeAt,
+            totalDuration
+        );
+    },
+};
+
+// ============================================
+// COURSE PROGRESS SERVICE (AGGREGATION API)
+// ============================================
+export const courseProgressService = {
+    // -------------------- GET FULL COURSE WITH PROGRESS --------------------
+    getCourseWithProgress: async (userId: string, courseId: string) => {
+        const courseObjectId = new mongoose.Types.ObjectId(courseId);
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+
+        // Aggregation pipeline for full course structure with progress overlay
+        const result = await Course.aggregate([
+            // Match the specific course
+            { $match: { _id: courseObjectId, isPublished: true } },
+
+            // Lookup sections
+            {
+                $lookup: {
+                    from: "sections",
+                    let: { courseId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ["$courseId", "$$courseId"] },
+                                isVisible: true,
+                            },
+                        },
+                        { $sort: { order: 1 } },
+
+                        // Lookup lessons for each section
+                        {
+                            $lookup: {
+                                from: "lessons",
+                                let: { sectionId: "$_id" },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: { $eq: ["$sectionId", "$$sectionId"] },
+                                            isVisible: true,
+                                        },
+                                    },
+                                    { $sort: { order: 1 } },
+
+                                    // Lookup lesson contents
+                                    {
+                                        $lookup: {
+                                            from: "lessoncontents",
+                                            let: { lessonId: "$_id" },
+                                            pipeline: [
+                                                {
+                                                    $match: {
+                                                        $expr: { $eq: ["$lessonId", "$$lessonId"] },
+                                                        isVisible: true,
+                                                    },
+                                                },
+                                                { $sort: { order: 1 } },
+
+                                                // Lookup user progress for each content
+                                                {
+                                                    $lookup: {
+                                                        from: "contentattempts",
+                                                        let: { contentId: "$_id" },
+                                                        pipeline: [
+                                                            {
+                                                                $match: {
+                                                                    $expr: {
+                                                                        $and: [
+                                                                            { $eq: ["$contentId", "$$contentId"] },
+                                                                            { $eq: ["$userId", userObjectId] },
+                                                                        ],
+                                                                    },
+                                                                },
+                                                            },
+                                                        ],
+                                                        as: "progress",
+                                                    },
+                                                },
+
+                                                // Flatten progress (single document)
+                                                {
+                                                    $addFields: {
+                                                        userProgress: { $arrayElemAt: ["$progress", 0] },
+                                                    },
+                                                },
+                                                { $project: { progress: 0 } },
+                                            ],
+                                            as: "contents",
+                                        },
+                                    },
+                                ],
+                                as: "lessons",
+                            },
+                        },
+                    ],
+                    as: "sections",
+                },
+            },
+
+            // Calculate totals
+            {
+                $addFields: {
+                    totalMarks: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $reduce: {
+                                                            input: "$$this.contents",
+                                                            initialValue: 0,
+                                                            in: { $add: ["$$value", { $ifNull: ["$$this.marks", 0] }] },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    obtainedMarks: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $reduce: {
+                                                            input: "$$this.contents",
+                                                            initialValue: 0,
+                                                            in: {
+                                                                $add: [
+                                                                    "$$value",
+                                                                    { $ifNull: ["$$this.userProgress.obtainedMarks", 0] },
+                                                                ],
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    totalContents: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: { $add: ["$$value", { $size: "$$this.contents" }] },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    completedContents: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $size: {
+                                                            $filter: {
+                                                                input: "$$this.contents",
+                                                                as: "content",
+                                                                cond: { $eq: ["$$content.userProgress.isCompleted", true] },
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+
+            // Calculate percentage
+            {
+                $addFields: {
+                    progressPercentage: {
+                        $cond: {
+                            if: { $eq: ["$totalContents", 0] },
+                            then: 0,
+                            else: {
+                                $multiply: [{ $divide: ["$completedContents", "$totalContents"] }, 100],
+                            },
+                        },
+                    },
+                    marksPercentage: {
+                        $cond: {
+                            if: { $eq: ["$totalMarks", 0] },
+                            then: 0,
+                            else: {
+                                $multiply: [{ $divide: ["$obtainedMarks", "$totalMarks"] }, 100],
+                            },
+                        },
+                    },
+                },
+            },
+
+            // Populate instructor
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "instructor",
+                    foreignField: "_id",
+                    as: "instructor",
+                    pipeline: [{ $project: { name: 1, email: 1, avatar: 1 } }],
+                },
+            },
+            { $unwind: { path: "$instructor", preserveNullAndEmptyArrays: true } },
+
+            // Populate category
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "category",
+                    foreignField: "_id",
+                    as: "category",
+                    pipeline: [{ $project: { name: 1, slug: 1 } }],
+                },
+            },
+            { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+        ]);
+
+        if (!result || result.length === 0) {
+            throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        return result[0];
+    },
+
+    // -------------------- GET RESUME INFO --------------------
+    getResumeInfo: async (userId: string, courseId: string) => {
+        // Find last accessed content
+        const lastAccessed = await mongoose.model("ContentAttempt").findOne({
+            userId: new mongoose.Types.ObjectId(userId),
+            courseId: new mongoose.Types.ObjectId(courseId),
+            isCompleted: false,
+        })
+            .sort({ lastAccessedAt: -1 })
+            .populate("contentId", "title type")
+            .populate("lessonId", "title")
+            .lean();
+
+        return lastAccessed;
+    },
+};
+
+export default {
+    courseService,
+    sectionService,
+    lessonService,
+    lessonContentService,
+    contentProgressService,
+    courseProgressService,
+};
