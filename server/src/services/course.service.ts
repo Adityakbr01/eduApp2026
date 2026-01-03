@@ -877,6 +877,142 @@ export const courseProgressService = {
                             },
                         },
                     },
+                    // Assignment counts
+                    totalAssignments: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $size: {
+                                                            $filter: {
+                                                                input: "$$this.contents",
+                                                                as: "content",
+                                                                cond: { $eq: ["$$content.type", "assignment"] },
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    completedAssignments: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $size: {
+                                                            $filter: {
+                                                                input: "$$this.contents",
+                                                                as: "content",
+                                                                cond: {
+                                                                    $and: [
+                                                                        { $eq: ["$$content.type", "assignment"] },
+                                                                        { $eq: ["$$content.userProgress.isCompleted", true] },
+                                                                    ],
+                                                                },
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    // Video counts
+                    totalVideos: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $size: {
+                                                            $filter: {
+                                                                input: "$$this.contents",
+                                                                as: "content",
+                                                                cond: { $eq: ["$$content.type", "video"] },
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    completedVideos: {
+                        $reduce: {
+                            input: "$sections",
+                            initialValue: 0,
+                            in: {
+                                $add: [
+                                    "$$value",
+                                    {
+                                        $reduce: {
+                                            input: "$$this.lessons",
+                                            initialValue: 0,
+                                            in: {
+                                                $add: [
+                                                    "$$value",
+                                                    {
+                                                        $size: {
+                                                            $filter: {
+                                                                input: "$$this.contents",
+                                                                as: "content",
+                                                                cond: {
+                                                                    $and: [
+                                                                        { $eq: ["$$content.type", "video"] },
+                                                                        { $eq: ["$$content.userProgress.isCompleted", true] },
+                                                                    ],
+                                                                },
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
                 },
             },
 
@@ -936,20 +1072,57 @@ export const courseProgressService = {
         return result[0];
     },
 
-    // -------------------- GET RESUME INFO --------------------
+    // -------------------- GET RESUME INFO (CONTINUE LEARNING) --------------------
+    // 🚀 ULTRA-OPTIMIZED: Uses aggregation pipeline (single DB hit)
     getResumeInfo: async (userId: string, courseId: string) => {
-        // Find last accessed content
-        const lastAccessed = await mongoose.model("ContentAttempt").findOne({
-            userId: new mongoose.Types.ObjectId(userId),
-            courseId: new mongoose.Types.ObjectId(courseId),
-            isCompleted: false,
-        })
-            .sort({ lastAccessedAt: -1 })
-            .populate("contentId", "title type")
-            .populate("lessonId", "title")
-            .lean();
+        const latestAttempt = await contentAttemptRepository.getLatestAttempt(userId, courseId);
 
-        return lastAccessed;
+        // No progress exists - return null safely
+        if (!latestAttempt) {
+            return null;
+        }
+
+        // Data already flattened from aggregation pipeline
+        const { content, lesson, section, course } = latestAttempt as any;
+
+        return {
+            // Resume identifiers
+            lessonId: latestAttempt.lessonId || null,
+            contentId: latestAttempt.contentId || null,
+            courseId: latestAttempt.courseId || null,
+
+            // Resume position
+            resumeAt: latestAttempt.resumeAt || 0,
+            totalDuration: latestAttempt.totalDuration || 0,
+            resumePercentage: latestAttempt.totalDuration
+                ? Math.round((latestAttempt.resumeAt / latestAttempt.totalDuration) * 100)
+                : 0,
+
+            // Content details
+            contentTitle: content?.title || null,
+            contentType: content?.type || null,
+            contentOrder: content?.order || 0,
+
+            // Lesson details
+            lessonTitle: lesson?.title || null,
+            lessonOrder: lesson?.order || 0,
+
+            // Section details (for navigation context)
+            sectionTitle: section?.title || null,
+            sectionOrder: section?.order || 0,
+
+            // Course details
+            courseTitle: course?.title || null,
+            courseSlug: course?.slug || null,
+
+            // Progress status
+            isCompleted: latestAttempt.isCompleted,
+            obtainedMarks: latestAttempt.obtainedMarks || 0,
+            totalMarks: latestAttempt.totalMarks || 0,
+
+            // Timestamps
+            lastAccessedAt: latestAttempt.lastAccessedAt,
+        };
     },
 };
 

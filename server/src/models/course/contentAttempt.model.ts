@@ -45,9 +45,16 @@ const contentAttemptSchema = new mongoose.Schema({
     lastAccessedAt: Date
 }, { timestamps: true });
 
+// Unique constraint: one attempt per user per content
 contentAttemptSchema.index(
     { userId: 1, contentId: 1 },
     { unique: true }
+);
+
+// 🚀 Performance index for "Continue Learning" feature
+// Optimized for: find latest attempt by userId + courseId, sorted by lastAccessedAt DESC
+contentAttemptSchema.index(
+    { userId: 1, courseId: 1, lastAccessedAt: -1 }
 );
 
 export default mongoose.model("ContentAttempt", contentAttemptSchema);

@@ -460,6 +460,113 @@ export const contentAttemptRepository = {
         return ContentAttempt.deleteMany({ courseId });
     },
 
+    // -------------------- GET LATEST ATTEMPT (CONTINUE LEARNING) --------------------
+    // 🚀 ULTRA-OPTIMIZED: Single DB hit using aggregation with $lookup
+    getLatestAttempt: async (
+        userId: string | Types.ObjectId,
+        courseId: string | Types.ObjectId
+    ) => {
+        const result = await ContentAttempt.aggregate([
+            // 1️⃣ Match user's attempts for this course
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(userId as string),
+                    courseId: new mongoose.Types.ObjectId(courseId as string),
+                },
+            },
+
+            // 2️⃣ Sort: incomplete first, then by lastAccessedAt DESC
+            { $sort: { isCompleted: 1, lastAccessedAt: -1 } },
+
+            // 3️⃣ Take only the latest one
+            { $limit: 1 },
+
+            // 4️⃣ Lookup content details (single DB hit)
+            {
+                $lookup: {
+                    from: "lessoncontents",
+                    localField: "contentId",
+                    foreignField: "_id",
+                    as: "content",
+                    pipeline: [
+                        { $project: { title: 1, type: 1, videoUrl: 1, pdfUrl: 1, order: 1 } },
+                    ],
+                },
+            },
+            { $unwind: { path: "$content", preserveNullAndEmptyArrays: true } },
+
+            // 5️⃣ Lookup lesson details
+            {
+                $lookup: {
+                    from: "lessons",
+                    localField: "lessonId",
+                    foreignField: "_id",
+                    as: "lesson",
+                    pipeline: [
+                        { $project: { title: 1, order: 1 } },
+                    ],
+                },
+            },
+            { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+
+            // 6️⃣ Lookup section details (for navigation context)
+            {
+                $lookup: {
+                    from: "sections",
+                    localField: "lesson.sectionId",
+                    foreignField: "_id",
+                    as: "section",
+                    pipeline: [
+                        { $project: { title: 1, order: 1 } },
+                    ],
+                },
+            },
+            { $unwind: { path: "$section", preserveNullAndEmptyArrays: true } },
+
+            // 7️⃣ Lookup course details
+            {
+                $lookup: {
+                    from: "courses",
+                    localField: "courseId",
+                    foreignField: "_id",
+                    as: "course",
+                    pipeline: [
+                        { $project: { title: 1, slug: 1 } },
+                    ],
+                },
+            },
+            { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+
+            // 8️⃣ Project clean response structure
+            {
+                $project: {
+                    _id: 1,
+                    lessonId: 1,
+                    contentId: 1,
+                    courseId: 1,
+
+                    // Resume position
+                    resumeAt: 1,
+                    totalDuration: 1,
+
+                    // Progress status
+                    isCompleted: 1,
+                    obtainedMarks: 1,
+                    totalMarks: 1,
+                    lastAccessedAt: 1,
+
+                    // Populated data (flattened)
+                    content: 1,
+                    lesson: 1,
+                    section: 1,
+                    course: 1,
+                },
+            },
+        ]);
+
+        return result[0] || null;
+    },
+
     // Get course progress aggregation
     getCourseProgressAggregation: async (
         userId: string | Types.ObjectId,
