@@ -28,9 +28,6 @@ const emailService = {
                 subject,
                 html,
             });
-
-            logger.info(`✅ Email sent to ${payload.email}:`);
-            logger.info(response);
             return response;
         } catch (error) {
             logger.error(`❌ Failed to send email to ${payload.email}:`, error);

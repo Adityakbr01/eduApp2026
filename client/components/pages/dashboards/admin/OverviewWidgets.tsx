@@ -34,7 +34,7 @@ const OverviewWidgets = ({
     titlePrefix = "",
 }: OverviewWidgetsProps) => {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-y-scroll">
             <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {stats.map((stat) => (
                     <Card key={stat.label} className={cn(stat.border, stat.bgColor)}>

@@ -25,6 +25,10 @@ import { CheckCircle, MoreVertical, ShieldBan, Trash2, User } from "lucide-react
 import type { UserRow } from "./types";
 import { useState } from "react";
 import UserProfileModal from "./Users/UserProfileModel/UserProfileModal";
+import { useEffectivePermissions } from "@/store/myPermission";
+import { CheckPermission } from "@/lib/utils/permissions";
+import app_permissions from "@/constants/permissions";
+import toast from "react-hot-toast";
 
 
 type UserActionsMenuProps = {
@@ -39,15 +43,39 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
     const deleteMutation = usersMutations.useDeleteUser();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+    const effectivePermissions = useEffectivePermissions();
+
+    const CanManageUser = CheckPermission({
+        carrier: effectivePermissions,
+        requirement: app_permissions.MANAGE_USER,
+    });
+
+    const CanDeleteUser = CheckPermission({
+        carrier: effectivePermissions,
+        requirement: app_permissions.DELETE_USER,
+    });
+
     const handleApprove = () => {
-        approveMutation.mutate({ userId: user.id });
+        if (!CanManageUser) {
+            toast.error("You do not have permission to approve users.");
+            return;
+        }
+        approveMutation.mutate({ userId: user.id },);
     };
 
     const handleBanToggle = () => {
+        if (!CanManageUser) {
+            toast.error("You do not have permission to ban/unban users.");
+            return;
+        }
         banMutation.mutate({ userId: user.id });
     };
 
     const handleDelete = () => {
+        if (!CanDeleteUser) {
+            toast.error("You do not have permission to delete users.");
+            return
+        }
         deleteMutation.mutate(user.id);
     };
 
@@ -89,7 +117,7 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <DropdownMenuItem
-                                    disabled={approveMutation.isPending}
+                                    disabled={approveMutation.isPending || !CanManageUser}
                                     onSelect={(event) => event.preventDefault()}
                                 >
                                     <CheckCircle className="mr-2 h-4 w-4" />
@@ -109,7 +137,7 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
                                     </AlertDialogCancel>
                                     <AlertDialogAction
                                         onClick={handleApprove}
-                                        disabled={approveMutation.isPending}
+                                        disabled={approveMutation.isPending || !CanManageUser}
                                     >
                                         {approveMutation.isPending ? "Approving..." : "Confirm"}
                                     </AlertDialogAction>
@@ -122,7 +150,7 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
                         <AlertDialogTrigger asChild>
                             <DropdownMenuItem
                                 className=""
-                                disabled={banMutation.isPending}
+                                disabled={banMutation.isPending || !CanManageUser}
                                 onSelect={(event) => event.preventDefault()}
                             >
                                 <ShieldBan className="mr-2 h-4 w-4" />
@@ -156,7 +184,7 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
                         <AlertDialogTrigger asChild>
                             <DropdownMenuItem
                                 className="text-red-600 focus:text-red-600"
-                                disabled={deleteMutation.isPending}
+                                disabled={deleteMutation.isPending || !CanDeleteUser}
                                 onSelect={(event) => event.preventDefault()}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />

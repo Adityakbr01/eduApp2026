@@ -97,7 +97,7 @@ const updateUserSchema = z.object({
     ),
     address: z.string().optional(),
     isBanned: z.boolean().optional(),
-    permissions: z.array(z.string()).optional(),
+
     isEmailVerified: z.boolean().optional(),
 });
 

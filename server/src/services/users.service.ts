@@ -397,7 +397,7 @@ const userService = {
         actionBy: string,
         options?: { banEmail?: boolean }
     ) => {
-        const user = await UserModel.findById(userId).exec();
+        const user = await authRepository.findUserById(userId);
 
         if (!user) {
             throw new AppError(
@@ -434,9 +434,10 @@ const userService = {
             user.isBanned = true;
             user.bannedBy = new Types.ObjectId(actionBy);
 
+            console.log(`User ${user.email} has been banned by user ID ${actionBy}.`);
             if (options?.banEmail) {
                 await addEmailJob(emailQueue, EMAIL_JOB_NAMES.ACCOUNT_BAN, {
-                    to: user.email,
+                    email: user.email,
                 });
             }
         } else {

@@ -38,7 +38,6 @@ type UserPageContentProps = {
     isError?: boolean;
     error?: Error | null;
 
-    canManageUser?: boolean;
 
     pageInfo: {
         fromItem: number;
@@ -62,7 +61,6 @@ function UserPageContent({
     isLoading,
     isError,
     error,
-    canManageUser,
     pageInfo,
     limit,
     setLimit,
@@ -89,7 +87,7 @@ function UserPageContent({
                         <TableHead className="hidden md:table-cell">
                             Last Active
                         </TableHead>
-                        {canManageUser && (
+                        {(
                             <TableHead className="text-right">
                                 Actions
                             </TableHead>
@@ -174,7 +172,7 @@ function UserPageContent({
                                     {user.lastActive}
                                 </TableCell>
 
-                                {canManageUser && (
+                                {(
                                     <TableCell className="text-right">
                                         <UserActionsMenu
                                             user={user}

@@ -38,7 +38,6 @@ export type UsersPageProps = {
     usersError?: Error | null;
 
     rowsToRender?: UserRow[];
-    CanManageUser?: boolean;
 };
 
 /* ---------------------------- Component --------------------------- */
@@ -93,7 +92,6 @@ function UsersPage(props: UsersPageProps) {
                 isLoading={props.isLoadingUsers}
                 isError={props.isUsersError}
                 error={props.usersError}
-                canManageUser={props.CanManageUser}
                 pageInfo={{ fromItem, toItem, totalItems }}
                 limit={props.limit}
                 setLimit={props.setLimit}
