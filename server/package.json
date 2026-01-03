@@ -7,7 +7,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "cross-env NODE_ENV=production node dist/server.js",
-    "seed:rbac": "tsx src/seeds/seedRolesAndPermissions.ts"
+    "seed:rbac": "tsx src/seeds/seedRolesAndPermissions.ts",
+    "seed:categories": "tsx src/seeds/seedCategories.ts",
+    "seed:all": "npm run seed:rbac && npm run seed:categories"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
     "bcryptjs": "^3.0.3",
     "bull": "^4.16.5",
     "bullmq": "^5.63.0",
+    "cloudinary": "^2.8.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

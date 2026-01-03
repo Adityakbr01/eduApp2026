@@ -115,17 +115,9 @@ function DashboardContent({
                 )}
 
                 {activeSection === adminUtils.sidebarItems[2].value && (
-                    <section>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>📚 Courses</CardTitle>
-                                <CardDescription>Manage courses and content</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">Courses section coming soon...</p>
-                            </CardContent>
-                        </Card>
-                    </section>
+                    <div>
+                        {/* <AdminCoursesPage /> */}
+                    </div>
                 )}
 
                 {activeSection === adminUtils.sidebarItems[3].value && (

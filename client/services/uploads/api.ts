@@ -1,0 +1,159 @@
+import apiClient from "@/lib/api/axios";
+import { UploadResponse, DeleteUploadResponse, UploadProgress } from "./types";
+
+// ==================== UPLOAD API ====================
+
+export const uploadApi = {
+    /**
+     * Upload a course cover image
+     * @param file - Image file (max 5MB, jpg/png/gif/webp)
+     * @param onProgress - Optional progress callback
+     */
+    uploadCourseImage: async (
+        file: File,
+        onProgress?: (progress: UploadProgress) => void
+    ): Promise<UploadResponse> => {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await apiClient.post<UploadResponse>(
+            "/upload/course-image",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 60000, // 1 minute for images
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        onProgress({
+                            loaded: progressEvent.loaded,
+                            total: progressEvent.total,
+                            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+                        });
+                    }
+                },
+            }
+        );
+
+        return response.data;
+    },
+
+    /**
+     * Upload a lesson video
+     * @param file - Video file (max 500MB, mp4/webm/mov/avi/mkv/m4v)
+     * @param onProgress - Optional progress callback
+     */
+    uploadLessonVideo: async (
+        file: File,
+        onProgress?: (progress: UploadProgress) => void
+    ): Promise<UploadResponse> => {
+        const formData = new FormData();
+        formData.append("video", file);
+
+        const response = await apiClient.post<UploadResponse>(
+            "/upload/lesson-video",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 600000, // 10 minutes for large videos
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        onProgress({
+                            loaded: progressEvent.loaded,
+                            total: progressEvent.total,
+                            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+                        });
+                    }
+                },
+            }
+        );
+
+        return response.data;
+    },
+
+    /**
+     * Upload a lesson document (PDF)
+     * @param file - PDF file (max 20MB)
+     * @param onProgress - Optional progress callback
+     */
+    uploadLessonDocument: async (
+        file: File,
+        onProgress?: (progress: UploadProgress) => void
+    ): Promise<UploadResponse> => {
+        const formData = new FormData();
+        formData.append("document", file);
+
+        const response = await apiClient.post<UploadResponse>(
+            "/upload/lesson-document",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 120000, // 2 minutes for documents
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        onProgress({
+                            loaded: progressEvent.loaded,
+                            total: progressEvent.total,
+                            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+                        });
+                    }
+                },
+            }
+        );
+
+        return response.data;
+    },
+
+    /**
+     * Upload any lesson content (auto-detect type)
+     * @param file - Any supported file (image/video/pdf)
+     * @param onProgress - Optional progress callback
+     */
+    uploadLessonContent: async (
+        file: File,
+        onProgress?: (progress: UploadProgress) => void
+    ): Promise<UploadResponse> => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await apiClient.post<UploadResponse>(
+            "/upload/lesson-content",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 600000, // 10 minutes for large files
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        onProgress({
+                            loaded: progressEvent.loaded,
+                            total: progressEvent.total,
+                            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+                        });
+                    }
+                },
+            }
+        );
+
+        return response.data;
+    },
+
+    /**
+     * Delete an uploaded file from Cloudinary
+     * @param publicId - The public ID of the file to delete
+     */
+    deleteUpload: async (publicId: string): Promise<DeleteUploadResponse> => {
+        const response = await apiClient.delete<DeleteUploadResponse>(
+            `/upload/${encodeURIComponent(publicId)}`
+        );
+        return response.data;
+    },
+};
+
+export default uploadApi;
