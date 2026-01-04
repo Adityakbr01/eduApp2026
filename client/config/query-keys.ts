@@ -60,4 +60,25 @@ export const QUERY_KEYS = {
         BY_ID: ["categories", "by-id"],
         BY_SLUG: ["categories", "by-slug"],
     },
+
+    // Enrollment
+    ENROLLMENT: {
+        STATUS: (courseId: string) => ["enrollment", "status", courseId],
+        MY_COURSES: ["enrollment", "my-courses"],
+        MY_COURSES_PAGINATED: (page: number) => ["enrollment", "my-courses", page],
+    },
+
+    // Payments
+    PAYMENTS: {
+        HISTORY: ["payments", "history"],
+        HISTORY_PAGINATED: (page: number) => ["payments", "history", page],
+        DETAIL: (paymentId: string) => ["payments", "detail", paymentId],
+    },
+
+    // Reviews
+    REVIEWS: {
+        BY_COURSE: (courseId: string) => ["reviews", "course", courseId],
+        BY_COURSE_PAGINATED: (courseId: string, page: number) => ["reviews", "course", courseId, page],
+        MY_REVIEW: (courseId: string) => ["reviews", "my-review", courseId],
+    },
 };

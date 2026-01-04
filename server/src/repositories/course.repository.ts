@@ -11,7 +11,7 @@ import ContentAttempt from "src/models/course/contentAttempt.model.js";
 // ============================================
 export const courseRepository = {
 
-    // Find all published courses
+    // Find all published courses with aggregated stats
     findAllPublished: async (
         query: {
             page?: number;
@@ -23,52 +23,270 @@ export const courseRepository = {
     ) => {
         const { page = 1, limit = 10, search, category, subCategory } = query;
         const skip = (page - 1) * limit;
-        const filter: FilterQuery<any> = { isPublished: true };
+        const matchFilter: any = { isPublished: true };
 
         if (search) {
-            filter.$or = [
+            matchFilter.$or = [
                 { title: { $regex: search, $options: "i" } },
                 { description: { $regex: search, $options: "i" } },
             ];
         }
-        if (category) filter.category = category;
-        if (subCategory) filter.subCategory = subCategory;
-        const [courses, total] = await Promise.all([
-            Course.find(filter)
-                .sort({ publishedAt: -1, createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate("instructor", "name avatar")
-                .populate("category", "name slug")
-                .populate("subCategory", "name slug")
-                .lean(),
-            Course.countDocuments(filter),
+        if (category) matchFilter.category = new Types.ObjectId(category);
+        if (subCategory) matchFilter.subCategory = new Types.ObjectId(subCategory);
+
+        const [result, countResult] = await Promise.all([
+            Course.aggregate([
+                { $match: matchFilter },
+                { $sort: { publishedAt: -1, createdAt: -1 } },
+                { $skip: skip },
+                { $limit: limit },
+
+                // Lookup sections count
+                {
+                    $lookup: {
+                        from: "sections",
+                        let: { courseId: "$_id" },
+                        pipeline: [
+                            { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+                            { $count: "count" }
+                        ],
+                        as: "sectionStats"
+                    }
+                },
+
+                // Lookup lessons count
+                {
+                    $lookup: {
+                        from: "lessons",
+                        let: { courseId: "$_id" },
+                        pipeline: [
+                            { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+                            { $count: "count" }
+                        ],
+                        as: "lessonStats"
+                    }
+                },
+
+                // Lookup lesson contents count
+                {
+                    $lookup: {
+                        from: "lessoncontents",
+                        let: { courseId: "$_id" },
+                        pipeline: [
+                            { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+                            { $count: "count" }
+                        ],
+                        as: "contentStats"
+                    }
+                },
+
+                // Lookup instructor
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "instructor",
+                        foreignField: "_id",
+                        pipeline: [
+                            { $project: { name: 1, avatar: 1 } }
+                        ],
+                        as: "instructor"
+                    }
+                },
+                { $unwind: { path: "$instructor", preserveNullAndEmptyArrays: true } },
+
+                // Lookup category
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "category",
+                        foreignField: "_id",
+                        pipeline: [
+                            { $project: { name: 1, slug: 1 } }
+                        ],
+                        as: "category"
+                    }
+                },
+                { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+
+                // Lookup subCategory
+                {
+                    $lookup: {
+                        from: "categories",
+                        localField: "subCategory",
+                        foreignField: "_id",
+                        pipeline: [
+                            { $project: { name: 1, slug: 1 } }
+                        ],
+                        as: "subCategory"
+                    }
+                },
+                { $unwind: { path: "$subCategory", preserveNullAndEmptyArrays: true } },
+
+                // Add computed stats fields
+                {
+                    $addFields: {
+                        stats: {
+                            totalEnrollments: { $ifNull: ["$totalEnrollments", 0] },
+                            totalSections: {
+                                $ifNull: [{ $arrayElemAt: ["$sectionStats.count", 0] }, 0]
+                            },
+                            totalLessons: {
+                                $ifNull: [{ $arrayElemAt: ["$lessonStats.count", 0] }, 0]
+                            },
+                            totalContents: {
+                                $ifNull: [{ $arrayElemAt: ["$contentStats.count", 0] }, 0]
+                            }
+                        }
+                    }
+                },
+
+                // Remove temporary lookup arrays
+                {
+                    $project: {
+                        sectionStats: 0,
+                        lessonStats: 0,
+                        contentStats: 0
+                    }
+                }
+            ]),
+            Course.countDocuments(matchFilter),
         ]);
+
         return {
-            courses,
+            courses: result,
             pagination: {
                 page,
                 limit,
-                total,
-                totalPages: Math.ceil(total / limit),
+                total: countResult,
+                totalPages: Math.ceil(countResult / limit),
             },
         };
     },
 
-    // Find published course by ID or Slug
+    // Find published course by ID or Slug with aggregated stats
     findPublishedById: async (idOrSlug: string | Types.ObjectId) => {
         // Check if it's a valid ObjectId, if not, treat as slug
         const isObjectId = Types.ObjectId.isValid(idOrSlug) &&
             (typeof idOrSlug === 'string' ? idOrSlug.length === 24 : true);
 
-        const query = isObjectId
-            ? { _id: idOrSlug, isPublished: true }
+        const matchQuery = isObjectId
+            ? { _id: new Types.ObjectId(idOrSlug as string), isPublished: true }
             : { slug: idOrSlug, isPublished: true };
 
-        return Course.findOne(query)
-            .populate("instructor", "name email avatar fullName profileImage")
-            .populate("category", "name slug")
-            .populate("subCategory", "name slug");
+        const result = await Course.aggregate([
+            // Match the course
+            { $match: matchQuery },
+
+            // Lookup sections count
+            {
+                $lookup: {
+                    from: "sections",
+                    let: { courseId: "$_id" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+                        { $count: "count" }
+                    ],
+                    as: "sectionStats"
+                }
+            },
+
+            // Lookup lessons count
+            {
+                $lookup: {
+                    from: "lessons",
+                    let: { courseId: "$_id" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+                        { $count: "count" }
+                    ],
+                    as: "lessonStats"
+                }
+            },
+
+            // Lookup lesson contents count
+            {
+                $lookup: {
+                    from: "lessoncontents",
+                    let: { courseId: "$_id" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$courseId", "$$courseId"] } } },
+                        { $count: "count" }
+                    ],
+                    as: "contentStats"
+                }
+            },
+
+            // Lookup instructor
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "instructor",
+                    foreignField: "_id",
+                    pipeline: [
+                        { $project: { name: 1, email: 1, avatar: 1, fullName: 1, profileImage: 1 } }
+                    ],
+                    as: "instructor"
+                }
+            },
+            { $unwind: { path: "$instructor", preserveNullAndEmptyArrays: true } },
+
+            // Lookup category
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "category",
+                    foreignField: "_id",
+                    pipeline: [
+                        { $project: { name: 1, slug: 1 } }
+                    ],
+                    as: "category"
+                }
+            },
+            { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+
+            // Lookup subCategory
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "subCategory",
+                    foreignField: "_id",
+                    pipeline: [
+                        { $project: { name: 1, slug: 1 } }
+                    ],
+                    as: "subCategory"
+                }
+            },
+            { $unwind: { path: "$subCategory", preserveNullAndEmptyArrays: true } },
+
+            // Add computed stats fields
+            {
+                $addFields: {
+                    stats: {
+                        totalEnrollments: { $ifNull: ["$totalEnrollments", 0] },
+                        totalSections: {
+                            $ifNull: [{ $arrayElemAt: ["$sectionStats.count", 0] }, 0]
+                        },
+                        totalLessons: {
+                            $ifNull: [{ $arrayElemAt: ["$lessonStats.count", 0] }, 0]
+                        },
+                        totalContents: {
+                            $ifNull: [{ $arrayElemAt: ["$contentStats.count", 0] }, 0]
+                        }
+                    }
+                }
+            },
+
+            // Remove temporary lookup arrays
+            {
+                $project: {
+                    sectionStats: 0,
+                    lessonStats: 0,
+                    contentStats: 0
+                }
+            }
+        ]);
+
+        return result.length > 0 ? result[0] : null;
     },
 
 

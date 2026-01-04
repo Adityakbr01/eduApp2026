@@ -115,6 +115,7 @@ export function CourseDetailPage({ slug }: CourseDetailPageProps) {
                             <div className="flex items-center gap-2">
                                 <Badge variant="default">{level}</Badge>
                                 <Badge variant="outline">{language}</Badge>
+
                             </div>
 
                             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">
@@ -144,6 +145,15 @@ export function CourseDetailPage({ slug }: CourseDetailPageProps) {
                                         <Globe className="size-4 text-blue-500" />
                                         <span>Last updated {new Date(course.updatedAt).toLocaleDateString()}</span>
                                     </div>
+                                )}
+
+                                {course.stats && course.stats.totalEnrollments > 0 && (
+                                    <Badge className="flex justify-between shadow-none" variant={"destructive"}>
+                                        <span className="text-muted-foreground">Enrolled Students: </span>
+                                        <span className="font-medium">
+                                            {course.stats.totalEnrollments.toLocaleString()}
+                                        </span>
+                                    </Badge>
                                 )}
                             </div>
 
@@ -178,8 +188,8 @@ export function CourseDetailPage({ slug }: CourseDetailPageProps) {
 
                     {/* Right Column - Sticky Enrollment Card */}
                     <EnrollmentCard
-                        course={course}
                         visibleSections={visibleSections}
+                        course={course}
                         totalLessons={totalLessons}
                         totalDuration={totalDuration}
                         bookmarked={bookmarked}

@@ -131,6 +131,14 @@ export interface ICategoryInfo {
     slug?: string;
 }
 
+// Course stats from aggregation
+export interface ICourseStats {
+    totalEnrollments: number;
+    totalSections: number;
+    totalLessons: number;
+    totalContents: number;
+}
+
 export interface ICourse {
     _id: string;
     title: string;
@@ -158,6 +166,7 @@ export interface ICourse {
     isFeatured?: boolean;
     sections?: ISection[];
     ratingStats?: IRatingStats;
+    stats?: ICourseStats;
     seoTitle?: string;
     seoDescription?: string;
     seoKeywords?: string[];
