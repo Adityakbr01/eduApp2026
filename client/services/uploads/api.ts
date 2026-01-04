@@ -110,6 +110,41 @@ export const uploadApi = {
     },
 
     /**
+     * Upload lesson audio
+     * @param file - Audio file (max 100MB, mp3/wav/ogg/aac/m4a/webm/flac)
+     * @param onProgress - Optional progress callback
+     */
+    uploadLessonAudio: async (
+        file: File,
+        onProgress?: (progress: UploadProgress) => void
+    ): Promise<UploadResponse> => {
+        const formData = new FormData();
+        formData.append("audio", file);
+
+        const response = await apiClient.post<UploadResponse>(
+            "/upload/lesson-audio",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                timeout: 300000, // 5 minutes for audio files
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        onProgress({
+                            loaded: progressEvent.loaded,
+                            total: progressEvent.total,
+                            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
+                        });
+                    }
+                },
+            }
+        );
+
+        return response.data;
+    },
+
+    /**
      * Upload any lesson content (auto-detect type)
      * @param file - Any supported file (image/video/pdf)
      * @param onProgress - Optional progress callback

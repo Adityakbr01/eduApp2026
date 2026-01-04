@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { CourseLevel, CourseStatus, Currency, DeliveryMode } from "../../types/course.type.js";
+import { CourseLevel, CourseStatus, Currency, DeliveryMode, Language } from "../../types/course.type.js";
 
 
 
@@ -34,8 +34,8 @@ const courseSchema = new mongoose.Schema({
     },
     language: {
         type: String,
-        default: "English",
-        trim: true,
+        enum: Object.values(Language),
+        default: Language.ENGLISH,
     },
     deliveryMode: {
         type: String,
@@ -57,6 +57,14 @@ const courseSchema = new mongoose.Schema({
     // Enrollment
     totalEnrollments: { type: Number, default: 0, min: 0 },
     maxEnrollments: { type: Number, min: 1 },
+
+    // Course Duration (in weeks)
+    durationWeeks: {
+        type: Number,
+        default: 1,
+        min: 1,
+        max: 520, // Max 10 years
+    },
 
     // Instructors
     instructor: {
@@ -108,13 +116,29 @@ const courseSchema = new mongoose.Schema({
 
     // Pricing
     pricing: {
-        price: { type: Number, required: true, min: 0 },
+        originalPrice: { type: Number, required: true, min: 0 }, // Price set by instructor
+        price: { type: Number, min: 0, default: 0 }, // Auto-calculated final price
+        discountPercentage: { type: Number, min: 0, max: 100, default: 0 },
+        discountExpiresAt: { type: Date }, // When the discount expires
         currency: {
             type: String,
             enum: Object.values(Currency),
             default: Currency.USD,
         },
         isFree: { type: Boolean, default: false },
+    },
+
+    // Rating Statistics (aggregated from reviews)
+    ratingStats: {
+        averageRating: { type: Number, default: 0, min: 0, max: 5 },
+        totalReviews: { type: Number, default: 0, min: 0 },
+        ratingsDistribution: {
+            one: { type: Number, default: 0, min: 0 },
+            two: { type: Number, default: 0, min: 0 },
+            three: { type: Number, default: 0, min: 0 },
+            four: { type: Number, default: 0, min: 0 },
+            five: { type: Number, default: 0, min: 0 },
+        },
     },
 
     // Content
@@ -128,12 +152,6 @@ const courseSchema = new mongoose.Schema({
         },
     ],
 
-
-    // SEO
-    seoTitle: { type: String, maxlength: 70 },
-    seoDescription: { type: String, maxlength: 160 },
-    seoKeywords: { type: [String], default: [] },
-
     // Timestamps
     lastUpdated: { type: Date, default: Date.now },
 },
@@ -142,5 +160,67 @@ const courseSchema = new mongoose.Schema({
         toJSON: { virtuals: true },
         toObject: { virtuals: true },
     });
+
+// ============================================
+// PRE-SAVE HOOK: Auto-calculate price from originalPrice and discountPercentage
+// ============================================
+courseSchema.pre("save", function (next) {
+    if (this.pricing) {
+        const originalPrice = this.pricing.originalPrice || 0;
+        const discountPercentage = this.pricing.discountPercentage || 0;
+        const discountExpiresAt = this.pricing.discountExpiresAt;
+
+        // Check if discount is active (not expired)
+        const isDiscountActive = discountPercentage > 0 &&
+            (!discountExpiresAt || new Date(discountExpiresAt) > new Date());
+
+        if (this.pricing.isFree) {
+            this.pricing.price = 0;
+        } else if (isDiscountActive) {
+            // Calculate discounted price
+            const discountAmount = (originalPrice * discountPercentage) / 100;
+            this.pricing.price = Math.round((originalPrice - discountAmount) * 100) / 100;
+        } else {
+            // No discount or expired, price equals originalPrice
+            this.pricing.price = originalPrice;
+        }
+    }
+    next();
+});
+
+// Pre-update hook for findOneAndUpdate operations
+courseSchema.pre(["findOneAndUpdate", "updateOne", "updateMany"], function (next) {
+    const update = this.getUpdate() as any;
+
+    if (update?.pricing || update?.$set?.pricing) {
+        const pricing = update.pricing || update.$set?.pricing;
+        const originalPrice = pricing.originalPrice ?? 0;
+        const discountPercentage = pricing.discountPercentage ?? 0;
+        const discountExpiresAt = pricing.discountExpiresAt;
+        const isFree = pricing.isFree ?? false;
+
+        // Check if discount is active
+        const isDiscountActive = discountPercentage > 0 &&
+            (!discountExpiresAt || new Date(discountExpiresAt) > new Date());
+
+        let calculatedPrice: number;
+        if (isFree) {
+            calculatedPrice = 0;
+        } else if (isDiscountActive) {
+            const discountAmount = (originalPrice * discountPercentage) / 100;
+            calculatedPrice = Math.round((originalPrice - discountAmount) * 100) / 100;
+        } else {
+            calculatedPrice = originalPrice;
+        }
+
+        // Set the calculated price
+        if (update.pricing) {
+            update.pricing.price = calculatedPrice;
+        } else if (update.$set?.pricing) {
+            update.$set.pricing.price = calculatedPrice;
+        }
+    }
+    next();
+});
 
 export default mongoose.model("Course", courseSchema);

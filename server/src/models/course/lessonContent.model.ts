@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ContentType } from "src/types/course.type.js";
 
 const lessonContentSchema = new mongoose.Schema({
     courseId: {
@@ -14,12 +15,15 @@ const lessonContentSchema = new mongoose.Schema({
 
     type: {
         type: String,
-        enum: ["video", "pdf", "assignment", "quiz"],
-        required: true
+        enum: Object.values(ContentType),
+        default: ContentType.VIDEO,
     },
 
     title: { type: String, required: true },
-    order: Number,
+    order: {
+        type: Number,
+        required: true
+    },
 
     // 🎯 MARKS (single source of truth)
     marks: { type: Number, required: true },
@@ -34,7 +38,13 @@ const lessonContentSchema = new mongoose.Schema({
     totalPages: Number,
 
     // 📝 QUIZ / ASSIGNMENT
-    quizId: mongoose.Schema.Types.ObjectId,
+    assessment: {
+        refId: mongoose.Schema.Types.ObjectId,
+        type: {
+            type: String,
+            enum: ["quiz", "assignment"]
+        }
+    },
 
     isVisible: { type: Boolean, default: true }
 }, { timestamps: true });

@@ -29,18 +29,15 @@ import {
 
 const router = Router();
 
-
-router.get("/", courseController.getAllPublishedCourses);
-router.get("/:id", courseController.getPublishedCourseById);
 // ============================================
-// 🔐 AUTH MIDDLEWARE FOR ALL ROUTES
+// 🔐 AUTH MIDDLEWARE FOR ALL ROUTES (except public routes below)
 // ============================================
-router.use(authMiddleware);
 
 // ============================================
 // 🎓 INSTRUCTOR ROUTES (Protected by Role)
 // ============================================
 const instructorRouter = Router();
+instructorRouter.use(authMiddleware);
 instructorRouter.use(checkRole(ROLES.INSTRUCTOR.code));
 
 // 1️⃣ COURSE CRUD
@@ -92,6 +89,7 @@ router.use("/instructor", instructorRouter);
 // 👨‍🎓 STUDENT ROUTES - PROGRESS TRACKING
 // ============================================
 const studentRouter = Router();
+studentRouter.use(authMiddleware);
 studentRouter.use(checkRole(ROLES.STUDENT.code, ROLES.ADMIN.code));
 
 // Content Progress
@@ -106,5 +104,12 @@ studentRouter.get("/:courseId/resume", courseProgressController.getResumeInfo);
 
 // Mount student routes
 router.use("/student", studentRouter);
+
+// ============================================
+// 🌐 PUBLIC ROUTES (No auth required)
+// These must be AFTER subrouters to avoid matching "instructor" or "student" as :id
+// ============================================
+router.get("/", courseController.getAllPublishedCourses);
+router.get("/:id", courseController.getPublishedCourseById);
 
 export default router;

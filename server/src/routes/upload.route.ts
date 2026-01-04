@@ -4,6 +4,7 @@ import {
     uploadCourseImage,
     uploadLessonVideo,
     uploadLessonDocument,
+    uploadLessonAudio,
     uploadLessonContent,
 } from "../utils/upload.js";
 import { uploadController } from "src/controllers/upload.controller.js";
@@ -55,6 +56,19 @@ router.post(
     checkPermission(PERMISSIONS.UPDATE_COURSE.code),
     uploadLessonDocument.single("document"),
     uploadController.uploadLessonDocument
+);
+
+/**
+ * @route   POST /api/v1/upload/lesson-audio
+ * @desc    Upload lesson audio
+ * @access  Private - Instructor, Admin
+ */
+router.post(
+    "/lesson-audio",
+    checkRole(ROLES.INSTRUCTOR.code, ROLES.ADMIN.code),
+    checkPermission(PERMISSIONS.UPDATE_COURSE.code),
+    uploadLessonAudio.single("audio"),
+    uploadController.uploadLessonAudio
 );
 
 /**

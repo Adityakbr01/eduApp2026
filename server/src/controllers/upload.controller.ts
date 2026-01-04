@@ -89,6 +89,30 @@ export const uploadController = {
     }),
 
     /**
+     * @desc    Upload lesson audio
+     * @route   POST /api/v1/upload/lesson-audio
+     * @access  Private (Instructor, Admin)
+     */
+    uploadLessonAudio: catchAsync(async (req: Request, res: Response) => {
+        if (!req.file) {
+            throw new AppError("No audio file provided", STATUSCODE.BAD_REQUEST, ERROR_CODE.INVALID_INPUT);
+        }
+
+        const result = await uploadVideoToCloudinary(
+            req.file.buffer,
+            "courses/lessons/audio",
+            `lesson-audio-${Date.now()}`
+        );
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, {
+            url: result.url,
+            publicId: result.publicId,
+            format: result.format,
+            duration: result.duration,
+        });
+    }),
+
+    /**
      * @desc    Upload any lesson content (auto-detect type)
      * @route   POST /api/v1/upload/lesson-content
      * @access  Private (Instructor, Admin)

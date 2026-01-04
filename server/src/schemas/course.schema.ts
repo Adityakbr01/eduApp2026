@@ -1,4 +1,4 @@
-import { CourseLevel, DeliveryMode } from "src/types/course.type.js";
+import { ContentType, CourseLevel, DeliveryMode, Language } from "src/types/course.type.js";
 import { z } from "zod";
 
 // ============================================
@@ -12,26 +12,27 @@ export const createCourseSchema = z.object({
         .min(10, "Description must be at least 10 characters"),
     shortDescription: z.string()
         .max(500, "Short description cannot exceed 500 characters"),
-    category: z.string().min(1, "Category is required"),
-    subCategory: z.string().min(1, "SubCategory is required"),
+    category: z.string().min(1, "Category is required"), // category mongoId 
+    subCategory: z.string().min(1, "SubCategory is required"), // subcategory mongoId
     level: z.nativeEnum(CourseLevel).optional(),
-    language: z.string().default("English"),
+    language: z.nativeEnum(Language).optional(),
     deliveryMode: z.nativeEnum(DeliveryMode).optional(),
     coverImage: z.string().url().optional(),
     previewVideoUrl: z.string().url().optional(),
     thumbnailUrl: z.string().url().optional(),
     pricing: z.object({
         price: z.number().min(0),
-        currency: z.enum(["USD", "EUR", "INR"]).default("USD"),
-        isFree: z.boolean().default(false),
+        originalPrice: z.number().min(0).optional(),
+        discountPercentage: z.number().min(0).max(100).optional(),
+        discountExpiresAt: z.string().optional(),
+        currency: z.enum(["USD", "EUR", "INR", "GBP"]).optional(),
+        isFree: z.boolean().optional(),
     }).optional(),
     tags: z.array(z.string()).max(10, "Cannot have more than 10 tags").optional(),
     accessDuration: z.number().min(0).optional(),
     maxEnrollments: z.number().min(1).optional(),
     curriculum: z.string().optional(),
-    seoTitle: z.string().max(70, "SEO Title cannot exceed 70 characters").optional(),
-    seoDescription: z.string().max(160, "SEO Description cannot exceed 160 characters").optional(),
-    seoKeywords: z.array(z.string()).optional(),
+    durationWeeks: z.number().min(1).max(520).optional(),
 });
 
 export const updateCourseSchema = z.object({
@@ -41,26 +42,27 @@ export const updateCourseSchema = z.object({
         .optional(),
     description: z.string().min(10).optional(),
     shortDescription: z.string().max(500).optional(),
-    category: z.string().optional(),
+    category: z.string().optional(), //category 
     subCategory: z.string().optional(),
-    level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
-    language: z.string().optional(),
-    deliveryMode: z.enum(["recorded", "live", "hybrid"]).optional(),
+    level: z.nativeEnum(CourseLevel).optional(),
+    language: z.nativeEnum(Language).optional(),
+    deliveryMode: z.nativeEnum(DeliveryMode).optional(),
     coverImage: z.string().url().optional(),
     previewVideoUrl: z.string().url().optional(),
     thumbnailUrl: z.string().url().optional(),
     pricing: z.object({
         price: z.number().min(0),
-        currency: z.enum(["USD", "EUR", "INR"]).optional(),
+        originalPrice: z.number().min(0).optional(),
+        discountPercentage: z.number().min(0).max(100).optional(),
+        discountExpiresAt: z.string().optional(),
+        currency: z.enum(["USD", "EUR", "INR", "GBP"]).optional(),
         isFree: z.boolean().optional(),
     }).optional(),
     tags: z.array(z.string()).max(10).optional(),
     accessDuration: z.number().min(0).optional(),
     maxEnrollments: z.number().min(1).optional(),
     curriculum: z.string().optional(),
-    seoTitle: z.string().max(70).optional(),
-    seoDescription: z.string().max(160).optional(),
-    seoKeywords: z.array(z.string()).optional(),
+    durationWeeks: z.number().min(1).max(520).optional(),
 });
 
 // ============================================
@@ -103,47 +105,73 @@ export const reorderLessonsSchema = z.array(z.object({
 // LESSON CONTENT SCHEMAS
 // ============================================
 export const createContentSchema = z.object({
-    title: z.string().min(1, "Content title is required").max(200),
-    type: z.enum(["video", "pdf", "assignment", "quiz"]),
+    title: z.string().min(1, "Content title is required").max(200).trim(),
+    type: z.nativeEnum(ContentType).optional(),
     marks: z.number().min(0, "Marks must be a positive number"),
     isVisible: z.boolean().default(true),
+    isPreview: z.boolean().default(false),
 
-    // Video fields
-    videoUrl: z.string().url().optional(),
-    duration: z.number().min(0).optional(), // seconds
-    minWatchPercent: z.number().min(0).max(100).default(90),
+    // 🎥 VIDEO/AUDIO (nested)
+    video: z.object({
+        url: z.string().url().optional(),
+        duration: z.number().min(0).optional(),
+        minWatchPercent: z.number().min(0).max(100).default(90),
+    }).optional(),
 
-    // PDF fields
-    pdfUrl: z.string().url().optional(),
-    totalPages: z.number().min(1).optional(),
+    // 📄 PDF (nested)
+    pdf: z.object({
+        url: z.string().url().optional(),
+        totalPages: z.number().min(1).optional(),
+    }).optional(),
 
-    // Quiz/Assignment fields
-    quizId: z.string().optional(),
+    // 📝 QUIZ/ASSIGNMENT (nested)
+    assessment: z.object({
+        refId: z.string().optional(),
+        type: z.enum(["quiz", "assignment"]).optional(),
+    }).optional(),
 }).refine((data) => {
-    // Validate video type has videoUrl
-    if (data.type === "video" && !data.videoUrl) {
+    // Validate video type has video.url
+    if (data.type === "video" && !data.video?.url) {
         return false;
     }
-    // Validate pdf type has pdfUrl
-    if (data.type === "pdf" && !data.pdfUrl) {
+    // Validate audio type has video.url (audio uses video object)
+    if (data.type === "audio" && !data.video?.url) {
+        return false;
+    }
+    // Validate pdf type has pdf.url
+    if (data.type === "pdf" && !data.pdf?.url) {
         return false;
     }
     return true;
 }, {
-    message: "Video content requires videoUrl, PDF content requires pdfUrl",
+    message: "Video/Audio content requires video.url, PDF content requires pdf.url",
 });
 
 export const updateContentSchema = z.object({
-    title: z.string().min(1).max(200).optional(),
-    type: z.enum(["video", "pdf", "assignment", "quiz"]).optional(),
+    title: z.string().min(1).max(200).trim().optional(),
+    type: z.nativeEnum(ContentType).optional(),
     marks: z.number().min(0).optional(),
     isVisible: z.boolean().optional(),
-    videoUrl: z.string().url().optional(),
-    duration: z.number().min(0).optional(),
-    minWatchPercent: z.number().min(0).max(100).optional(),
-    pdfUrl: z.string().url().optional(),
-    totalPages: z.number().min(1).optional(),
-    quizId: z.string().optional(),
+    isPreview: z.boolean().optional(),
+
+    // 🎥 VIDEO (nested)
+    video: z.object({
+        url: z.string().url().optional(),
+        duration: z.number().min(0).optional(),
+        minWatchPercent: z.number().min(0).max(100).optional(),
+    }).optional(),
+
+    // 📄 PDF (nested)
+    pdf: z.object({
+        url: z.string().url().optional(),
+        totalPages: z.number().min(1).optional(),
+    }).optional(),
+
+    // 📝 QUIZ/ASSIGNMENT (nested)
+    assessment: z.object({
+        refId: z.string().optional(),
+        type: z.enum(["quiz", "assignment"]).optional(),
+    }).optional(),
 });
 
 export const reorderContentsSchema = z.array(z.object({

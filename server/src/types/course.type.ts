@@ -14,6 +14,19 @@ export enum DeliveryMode {
     HYBRID = "Hybrid",
 }
 
+
+export enum Language {
+    ENGLISH = "English",
+    SPANISH = "Spanish",
+    FRENCH = "French",
+    GERMAN = "German",
+    MANDARIN = "Mandarin",
+    HINDI = "Hindi",
+    HINGLISH = "Hinglish",
+    ARABIC = "Arabic",
+    PORTUGUESE = "Portuguese",
+}
+
 export enum ContentType {
     VIDEO = "video",
     PDF = "pdf",

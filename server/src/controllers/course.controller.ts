@@ -64,6 +64,7 @@ const courseController = {
     // -------------------- UPDATE COURSE --------------------
     updateCourse: catchAsync<{ id: string }>(async (req, res) => {
         const instructorId = req.user!.id;
+        console.log("Updating course with data:", req.body);
         const result = await courseService.updateCourse(req.params.id, instructorId, req.body);
         sendResponse(res, 200, "Course updated successfully", result);
     }),

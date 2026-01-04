@@ -37,6 +37,32 @@ const videoFilter = (
     }
 };
 
+const audioFilter = (
+    req: Express.Request,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback
+) => {
+    const allowedMimes = [
+        "audio/mpeg",      // MP3
+        "audio/mp3",       // MP3 alternate
+        "audio/wav",       // WAV
+        "audio/wave",      // WAV alternate
+        "audio/x-wav",     // WAV alternate
+        "audio/ogg",       // OGG
+        "audio/aac",       // AAC
+        "audio/m4a",       // M4A
+        "audio/x-m4a",     // M4A alternate
+        "audio/mp4",       // MP4 audio
+        "audio/webm",      // WebM audio
+        "audio/flac",      // FLAC
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error("Invalid file type. Only MP3, WAV, OGG, AAC, M4A, WebM, and FLAC audio files are allowed."));
+    }
+};
+
 const documentFilter = (
     req: Express.Request,
     file: Express.Multer.File,
@@ -64,13 +90,17 @@ const lessonContentFilter = (
         "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif",
         // Videos
         "video/mp4", "video/webm", "video/quicktime",
+        // Audio
+        "audio/mpeg", "audio/mp3", "audio/wav", "audio/wave", "audio/x-wav",
+        "audio/ogg", "audio/aac", "audio/m4a", "audio/x-m4a", "audio/mp4",
+        "audio/webm", "audio/flac",
         // Documents
         "application/pdf",
     ];
     if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error("Invalid file type. Only images, videos, and PDF documents are allowed."));
+        cb(new Error("Invalid file type. Only images, videos, audio files, and PDF documents are allowed."));
     }
 };
 
@@ -95,6 +125,13 @@ export const uploadLessonDocument = multer({
     storage,
     fileFilter: documentFilter,
     limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+});
+
+// For lesson audio (max 100MB)
+export const uploadLessonAudio = multer({
+    storage,
+    fileFilter: audioFilter,
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 });
 
 // For any lesson content (max 500MB)

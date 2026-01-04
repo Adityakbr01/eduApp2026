@@ -77,6 +77,25 @@ export const useUploadLessonDocument = () => {
 };
 
 /**
+ * Upload lesson audio
+ */
+export const useUploadLessonAudio = () => {
+    return useMutation({
+        mutationFn: ({
+            file,
+            onProgress,
+        }: {
+            file: File;
+            onProgress?: (progress: UploadProgress) => void;
+        }) => uploadApi.uploadLessonAudio(file, onProgress),
+        onSuccess: (data) => {
+            mutationHandlers.success(data.message || "Audio uploaded successfully");
+        },
+        onError: handleMutationError,
+    });
+};
+
+/**
  * Upload any lesson content (auto-detect type)
  */
 export const useUploadLessonContent = () => {

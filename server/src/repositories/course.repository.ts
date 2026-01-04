@@ -55,10 +55,18 @@ export const courseRepository = {
         };
     },
 
-    // Find published course by ID
-    findPublishedById: async (id: string | Types.ObjectId) => {
-        return Course.findOne({ _id: id, isPublished: true })
-            .populate("instructor", "name email avatar")
+    // Find published course by ID or Slug
+    findPublishedById: async (idOrSlug: string | Types.ObjectId) => {
+        // Check if it's a valid ObjectId, if not, treat as slug
+        const isObjectId = Types.ObjectId.isValid(idOrSlug) &&
+            (typeof idOrSlug === 'string' ? idOrSlug.length === 24 : true);
+
+        const query = isObjectId
+            ? { _id: idOrSlug, isPublished: true }
+            : { slug: idOrSlug, isPublished: true };
+
+        return Course.findOne(query)
+            .populate("instructor", "name email avatar fullName profileImage")
             .populate("category", "name slug")
             .populate("subCategory", "name slug");
     },
