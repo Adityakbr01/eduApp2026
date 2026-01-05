@@ -19,6 +19,9 @@ const router = express.Router();
 // All upload routes require authentication
 router.use(authMiddleware);
 
+
+router.post("/getPresignedUrl", uploadController.getPresignedUrl);
+
 /**
  * @route   POST /api/v1/upload/course-image
  * @desc    Upload course cover image

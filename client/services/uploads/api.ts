@@ -1,9 +1,50 @@
 import apiClient from "@/lib/api/axios";
 import { UploadResponse, DeleteUploadResponse, UploadProgress } from "./types";
 
+
+
+
+export type FileTypeEnum =
+    | "profile_image"
+    | "course_thumbnail"
+    | "lesson_video"
+    | "lesson_pdf";
+
+type UploadMode =
+    | { mode: "simple"; uploadUrl: string }
+    | { mode: "multipart" };
+
 // ==================== UPLOAD API ====================
 
 export const uploadApi = {
+    getPresignedUrl: async (
+        filename: string,
+        fileType: FileTypeEnum,
+        fileSize: number,
+        mimeType: string
+    ): Promise<{
+        mode: "simple" | "multipart";
+        intentId: string;
+        uploadUrl?: string;
+        key: string;
+    }> => {
+        const response = await apiClient.post<{
+            mode: UploadMode["mode"];
+            intentId: string;
+            uploadUrl?: string;
+            key: string;
+        }>(
+            "/upload/presigned-url",
+            {
+                filename,
+                fileType,
+                fileSize,
+                mimeType,
+            }
+        );
+        return response.data;
+    },
+
     /**
      * Upload a course cover image
      * @param file - Image file (max 5MB, jpg/png/gif/webp)

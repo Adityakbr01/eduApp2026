@@ -1,19 +1,51 @@
 import type { Request, Response } from "express";
-import {
-    uploadImageToCloudinary,
-    uploadVideoToCloudinary,
-    uploadDocumentToCloudinary,
-    uploadFileToCloudinary,
-    deleteFromCloudinary,
-} from "../utils/upload.js";
-import AppError from "src/utils/AppError.js";
-import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
+import { STATUSCODE } from "src/constants/statusCodes.js";
 import { SUCCESS_CODE } from "src/constants/successCodes.js";
+import { UploadService } from "src/services/upload-service/upload.service.js";
+import AppError from "src/utils/AppError.js";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
+import {
+    deleteFromCloudinary,
+    uploadDocumentToCloudinary,
+    uploadFileToCloudinary,
+    uploadImageToCloudinary,
+    uploadVideoToCloudinary,
+} from "../utils/upload.js";
 
 export const uploadController = {
+
+    getPresignedUrl: catchAsync(async (req: Request, res: Response) => {
+        const { filename, fileType, fileSize, mimeType } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            throw new AppError("User not authenticated", STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED);
+        }
+
+        if (!filename || !fileType || !fileSize || !mimeType) {
+            throw new AppError(
+                "Filename, fileType, fileSize, and mimeType are required",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        const result = await UploadService.getPresignedUrl({
+            userId,
+            filename,
+            fileType,
+            fileSize,
+            mimeType,
+        });
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+
+
+
     /**
      * @desc    Upload course cover image
      * @route   POST /api/v1/upload/course-image
