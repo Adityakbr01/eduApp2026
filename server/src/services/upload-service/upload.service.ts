@@ -6,13 +6,14 @@ import { buildKey } from "./keyBuilder.js";
 import { createIntent } from "./uploadIntent.js";
 import { s3 } from "./s3.js";
 import { env } from "src/configs/env.js";
+import { url } from "node_modules/zod/v4/classic/external.cjs";
 
-const PRESIGN_EXPIRE = 60 * 5; // 5 min
 const MULTIPART_THRESHOLD = 10 * 1024 * 1024; // 10MB
 export type FileTypeEnum =
     | "profile_image"
     | "course_thumbnail"
     | "lesson_video"
+    | "lesson_audio"
     | "lesson_pdf";
 
 
@@ -57,25 +58,31 @@ export class UploadService {
         // 5️⃣ create upload intent (security)
         const intent = await createIntent(userId, key, fileSize, mimeType);
 
+
+
         // 6️⃣ decide upload type
         if (fileSize <= MULTIPART_THRESHOLD) {
-            // SIMPLE UPLOAD
+            // SIMPLE upload
             const command = new PutObjectCommand({
-                Bucket: env.AWS_S3_BUCKET_NAME!,
+                Bucket: env.AWS_S3_BUCKET_NAME,
                 Key: key,
                 ContentType: mimeType,
-                ContentLength: fileSize, // 🔒 HARD LIMIT
             });
 
-            const url = await getSignedUrl(s3, command, {
-                expiresIn: PRESIGN_EXPIRE,
+            // Sign only host header (default) - don't add extra signed headers
+            // This gives the client flexibility in what headers it sends
+            const presigned = await getSignedUrl(s3, command, {
+                expiresIn: 300,
+
             });
 
             return {
                 mode: "simple" as const,
                 intentId: intent.id,
-                uploadUrl: url,
+                uploadUrl: presigned,
                 key,
+                mimeType,
+                fileSize,
             };
         }
 

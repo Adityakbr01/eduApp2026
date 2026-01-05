@@ -1,15 +1,46 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadApi } from "./api";
-import { UploadProgress } from "./types";
+import { FileTypeEnum, UploadProgress } from "./types";
 import { mutationHandlers } from "@/services/common/mutation-utils";
 import { QUERY_KEYS } from "@/config/query-keys";
+import { uploadFileToS3 } from "@/lib/s3/uploadSDK";
 
 // Helper to create a simple error handler
 const handleMutationError = (error: unknown) => {
     mutationHandlers.error(error);
 };
 
-// ==================== UPLOAD MUTATIONS ====================
+// ==================== S3 PRESIGNED URL UPLOAD ====================
+
+/**
+ * Upload file directly to S3 using presigned URLs
+ * This is the preferred method for large files
+ */
+export const useS3Upload = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            file,
+            fileType,
+            onProgress,
+        }: {
+            file: File;
+            fileType: FileTypeEnum;
+            onProgress?: (progress: { loaded: number; total: number; percentage: number }) => void;
+        }) => uploadFileToS3({ file, fileType, onProgress }),
+        onSuccess: () => {
+            mutationHandlers.success("File uploaded successfully");
+            // Invalidate relevant queries
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES],
+            });
+        },
+        onError: handleMutationError,
+    });
+};
+
+// ==================== LEGACY UPLOAD MUTATIONS (via server) ====================
 
 /**
  * Upload course cover image

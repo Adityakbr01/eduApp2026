@@ -8,12 +8,9 @@ import type {
     UpdateAssignmentDTO,
     IQuizQuestion,
 } from "./types";
+import { ApiResponse } from "../auth";
 
-interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
+
 
 // ============================================
 // QUIZ API

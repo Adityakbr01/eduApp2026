@@ -3,6 +3,8 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { SUCCESS_CODE } from "src/constants/successCodes.js";
 import { UploadService } from "src/services/upload-service/upload.service.js";
+import { MultipartUploadService } from "src/services/upload-service/multipartUpload.js";
+import { FinalizeUploadService } from "src/services/upload-service/finalizeUpload.js";
 import AppError from "src/utils/AppError.js";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
@@ -40,6 +42,98 @@ export const uploadController = {
             mimeType,
         });
 
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Initialize multipart upload
+     * @route   POST /api/v1/upload/multipart/init
+     * @access  Private
+     */
+    initMultipart: catchAsync(async (req: Request, res: Response) => {
+        const { intentId } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            throw new AppError("User not authenticated", STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED);
+        }
+
+        if (!intentId) {
+            throw new AppError("Intent ID is required", STATUSCODE.BAD_REQUEST, ERROR_CODE.INVALID_INPUT);
+        }
+
+        const result = await MultipartUploadService.initMultipart(userId, intentId);
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Get signed URL for a specific part
+     * @route   POST /api/v1/upload/multipart/sign-part
+     * @access  Private
+     */
+    signPart: catchAsync(async (req: Request, res: Response) => {
+        const { intentId, uploadId, partNumber } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            throw new AppError("User not authenticated", STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED);
+        }
+
+        if (!intentId || !uploadId || !partNumber) {
+            throw new AppError(
+                "intentId, uploadId, and partNumber are required",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        const url = await MultipartUploadService.signPart(userId, intentId, uploadId, partNumber);
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, { url });
+    }),
+
+    /**
+     * @desc    Complete multipart upload
+     * @route   POST /api/v1/upload/multipart/complete
+     * @access  Private
+     */
+    completeMultipart: catchAsync(async (req: Request, res: Response) => {
+        const { intentId, uploadId, parts } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            throw new AppError("User not authenticated", STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED);
+        }
+
+        if (!intentId || !uploadId || !parts) {
+            throw new AppError(
+                "intentId, uploadId, and parts are required",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        const result = await MultipartUploadService.completeMultipart(userId, intentId, uploadId, parts);
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Complete upload (finalize and move to permanent storage)
+     * @route   POST /api/v1/upload/complete
+     * @access  Private
+     */
+    completeUpload: catchAsync(async (req: Request, res: Response) => {
+        const { intentId } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            throw new AppError("User not authenticated", STATUSCODE.UNAUTHORIZED, ERROR_CODE.UNAUTHORIZED);
+        }
+
+        if (!intentId) {
+            throw new AppError("Intent ID is required", STATUSCODE.BAD_REQUEST, ERROR_CODE.INVALID_INPUT);
+        }
+
+        const result = await FinalizeUploadService.finalizeUpload(userId, intentId);
         sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
     }),
 

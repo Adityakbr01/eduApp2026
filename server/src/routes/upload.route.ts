@@ -20,7 +20,35 @@ const router = express.Router();
 router.use(authMiddleware);
 
 
-router.post("/getPresignedUrl", uploadController.getPresignedUrl);
+router.post("/presigned-url", uploadController.getPresignedUrl);
+
+/**
+ * @route   POST /api/v1/upload/multipart/init
+ * @desc    Initialize multipart upload
+ * @access  Private
+ */
+router.post("/multipart/init", uploadController.initMultipart);
+
+/**
+ * @route   POST /api/v1/upload/multipart/sign-part
+ * @desc    Get signed URL for uploading a specific part
+ * @access  Private
+ */
+router.post("/multipart/sign-part", uploadController.signPart);
+
+/**
+ * @route   POST /api/v1/upload/multipart/complete
+ * @desc    Complete multipart upload
+ * @access  Private
+ */
+router.post("/multipart/complete", uploadController.completeMultipart);
+
+/**
+ * @route   POST /api/v1/upload/complete
+ * @desc    Complete upload and finalize (move to permanent storage)
+ * @access  Private
+ */
+router.post("/complete", uploadController.completeUpload);
 
 /**
  * @route   POST /api/v1/upload/course-image

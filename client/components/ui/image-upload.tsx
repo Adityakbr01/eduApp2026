@@ -6,8 +6,14 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUploadCourseImage, useDeleteUpload, UploadProgress } from "@/services/uploads";
+import { useS3Upload, useDeleteUpload } from "@/services/uploads";
 import Image from "next/image";
+
+interface UploadProgress {
+    loaded: number;
+    total: number;
+    percentage: number;
+}
 
 interface ImageUploadProps {
     value?: string;
@@ -30,7 +36,7 @@ export function ImageUpload({
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const uploadMutation = useUploadCourseImage();
+    const uploadMutation = useS3Upload();
     const deleteMutation = useDeleteUpload();
 
     const handleProgress = useCallback((progress: UploadProgress) => {
@@ -54,11 +60,13 @@ export function ImageUpload({
             try {
                 const result = await uploadMutation.mutateAsync({
                     file,
+                    fileType: "course_thumbnail",
                     onProgress: handleProgress,
                 });
 
-                if (result.success && result.data) {
-                    onChange(result.data.url, result.data.publicId);
+                if (result) {
+                    // For S3, the key is the identifier (similar to publicId)
+                    onChange(result.key, result.key);
                 }
             } finally {
                 setUploadProgress(null);

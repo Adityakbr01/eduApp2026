@@ -1,4 +1,4 @@
-import { User } from "../auth";
+import { ApiResponse, User } from "../auth";
 
 // Single User object inside data.data
 export interface ApprovedUser {
@@ -115,7 +115,7 @@ export type ApiResult<T> = {
     statusCode: number;
 };
 
-export type PermissionMutationResponse = ApiResult<{
+export type PermissionMutationResponse = ApiResponse<{
     message: string;
     data: ApprovedUser;
 }>;

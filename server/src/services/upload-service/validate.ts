@@ -1,13 +1,44 @@
-const RULES = {
-    image: { max: 5, mime: ["image/png", "image/jpeg", "image/webp"] },
-    video: { max: 2048, mime: ["video/mp4"] },
-    pdf: { max: 50, mime: ["application/pdf"] }
+import type { FileTypeEnum } from "./upload.service.js";
+
+interface ValidationRule {
+    max: number; // MB
+    mime: string[];
+}
+
+const RULES: Record<string, ValidationRule> = {
+    profile_image: {
+        max: 5,
+        mime: ["image/png", "image/jpeg", "image/webp", "image/gif"]
+    },
+    course_thumbnail: {
+        max: 5,
+        mime: ["image/png", "image/jpeg", "image/webp", "image/gif"]
+    },
+    lesson_video: {
+        max: 2048,
+        mime: ["video/mp4", "video/webm", "video/quicktime"]
+    },
+    lesson_audio: {
+        max: 100,
+        mime: ["audio/mpeg", "audio/wav", "audio/ogg", "audio/aac", "audio/mp4", "audio/webm", "audio/flac"]
+    },
+    lesson_pdf: {
+        max: 50,
+        mime: ["application/pdf"]
+    },
 };
 
-export function validateFile(type, size, mime) {
+export function validateFile(type: FileTypeEnum, size: number, mime: string): void {
     const rule = RULES[type];
-    if (!rule) throw new Error("Invalid type");
+    if (!rule) {
+        throw new Error(`Invalid file type: ${type}`);
+    }
 
-    if (!rule.mime.includes(mime)) throw new Error("Invalid mime");
-    if (size > rule.max * 1024 * 1024) throw new Error("Too large");
+    if (!rule.mime.includes(mime)) {
+        throw new Error(`Invalid mime type: ${mime}. Allowed: ${rule.mime.join(", ")}`);
+    }
+
+    if (size > rule.max * 1024 * 1024) {
+        throw new Error(`File too large. Maximum size: ${rule.max}MB`);
+    }
 }

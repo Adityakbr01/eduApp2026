@@ -1,6 +1,5 @@
 import apiClient from "@/lib/api/axios";
 import {
-    ApiResponse,
     CategoryListData,
     CategoryTreeData,
     CategoryWithSubcategoriesData,
@@ -9,6 +8,7 @@ import {
     ValidateSubcategoryData,
     CategoryFilterDTO,
 } from "./types";
+import { ApiResponse } from "../auth";
 
 // ==================== QUERY PARAMS BUILDER ====================
 

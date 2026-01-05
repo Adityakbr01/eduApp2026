@@ -1,21 +1,35 @@
 import { redis } from "src/configs/redis.js";
 import { v4 as uuid } from "uuid";
 
-export async function createIntent(userId, key, size, mime) {
-  const intent = {
+export interface UploadIntent {
+  id: string;
+  userId: string;
+  key: string;
+  size: number;
+  mime: string;
+  expiresAt: number;
+}
+
+export async function createIntent(
+  userId: string,
+  key: string,
+  size: number,
+  mime: string
+): Promise<UploadIntent> {
+  const intent: UploadIntent = {
     id: uuid(),
     userId,
     key,
     size,
     mime,
-    expiresAt: Date.now() + 5 * 60 * 1000
+    expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
   };
 
   await redis.set(
     `upload:intent:${intent.id}`,
     JSON.stringify(intent),
     "PX",
-    300000
+    300000 // 5 minutes in ms
   );
 
   return intent;

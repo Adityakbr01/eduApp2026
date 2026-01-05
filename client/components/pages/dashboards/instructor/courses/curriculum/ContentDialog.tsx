@@ -27,12 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, FileVideo, FileAudio, FileText, CheckCircle2, X } from "lucide-react";
 
 import { ContentType, CreateContentDTO, useCreateContent } from "@/services/courses";
-import {
-    useUploadLessonVideo,
-    useUploadLessonDocument,
-    useUploadLessonAudio,
-    UploadProgress,
-} from "@/services/uploads";
+import { FileType, useS3Upload } from "@/services/uploads";
 
 interface ContentDialogProps {
     open: boolean;
@@ -70,9 +65,7 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
     const pdfInputRef = useRef<HTMLInputElement>(null);
 
     const createContent = useCreateContent();
-    const uploadVideo = useUploadLessonVideo();
-    const uploadDocument = useUploadLessonDocument();
-    const uploadAudio = useUploadLessonAudio();
+    const s3Upload = useS3Upload();
 
     const isLoading = createContent.isPending || isUploading;
 
@@ -121,11 +114,11 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
         });
     };
 
-    const handleProgressUpdate = (progress: UploadProgress) => {
+    const handleProgressUpdate = (progress: { loaded: number; total: number; percentage: number }) => {
         setUploadProgress(progress.percentage);
     };
 
-    // Auto-upload video when selected
+    // Auto-upload video when selected using S3 presigned URL
     const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -140,13 +133,14 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
             setDuration(calculatedDuration);
             setIsDurationAutoCalculated(true);
 
-            // Auto-upload to Cloudinary
-            const uploadResult = await uploadVideo.mutateAsync({
+            // Upload to S3 using presigned URL
+            const uploadResult = await s3Upload.mutateAsync({
                 file,
+                fileType: FileType.LESSON_VIDEO,
                 onProgress: handleProgressUpdate,
             });
 
-            setVideoUrl(uploadResult.data?.url || "");
+            setVideoUrl(uploadResult.key);
             setUploadComplete(true);
         } catch (error) {
             console.error("Error uploading video:", error);
@@ -157,7 +151,7 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
         }
     };
 
-    // Auto-upload audio when selected
+    // Auto-upload audio when selected using S3 presigned URL
     const handleAudioSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -172,13 +166,14 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
             setDuration(calculatedDuration);
             setIsDurationAutoCalculated(true);
 
-            // Auto-upload to Cloudinary using audio endpoint
-            const uploadResult = await uploadAudio.mutateAsync({
+            // Upload to S3 using presigned URL (using lesson_video type for audio as well)
+            const uploadResult = await s3Upload.mutateAsync({
                 file,
+                fileType: FileType.LESSON_AUDIO,
                 onProgress: handleProgressUpdate,
             });
 
-            setVideoUrl(uploadResult.data?.url || "");
+            setVideoUrl(uploadResult.key);
             setUploadComplete(true);
         } catch (error) {
             console.error("Error uploading audio:", error);
@@ -189,7 +184,7 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
         }
     };
 
-    // Auto-upload PDF when selected
+    // Auto-upload PDF when selected using S3 presigned URL
     const handlePdfSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -199,13 +194,14 @@ export function ContentDialog({ open, onOpenChange, lessonId }: ContentDialogPro
             setUploadComplete(false);
             setFileName(file.name);
 
-            // Auto-upload to Cloudinary
-            const uploadResult = await uploadDocument.mutateAsync({
+            // Upload to S3 using presigned URL
+            const uploadResult = await s3Upload.mutateAsync({
                 file,
+                fileType: FileType.LESSON_PDF,
                 onProgress: handleProgressUpdate,
             });
 
-            setPdfUrl(uploadResult.data?.url || "");
+            setPdfUrl(uploadResult.key);
             setUploadComplete(true);
         } catch (error) {
             console.error("Error uploading PDF:", error);

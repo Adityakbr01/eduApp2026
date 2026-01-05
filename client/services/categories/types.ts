@@ -34,12 +34,6 @@ export interface ICategoryWithSubcategories extends ICategory {
 
 // ==================== API RESPONSE INTERFACES ====================
 
-export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
-
 export interface CategoryListData {
     categories: ICategory[];
     total: number;

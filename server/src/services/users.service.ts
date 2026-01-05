@@ -323,8 +323,6 @@ const userService = {
                 [{ path: "permission", message: "This permission is not assigned to the user" }]
             );
         }
-        console.log("Before deletion, user permissions:", user.permissions);
-        console.log("Deleting permission:", permission);
         user.permissions = user.permissions.filter((perm) => perm.toString() !== permission.toString());
         await user.save();
 
@@ -433,8 +431,6 @@ const userService = {
         if (isBanning) {
             user.isBanned = true;
             user.bannedBy = new Types.ObjectId(actionBy);
-
-            console.log(`User ${user.email} has been banned by user ID ${actionBy}.`);
             if (options?.banEmail) {
                 await addEmailJob(emailQueue, EMAIL_JOB_NAMES.ACCOUNT_BAN, {
                     email: user.email,

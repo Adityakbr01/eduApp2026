@@ -47,7 +47,6 @@ export type UsersQueryParams = {
 const usersApi = {
     getUsers: async (params: UsersQueryParams = {}): Promise<UsersApiResult> => {
         const res = await api.get<ApiResponse<UsersApiResult>>("/users", { params });
-        console.log("API Response:", res.data);
         return {
             users: res.data.data?.users || [],
             pagination: res.data.data?.pagination || res.data.meta?.pagination || {

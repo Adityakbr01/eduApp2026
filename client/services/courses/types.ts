@@ -181,14 +181,6 @@ export interface IInstructorInfo {
     profileImage?: string;
 }
 
-// ==================== API RESPONSE INTERFACES ====================
-
-export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T;
-}
-
 // Course Responses
 export interface CourseListData {
     courses: ICourse[];

@@ -27,3 +27,14 @@ export interface UploadProgress {
     total: number;
     percentage: number;
 }
+
+
+export const FileType = {
+    PROFILE_IMAGE: "profile_image",
+    COURSE_THUMBNAIL: "course_thumbnail",
+    LESSON_VIDEO: "lesson_video",
+    LESSON_AUDIO: "lesson_audio",
+    LESSON_PDF: "lesson_pdf",
+} as const;
+
+export type FileTypeEnum = typeof FileType[keyof typeof FileType];

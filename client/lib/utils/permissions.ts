@@ -88,7 +88,6 @@ export const CheckPermission = (props: {
     requirement: PermissionRequirement;
 }): boolean => {
     const { carrier, requirement } = props;
-    console.log("Checking permissions:", { carrier, requirement });
     return hasAllPermissions(carrier, requirement);
 }
 

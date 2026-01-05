@@ -1,6 +1,5 @@
 import apiClient from "@/lib/api/axios";
 import {
-    ApiResponse,
     CourseListData,
     CourseDetailData,
     SectionListData,
@@ -19,6 +18,7 @@ import {
     UpdateContentDTO,
     ReorderItemDTO,
 } from "./types";
+import { ApiResponse } from "../auth";
 
 // ==================== BASE PATH ====================
 
