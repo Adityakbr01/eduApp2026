@@ -4,10 +4,11 @@ import { s3 } from "./s3.js";
 import { env } from "src/configs/env.js";
 
 
-export async function simpleUpload(key, mime) {
+export async function simpleUpload(key: string, mime: string): Promise<string> {
     const cmd = new PutObjectCommand({
         Bucket: env.AWS_S3_BUCKET_NAME!,
         Key: key,
+        ContentType: mime,
     });
 
     return getSignedUrl(s3, cmd, {

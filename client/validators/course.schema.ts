@@ -18,9 +18,9 @@ export const createCourseSchema = z.object({
     level: z.nativeEnum(CourseLevel).optional(),
     language: z.nativeEnum(Language).default(Language.ENGLISH),
     deliveryMode: z.nativeEnum(DeliveryMode).optional(),
-    coverImage: z.string().url().optional(),
-    previewVideoUrl: z.string().url().optional(),
-    thumbnailUrl: z.string().url().optional(),
+    coverImage: z.string().optional(),
+    previewVideoUrl: z.string().optional(),
+    thumbnailUrl: z.string().optional(),
     pricing: z.object({
         originalPrice: z.number().min(0, "Original price is required"),
         price: z.number().min(0).optional(), // Auto-calculated by server
@@ -48,9 +48,9 @@ export const updateCourseSchema = z.object({
     level: z.nativeEnum(CourseLevel).optional(),
     language: z.nativeEnum(Language).optional(),
     deliveryMode: z.nativeEnum(DeliveryMode).optional(),
-    coverImage: z.string().url().optional(),
-    previewVideoUrl: z.string().url().optional(),
-    thumbnailUrl: z.string().url().optional(),
+    coverImage: z.string().optional(),
+    previewVideoUrl: z.string().optional(),
+    thumbnailUrl: z.string().optional(),
     pricing: z.object({
         originalPrice: z.number().min(0, "Original price is required"),
         price: z.number().min(0).optional(), // Auto-calculated by server

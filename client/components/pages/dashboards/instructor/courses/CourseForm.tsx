@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { ImageUpload } from "@/components/ui/image-upload";
 import { Loader2, Save, ArrowLeft, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 import { createCourseSchema, CreateCourseInput } from "@/validators/course.schema";
 import { useCreateCourse, useUpdateCourse, CourseLevel, DeliveryMode, Language, ICourse } from "@/services/courses";
 import { useGetCategoriesWithSubcategories } from "@/services/categories";
+import { S3Uploader } from "@/lib/s3/S3Uploader";
 
 interface CourseFormProps {
     initialData?: ICourse;
@@ -103,7 +103,7 @@ export function CourseForm({ initialData, isEditing = false }: CourseFormProps) 
     });
 
     // Get subcategories for selected category
-    const selectedCategoryData = categories.find((cat) => cat._id === selectedCategory);
+    const selectedCategoryData = categories.find((cat: { _id: string }) => cat._id === selectedCategory);
     const subcategories = selectedCategoryData?.subcategories || [];
 
     // Update selectedCategory when form category changes
@@ -272,7 +272,7 @@ export function CourseForm({ initialData, isEditing = false }: CourseFormProps) 
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {categories.map((cat) => (
+                                                        {categories.map((cat: { _id: string; name: string }) => (
                                                             <SelectItem key={cat._id} value={cat._id}>
                                                                 {cat.name}
                                                             </SelectItem>
@@ -301,7 +301,7 @@ export function CourseForm({ initialData, isEditing = false }: CourseFormProps) 
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {subcategories.map((sub) => (
+                                                        {subcategories.map((sub: { _id: string; name: string }) => (
                                                             <SelectItem key={sub._id} value={sub._id}>
                                                                 {sub.name}
                                                             </SelectItem>
@@ -417,26 +417,33 @@ export function CourseForm({ initialData, isEditing = false }: CourseFormProps) 
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
-                                                <ImageUpload
-                                                    value={field.value}
-                                                    publicId={coverImagePublicId}
-                                                    onChange={(url, publicId) => {
-                                                        field.onChange(url);
-                                                        setCoverImagePublicId(publicId);
-                                                    }}
-                                                    onRemove={() => {
-                                                        field.onChange("");
-                                                        setCoverImagePublicId("");
+                                                <S3Uploader
+                                                    initialValue={field.value}
+                                                    uploadType="image"
+                                                    multiple={false}
+                                                    getKey={(file) => `Course/${initialData?._id || "new"}/cover-${Date.now()}.${file.name.split('.').pop()}`}
+                                                    maxFiles={1}
+                                                    maxFileSizeMB={5}
+                                                    accept={{ "image/*": [] }}
+                                                    autoUpload={true}
+                                                    parallelUploads={1}
+                                                    onUploaded={(keys) => {
+                                                        if (keys[0]) {
+                                                            field.onChange(keys[0]); // ✅ store S3 key in form
+                                                        }
                                                     }}
                                                 />
                                             </FormControl>
+
                                             <FormDescription>
-                                                Recommended: 1280x720px (16:9 ratio)
+                                                Recommended: 1280×720 (JPG/PNG/WebP, max 5MB)
                                             </FormDescription>
+
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+
                             </CardContent>
                         </Card>
 

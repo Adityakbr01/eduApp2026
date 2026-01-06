@@ -1,4 +1,4 @@
-import type { FileTypeEnum } from "./upload.service.js";
+import type { FileTypeEnum } from "../upload.service.js";
 
 interface ValidationRule {
     max: number; // MB

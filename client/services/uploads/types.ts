@@ -30,11 +30,9 @@ export interface UploadProgress {
 
 
 export const FileType = {
-    PROFILE_IMAGE: "profile_image",
-    COURSE_THUMBNAIL: "course_thumbnail",
-    LESSON_VIDEO: "lesson_video",
-    LESSON_AUDIO: "lesson_audio",
-    LESSON_PDF: "lesson_pdf",
+    IMAGE: "image",
+    VIDEO: "video",
+    DOCUMENT: "document",
 } as const;
 
 export type FileTypeEnum = typeof FileType[keyof typeof FileType];
