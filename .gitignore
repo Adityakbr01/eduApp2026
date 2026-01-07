@@ -1,8 +1,27 @@
-./document/ec2Connect.md
-./document/s3BucketPolicy.md
-./document/vpcSetup.md
-./infrastructure/main.tf
-./infrastructure/variables.tf
-./infrastructure/outputs.tf
-./infrastructure/terraform.tfvars
-./scripts/deploy.sh
+# ===============================
+# Environment files
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Infrastructure / Terraform
+# ===============================
+infrastructure/.terraform/
+infrastructure/*.tfstate
+infrastructure/*.tfstate.backup
+infrastructure/terraform.tfvars
+infrastructure/.terraform.lock.hcl
+
+# ===============================
+# Infrastructure docs (internal)
+# ===============================
+document/ec2Connect.md
+document/s3BucketPolicy.md
+document/vpcSetup.md
+
+# ===============================
+# Deployment scripts (optional)
+# ===============================
+scripts/deploy.sh

@@ -1,0 +1,41 @@
+services:
+  frontend:
+    image: adityakbr/eduapp2026:frontend-prod   # Agar dev ke liye alag image hai to change kar lena
+    container_name: eduapp_frontend
+    env_file:
+      - .env.frontend.dev   # Dev ke liye alag env file (agar hai to), warna .env.frontend.prod
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./server   # Ya jo bhi tera backend folder hai
+      dockerfile: Dockerfile
+    container_name: eduapp_backend
+    env_file:
+      - .env.backend.dev   # Isme UPSTASH_REDIS_URL hona chahiye
+    environment:
+      - NODE_ENV=development   # isProd = false → Upstash use karega
+    restart: always
+    ports:
+      - "5000:3001"   # Internal port 3001 (logs se pata chala)
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    driver: bridge
+    name: eduapp_dev_network

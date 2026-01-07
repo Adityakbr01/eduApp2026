@@ -7,25 +7,63 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
-    image: adityakbr/eduapp2026:backend-prod
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     container_name: eduapp_backend
     env_file:
       - .env.backend.prod
+    environment:
+      - NODE_ENV=production   # isProd = true → hardcoded "redis://redis:6379" use karega
     restart: always
     ports:
-      - "5000:5000"
+      - "5000:3001"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
     container_name: eduapp_redis
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     restart: always
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   redis_data:
+    name: eduapp_redis_data
+
+networks:
+  app-network:
+    driver: bridge
+    name: eduapp_prod_network

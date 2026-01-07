@@ -1,10 +1,10 @@
-import { z } from "zod";
 import dotenv from "dotenv";
-import { is } from "zod/v4/locales";
+import { z } from "zod";
 
 dotenv.config();
 
 export const isProd = process.env.NODE_ENV === "production";
+console.log("Environment:", process.env.NODE_ENV), isProd;
 
 
 const envSchema = z.object({
@@ -31,10 +31,7 @@ const envSchema = z.object({
     // Email
     SMTP_PASS: z.string().min(6),
     SMTP_USER: z.string().email(),
-
-    // Redis
-    UPSTASH_REDIS_URL: isProd && z.string().url().optional() || z.string().min(10),
-
+    
     // BullMQ
     BULL_BOARD_PASSWORD: z.string().min(6),
     BULLMQ_WORKER_CONCURRENCY: z.coerce.number().default(5),
@@ -61,7 +58,9 @@ const envSchema = z.object({
 
 
     //Redis
-    REDIS_URL: z.string().min(10).optional(),
+    UPSTASH_REDIS_URL: z.string().url().optional(),
+    REDIS_URL: z.string().url().optional(),
+
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
