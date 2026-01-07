@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: adityakbr01/eduapp-frontend:prod
+    image: adityakbr/eduapp2026:frontend-prod
     container_name: eduapp_frontend
     env_file:
       - .env.frontend.prod
@@ -9,7 +9,7 @@ services:
       - "3000:3000"
 
   backend:
-    image: adityakbr01/eduapp-backend:prod
+    image: adityakbr/eduapp2026:backend-prod
     container_name: eduapp_backend
     env_file:
       - .env.backend.prod
@@ -29,5 +29,3 @@ services:
 
 volumes:
   redis_data:
-
-  

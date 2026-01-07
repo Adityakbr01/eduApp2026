@@ -22,13 +22,13 @@ jobs:
 
       - name: Build & Push Backend
         run: |
-          docker build -t adityakbr01/eduapp-backend:prod ./backend
-          docker push adityakbr01/eduapp-backend:prod
+          docker build -t adityakbr/eduapp2026:backend-prod ./server
+          docker push adityakbr/eduapp2026:backend-prod
 
       - name: Build & Push Frontend
         run: |
-          docker build -t adityakbr01/eduapp-frontend:prod ./frontend
-          docker push adityakbr01/eduapp-frontend:prod
+          docker build -t adityakbr/eduapp2026:frontend-prod ./client
+          docker push adityakbr/eduapp2026:frontend-prod
 
   deploy:
     name: Deploy on EC2
@@ -38,19 +38,14 @@ jobs:
     steps:
       - name: Pull latest images
         run: |
-          docker pull adityakbr01/eduapp-backend:prod
-          docker pull adityakbr01/eduapp-frontend:prod
+          docker pull adityakbr/eduapp2026:backend-prod
+          docker pull adityakbr/eduapp2026:frontend-prod
 
-      - name: Stop old containers (safe)
+      - name: Restart containers
         run: |
           cd /home/ubuntu/app
           docker compose down
-
-      - name: Start new containers
-        run: |
-          cd /home/ubuntu/app
           docker compose up -d
 
       - name: Cleanup unused images
-        run: |
-          docker image prune -f
+        run: docker image prune -f

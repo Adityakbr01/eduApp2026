@@ -1,23 +1,46 @@
-FROM node:20-alpine AS builder
+# syntax = docker/dockerfile:1
+
+FROM node:22-slim AS base
+
+ARG PORT=3000
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
 WORKDIR /app
 
-COPY package*.json ./
+# Dependencies
+FROM base AS dependencies
+
+COPY package.json package-lock.json ./
 RUN npm ci
+
+# Build
+FROM base AS build
+
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+
+
 RUN npm run build
 
-FROM node:20-alpine
-WORKDIR /app
+# Run
+FROM base AS run
+
 ENV NODE_ENV=production
+ENV PORT=$PORT
 
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json .
-COPY --from=builder /app/next.config.js ./next.config.js
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
 
-RUN npm install -g pm2
-EXPOSE 3000
-#CMD [ "npm","run", "start" ]
-#agar niche wala line chalaye to pm2 ke through chalega app
-CMD ["pm2-runtime", "node_modules/.bin/next", "start"]
+COPY --from=build /app/public ./public
+COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE $PORT
+
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]

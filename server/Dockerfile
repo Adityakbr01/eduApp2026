@@ -19,4 +19,4 @@ COPY --from=builder /app/package.json .
 RUN npm install -g pm2
 EXPOSE 3001
 
-CMD ["pm2-runtime", "dist/index.js"]
+CMD ["pm2-runtime", "dist/server.js"]
