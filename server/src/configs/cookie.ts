@@ -1,7 +1,7 @@
 import { env } from "./env.js";
 import type { CookieOptions } from "express";
 
-const isProd = env.NODE_ENV === "production";
+export const isProd = env.NODE_ENV === "production";
 
 export const accessTokenCookieOptions: CookieOptions = {
     httpOnly: true,

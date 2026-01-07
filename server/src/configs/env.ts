@@ -1,7 +1,11 @@
 import { z } from "zod";
 import dotenv from "dotenv";
+import { is } from "zod/v4/locales";
 
 dotenv.config();
+
+export const isProd = process.env.NODE_ENV === "production";
+
 
 const envSchema = z.object({
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -29,7 +33,7 @@ const envSchema = z.object({
     SMTP_USER: z.string().email(),
 
     // Redis
-    UPSTASH_REDIS_URL: z.string().url(),
+    UPSTASH_REDIS_URL: isProd && z.string().url().optional() || z.string().min(10),
 
     // BullMQ
     BULL_BOARD_PASSWORD: z.string().min(6),
@@ -54,6 +58,10 @@ const envSchema = z.object({
     // AWS_ENDPOINT_URL_IAM: z.string().url(),
     AWS_REGION: z.string().min(2),
     AWS_S3_BUCKET_NAME: z.string().min(3),
+
+
+    //Redis
+    REDIS_URL: z.string().min(10).optional(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
