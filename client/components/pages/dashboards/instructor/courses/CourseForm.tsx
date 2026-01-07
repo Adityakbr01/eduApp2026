@@ -33,6 +33,7 @@ import { createCourseSchema, CreateCourseInput } from "@/validators/course.schem
 import { useCreateCourse, useUpdateCourse, CourseLevel, DeliveryMode, Language, ICourse } from "@/services/courses";
 import { useGetCategoriesWithSubcategories } from "@/services/categories";
 import { S3Uploader } from "@/lib/s3/S3Uploader";
+import { FileType } from "@/services/uploads";
 
 interface CourseFormProps {
     initialData?: ICourse;
@@ -419,7 +420,7 @@ export function CourseForm({ initialData, isEditing = false }: CourseFormProps) 
                                             <FormControl>
                                                 <S3Uploader
                                                     initialValue={field.value}
-                                                    uploadType="image"
+                                                    uploadType={FileType.IMAGE}
                                                     multiple={false}
                                                     getKey={(file) => `Course/${initialData?._id || "new"}/cover-${Date.now()}.${file.name.split('.').pop()}`}
                                                     maxFiles={1}

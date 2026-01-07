@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  frontend:
+    image: yourdockerhub/next:prod
+    env_file:
+      - .env.prod
+    restart: always
+
+  backend:
+    image: yourdockerhub/api:prod
+    env_file:
+      - .env.prod
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  redis_data:
+
+  DOCKER_PASS

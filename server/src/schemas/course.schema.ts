@@ -113,15 +113,20 @@ export const createContentSchema = z.object({
 
     // 🎥 VIDEO/AUDIO (nested)
     video: z.object({
-        url: z.string().url().optional(),
+        url: z.string().optional(),
         duration: z.number().min(0).optional(),
         minWatchPercent: z.number().min(0).max(100).default(90),
     }).optional(),
 
     // 📄 PDF (nested)
     pdf: z.object({
-        url: z.string().url().optional(),
+        url: z.string().optional(),
         totalPages: z.number().min(1).optional(),
+    }).optional(),
+
+    audio: z.object({
+        url: z.string().optional(),
+        duration: z.number().min(0).optional(),
     }).optional(),
 
     // 📝 QUIZ/ASSIGNMENT (nested)
@@ -156,15 +161,20 @@ export const updateContentSchema = z.object({
 
     // 🎥 VIDEO (nested)
     video: z.object({
-        url: z.string().url().optional(),
+        url: z.string().optional(),
         duration: z.number().min(0).optional(),
         minWatchPercent: z.number().min(0).max(100).optional(),
     }).optional(),
 
     // 📄 PDF (nested)
     pdf: z.object({
-        url: z.string().url().optional(),
+        url: z.string().optional(),
         totalPages: z.number().min(1).optional(),
+    }).optional(),
+
+    audio: z.object({
+        url: z.string().optional(),
+        duration: z.number().min(0).optional(),
     }).optional(),
 
     // 📝 QUIZ/ASSIGNMENT (nested)

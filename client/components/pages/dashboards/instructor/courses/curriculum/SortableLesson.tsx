@@ -105,7 +105,7 @@ export function SortableLesson({ lesson, index, sectionId, courseId }: SortableL
     const apiContents = contentsData?.data || [];
 
     // Create a key from API data to detect changes
-    const currentDataKey = apiContents.map(c => `${c._id}-${c.order}`).join(',');
+    const currentDataKey = apiContents.map((c: ILessonContent) => `${c._id}-${c.order}`).join(',');
 
     // Reset local state when API data changes
     if (currentDataKey !== lastDataKey && localContents !== null) {
@@ -129,13 +129,13 @@ export function SortableLesson({ lesson, index, sectionId, courseId }: SortableL
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = contents.findIndex((c) => c._id === active.id);
-        const newIndex = contents.findIndex((c) => c._id === over.id);
+        const oldIndex = contents.findIndex((c: ILessonContent) => c._id === active.id);
+        const newIndex = contents.findIndex((c: ILessonContent) => c._id === over.id);
 
         const newContents = arrayMove(contents, oldIndex, newIndex);
-        setLocalContents(newContents);
+        setLocalContents(newContents as ILessonContent[]);
 
-        const reorderData = newContents.map((content, idx) => ({
+        const reorderData = newContents.map((content:any, idx) => ({
             id: content._id,
             order: idx,
         }));
@@ -285,10 +285,10 @@ export function SortableLesson({ lesson, index, sectionId, courseId }: SortableL
                                     onDragEnd={handleContentDragEnd}
                                 >
                                     <SortableContext
-                                        items={contents.map((c) => c._id)}
+                                        items={contents.map((c: ILessonContent) => c._id)}
                                         strategy={verticalListSortingStrategy}
                                     >
-                                        {contents.map((content) => (
+                                        {contents.map((content: ILessonContent) => (
                                             <SortableContentItem
                                                 key={content._id}
                                                 content={content}

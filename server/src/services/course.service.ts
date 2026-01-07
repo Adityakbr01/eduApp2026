@@ -520,6 +520,7 @@ export const lessonContentService = {
 
     // -------------------- UPDATE CONTENT --------------------
     updateContent: async (contentId: string, instructorId: string, data: any) => {
+        console.log("Updating content:", contentId, data);
         const content = await lessonContentRepository.findById(contentId);
         if (!content) {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
@@ -533,7 +534,6 @@ export const lessonContentService = {
                 ERROR_CODE.FORBIDDEN
             );
         }
-
         return lessonContentRepository.updateById(contentId, data);
     },
 

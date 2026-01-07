@@ -1,88 +1,88 @@
-// lib/upload/multipartUpload.ts
-import { uploadApi } from "@/services/uploads/api";
+"use client";
 
-const CONCURRENCY = 4;
+import { useEffect, useMemo, useState } from "react";
+import FlipNumbers from "react-flip-numbers";
+import { Clock } from "lucide-react";
 
-interface UploadedPart {
-    PartNumber: number;
-    ETag: string;
+interface CountdownTimerProps {
+    targetDate: string | Date;
+    variant?: "flip";
+    showIcon?: boolean;
 }
 
-export async function multipartUpload(
-    file: File,
-    init: {
-        intentId: string;
-        uploadId: string;
-        partSize: number;
-        totalParts: number;
-    },
-    isPaused: () => boolean,
-    onProgress: (p: number) => void
-): Promise<void> {
-    const { intentId, uploadId, partSize, totalParts } = init;
+interface TimeLeft {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+}
 
-    const storageKey = `upload:${intentId}`;
-    const uploaded: number[] = JSON.parse(
-        localStorage.getItem(storageKey) || "[]"
+function getTimeLeft(target: Date): TimeLeft | null {
+    const diff = target.getTime() - Date.now();
+
+    if (diff <= 0) return null;
+
+    return {
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+    };
+}
+
+export default function CountdownTimer({
+    targetDate,
+    variant = "flip",
+    showIcon = false,
+}: CountdownTimerProps) {
+    const target = useMemo(() => new Date(targetDate), [targetDate]);
+    const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() =>
+        getTimeLeft(target)
     );
 
-    const parts: UploadedPart[] = [];
-    const queue: number[] = [];
-    let uploadedBytes = 0;
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft(getTimeLeft(target));
+        }, 1000);
 
-    for (let i = 1; i <= totalParts; i++) {
-        if (!uploaded.includes(i)) {
-            queue.push(i);
-        } else {
-            uploadedBytes += Math.min(
-                partSize,
-                file.size - (i - 1) * partSize
-            );
-        }
+        return () => clearInterval(timer);
+    }, [target]);
+
+    if (!timeLeft) {
+        return (
+            <div className="text-sm font-medium text-red-600">
+                ⏰ Offer expired
+            </div>
+        );
     }
 
-    async function worker() {
-        while (queue.length) {
-            if (isPaused()) return;
+    const renderBlock = (value: number, label: string) => (
+        <div className="flex flex-col items-center justify-center">
+            <FlipNumbers
+                height={24}
+                width={16}
+                play
+                duration={0.6}
+                numbers={String(value).padStart(2, "0")}
+                color="currentColor"
+            />
 
-            const partNumber = queue.shift();
-            if (!partNumber) return;
-
-            const start = (partNumber - 1) * partSize;
-            const end = Math.min(start + partSize, file.size);
-            const blob = file.slice(start, end);
-
-            const url = await uploadApi.signPart(
-                intentId,
-                uploadId,
-                partNumber
-            );
-
-            const res = await fetch(url, {
-                method: "PUT",
-                body: blob,
-                headers: { "Content-Type": file.type },
-            });
-
-            if (!res.ok) throw new Error("Part upload failed");
-
-            const etag = res.headers.get("ETag");
-            if (!etag) throw new Error("ETag missing");
-
-            parts.push({ PartNumber: partNumber, ETag: etag });
-            uploaded.push(partNumber);
-            uploadedBytes += blob.size;
-
-            localStorage.setItem(storageKey, JSON.stringify(uploaded));
-
-            onProgress(Math.round((uploadedBytes * 100) / file.size));
-        }
-    }
-
-    await Promise.all(
-        Array(CONCURRENCY).fill(0).map(worker)
+            <span className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                {label}
+            </span>
+        </div>
     );
 
-    await uploadApi.completeMultipart(intentId, uploadId, parts);
-    localStorage.removeItem(storageKey);
+    return (
+        <div className="flex items-center gap-3 text-red-700 dark:text-red-400">
+            {showIcon && <Clock className="h-4 w-4" />}
+
+            <div className="flex items-center gap-2">
+                {timeLeft.days > 0 && renderBlock(timeLeft.days, "Days")}
+                {renderBlock(timeLeft.hours, "Hrs")}
+                {renderBlock(timeLeft.minutes, "Min")}
+                {renderBlock(timeLeft.seconds, "Sec")}
+            </div>
+        </div>
+    );
 }

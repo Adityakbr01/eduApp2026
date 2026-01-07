@@ -33,6 +33,7 @@ export const FileType = {
     IMAGE: "image",
     VIDEO: "video",
     DOCUMENT: "document",
+    AUDIO: "audio",
 } as const;
 
 export type FileTypeEnum = typeof FileType[keyof typeof FileType];

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import APP_info from "@/constants/app_info";
 import { Bookmark, BookmarkCheck, BookOpen, Play } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -28,7 +29,7 @@ function CourseMedia({
                 <>
                     {course.coverImage ? (
                         <Image
-                            src={course.coverImage}
+                            src={`${APP_info.S3_BASE_URL}${course.coverImage}`}
                             alt={`${course.title} course thumbnail`}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -55,7 +56,7 @@ function CourseMedia({
                     {/* Bookmark Button */}
                     <button
                         onClick={toggleBookmark}
-                        className="absolute bottom-4 right-4 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
+                        className="absolute bottom-4 right-4 bg-amber-500 hover:bg-amber-600 cursor-pointer p-2 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
                         aria-label={bookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
                     >
                         {bookmarked ? (

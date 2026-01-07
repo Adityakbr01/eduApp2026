@@ -1,0 +1,8 @@
+./document/ec2Connect.md
+./document/s3BucketPolicy.md
+./document/vpcSetup.md
+./infrastructure/main.tf
+./infrastructure/variables.tf
+./infrastructure/outputs.tf
+./infrastructure/terraform.tfvars
+./scripts/deploy.sh

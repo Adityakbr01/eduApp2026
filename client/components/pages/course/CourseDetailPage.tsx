@@ -67,7 +67,7 @@ export function CourseDetailPage({ slug }: CourseDetailPageProps) {
     const language = course.language || 'English';
     const level = course.level || 'All Levels';
     const { totalLessons, totalDuration } = calculateCourseStats(course.sections);
-    const visibleSections = course.sections?.filter((s) => s.isVisible) || [];
+    const visibleSections = course.sections?.filter((s: { isVisible: boolean }) => s.isVisible) || [];
 
     return (
         <div className="min-h-screen">
@@ -160,7 +160,7 @@ export function CourseDetailPage({ slug }: CourseDetailPageProps) {
                             {/* Tags */}
                             {course.tags && course.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
-                                    {course.tags.map((tag) => (
+                                    {course.tags.map((tag: string) => (
                                         <Badge key={tag} variant="secondary" className="text-xs">
                                             {tag}
                                         </Badge>

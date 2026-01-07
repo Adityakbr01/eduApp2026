@@ -201,7 +201,7 @@ function EnrollmentCard({
                             course.pricing?.discountPercentage &&
                             course.pricing.discountPercentage > 0 &&
                             course.pricing.discountExpiresAt && (
-                                <div className="mb-4 p-3 rounded-lg bg-linear-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border border-red-200 dark:border-red-800">
+                                <div className="mb-4 flex items-center justify-center   p-3 rounded-lg bg-linear-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border border-red-200 dark:border-red-800">
                                     <CountdownTimer
                                         targetDate={course.pricing.discountExpiresAt}
                                         variant="flip"
@@ -218,13 +218,13 @@ function EnrollmentCard({
                                 ) : (
                                     <>
                                         <span className="text-3xl font-bold">
-                                            {course.pricing?.currency || "₹"}
+                                            {course.pricing?.currency.toLowerCase() === "inr" ? "₹" : course.pricing?.currency}
                                             {Math.round(course.pricing?.price || 0) || 0}
                                         </span>
                                         {course.pricing?.originalPrice &&
                                             course.pricing.originalPrice > (Math.round(course.pricing?.price || 0) || 0) && (
                                                 <span className="text-lg text-muted-foreground line-through">
-                                                    {course.pricing?.currency || "₹"}
+                                                    {course.pricing?.currency.toLowerCase() === "inr" ? "₹" : course.pricing?.currency}
                                                     {course.pricing.originalPrice}
                                                 </span>
                                             )}

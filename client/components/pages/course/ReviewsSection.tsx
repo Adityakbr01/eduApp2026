@@ -469,7 +469,7 @@ export function ReviewsSection({ courseId }: ReviewsSectionProps) {
                             {/* Reviews List */}
                             {reviews.length > 0 ? (
                                 <div className="space-y-4">
-                                    {reviews.map((review) => {
+                                    {reviews.map((review: IReview) => {
                                         const user = getReviewUser(review);
                                         return (
                                             <div

@@ -2,7 +2,6 @@ import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/config/query-keys";
 import { categoryApi } from "./api";
 import {
-    ApiResponse,
     CategoryListData,
     CategoryTreeData,
     CategoryWithSubcategoriesData,
@@ -10,6 +9,7 @@ import {
     CategoryDetailData,
     CategoryFilterDTO,
 } from "./types";
+import { ApiResponse } from "../auth";
 
 // ==================== CATEGORY QUERIES ====================
 

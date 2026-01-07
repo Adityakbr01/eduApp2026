@@ -1,52 +1,64 @@
+// schema/lessonContent.schema.ts
+
 import mongoose from "mongoose";
 import { ContentType } from "src/types/course.type.js";
+
+const videoSchema = new mongoose.Schema({
+    url: { type: String, required: true },
+    duration: { type: Number, required: true }, // seconds
+    minWatchPercent: { type: Number, default: 90, min: 0, max: 100 },
+});
+
+const pdfSchema = new mongoose.Schema({
+    url: { type: String, required: true },
+    totalPages: { type: Number, min: 1 },
+});
+
+const audioSchema = new mongoose.Schema({
+    url: { type: String, required: true },
+    duration: { type: Number, required: true }, // seconds
+});
+
+const assessmentSchema = new mongoose.Schema({
+    refId: { type: mongoose.Schema.Types.ObjectId },
+    type: {
+        type: String,
+        enum: ["quiz", "assignment"],
+    },
+});
+
+
 
 const lessonContentSchema = new mongoose.Schema({
     courseId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Course",
-        required: true
+        required: true,
     },
     lessonId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Lesson",
-        required: true
+        required: true,
     },
 
     type: {
         type: String,
         enum: Object.values(ContentType),
-        default: ContentType.VIDEO,
+        required: true,
     },
 
     title: { type: String, required: true },
-    order: {
-        type: Number,
-        required: true
-    },
+    order: { type: Number, required: true },
+    marks: { type: Number, default: 0 },
 
-    // 🎯 MARKS (single source of truth)
-    marks: { type: Number, required: true },
+    // NESTED — NOW MATCHES ZOD
+    video: { type: videoSchema, sparse: true }, // sparse allows null/undefined
+    pdf: { type: pdfSchema, sparse: true },
+    assessment: { type: assessmentSchema },
+    audio: { type: audioSchema, sparse: true },
 
-    // 🎥 VIDEO
-    videoUrl: String,
-    duration: Number,            // seconds
-    minWatchPercent: { type: Number, default: 90 },
-
-    // 📄 PDF
-    pdfUrl: String,
-    totalPages: Number,
-
-    // 📝 QUIZ / ASSIGNMENT
-    assessment: {
-        refId: mongoose.Schema.Types.ObjectId,
-        type: {
-            type: String,
-            enum: ["quiz", "assignment"]
-        }
-    },
-
-    isVisible: { type: Boolean, default: true }
+    isVisible: { type: Boolean, default: true },
+    isPreview: { type: Boolean, default: false }, // Add this too!
 }, { timestamps: true });
 
 lessonContentSchema.index({ lessonId: 1, order: 1 });

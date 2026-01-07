@@ -1,5 +1,4 @@
 import apiClient from "@/lib/api/axios";
-import type { ApiResponse } from "@/services/courses";
 import type {
     CreateReviewRequest,
     InstructorResponseRequest,
@@ -11,6 +10,7 @@ import type {
     UpdateReviewRequest,
     VoteReviewRequest,
 } from "./types";
+import { ApiResponse } from "../auth";
 
 // ==================== REVIEW API ====================
 

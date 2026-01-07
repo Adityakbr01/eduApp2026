@@ -9,6 +9,7 @@ const APP_info = {
     ADDRESS: "123 Learning Street, Pune, India",
     CONTACT_NUMBER: "+91 9876543210",
     COPYRIGHT: `© ${new Date().getFullYear()} EduApp. All rights reserved.`,
+    S3_BASE_URL: "https://eduapp2026-s3-bucket.s3.us-east-1.amazonaws.com/",
 };
 
 export default APP_info;

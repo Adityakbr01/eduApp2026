@@ -78,6 +78,11 @@ export interface IVideoContent {
     minWatchPercent?: number;
 }
 
+export interface IAudioContent {
+    url?: string;
+    duration?: number; // seconds
+}
+
 export interface IPdfContent {
     url?: string;
     totalPages?: number;
@@ -97,6 +102,7 @@ export interface ILessonContent {
     isPreview: boolean;
     order: number;
     video?: IVideoContent;
+    audio?: IAudioContent;
     pdf?: IPdfContent;
     assessment?: IAssessmentContent;
     createdAt: string;
@@ -277,6 +283,10 @@ export interface CreateContentDTO {
         url?: string;
         duration?: number;
         minWatchPercent?: number;
+    };
+    audio?: {
+        url?: string;
+        duration?: number;
     };
     pdf?: {
         url?: string;

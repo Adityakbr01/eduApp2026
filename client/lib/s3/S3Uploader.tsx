@@ -8,6 +8,7 @@ import { useDropzone } from "react-dropzone";
 import { Progress } from "@/components/ui/progress";
 import { FileTypeEnum } from "@/services/uploads";
 import uploadApi from "@/services/uploads/api";
+import isAllowedFile from "../utils/isAllowedFile";
 import { multipartUpload } from "./multipartUpload";
 import { UploadItem } from "./types";
 
@@ -24,6 +25,7 @@ interface S3UploaderProps {
   parallelUploads?: number;
   uploadType?: FileTypeEnum;
   getKey?: (file: File) => string; // ✅ dynamic folder structure
+  onDrop?: (acceptedFiles: File[]) => void;
 }
 
 export function S3Uploader({
@@ -41,6 +43,8 @@ export function S3Uploader({
   const [items, setItems] = useState<UploadItem[]>([]);
   const activeUploads = useRef(0);
 
+  console.log(uploadType, accept)
+
   // ---------- INITIAL ----------
   useEffect(() => {
     if (initialValue) {
@@ -57,10 +61,24 @@ export function S3Uploader({
     }
   }, [initialValue]);
 
+  useEffect(() => {
+    return () => {
+      items.forEach(item => {
+        if (item.preview?.startsWith("blob:")) {
+          URL.revokeObjectURL(item.preview);
+        }
+      });
+    };
+  }, [items]);
+
   // ---------- DROP ----------
   const onDrop = useCallback(
     (files: File[]) => {
-      const valid = files
+      const filtered = files.filter(file =>
+        isAllowedFile(file, accept)
+      );
+
+      const valid = filtered
         .slice(0, maxFiles)
         .filter(f => f.size <= maxFileSizeMB * 1024 * 1024);
 
@@ -76,8 +94,10 @@ export function S3Uploader({
         multiple ? [...prev, ...mapped].slice(0, maxFiles) : mapped.slice(0, 1)
       );
     },
-    [multiple, maxFiles, maxFileSizeMB]
+    [multiple, maxFiles, maxFileSizeMB, accept]
   );
+
+
 
   // ---------- UPLOAD ----------
   const uploadOne = async (item: UploadItem, index: number) => {
@@ -192,11 +212,39 @@ export function S3Uploader({
 
   // ---------- UI ----------
   const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
-    accept,
     multiple,
     maxFiles,
+    onDrop: (acceptedFiles) => {
+      // Call external onDrop if provided (for duration calculation)
+      if (onDrop) {
+        onDrop(acceptedFiles);
+      }
+
+      // Your existing logic
+      const filtered = acceptedFiles.filter(file =>
+        isAllowedFile(file, accept)
+      );
+
+      const valid = filtered
+        .slice(0, maxFiles)
+        .filter(f => f.size <= maxFileSizeMB! * 1024 * 1024);
+
+      const mapped = valid.map(file => ({
+        file,
+        preview: URL.createObjectURL(file),
+        progress: 0,
+        status: "idle" as const,
+        controller: new AbortController(),
+      }));
+
+      setItems(prev =>
+        multiple ? [...prev, ...mapped].slice(0, maxFiles) : mapped.slice(0, 1)
+      );
+    },
+    accept,
   });
+
+
 
   return (
     <div className="space-y-4">
@@ -212,27 +260,33 @@ export function S3Uploader({
           </p>
         )}
 
-        {items.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {items.map((item, i) => (
-              <div key={i} className="relative border rounded-lg">
+        {items.map((item, i) => {
+          const isUploaded = item.status === "success" && item.key;
+          const imageUrl = isUploaded
+            ? `https://eduapp2026-s3-bucket.s3.us-east-1.amazonaws.com/${item.key}`
+            : item.preview;
+
+          return (
+            <div key={i} className="relative border rounded-lg overflow-hidden">
+              {imageUrl && (
                 <Image
-                  src={item.preview}
-                  alt=""
+                  src={imageUrl}
+                  alt={`Upload preview ${i}`}
                   width={400}
                   height={225}
                   className="h-48 w-full object-cover"
+                // unoptimized={imageUrl.startsWith("blob:")} // Critical for blob URLs
                 />
+              )}
 
-                {item.status !== "success" && (
-                  <div className="absolute inset-x-0 bottom-0 bg-black/50 p-1">
-                    <Progress value={item.progress} />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              {item.status !== "success" && (
+                <div className="absolute inset-x-0 bottom-0 bg-black/50 p-1">
+                  <Progress value={item.progress} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -2,7 +2,6 @@ import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/config/query-keys";
 import { courseApi, publicCourseApi } from "./api";
 import {
-    ApiResponse,
     CourseListData,
     ICourse,
     SectionListData,
@@ -10,6 +9,7 @@ import {
     ContentListData,
     CourseDetailData,
 } from "./types";
+import { ApiResponse } from "../auth";
 
 // ==================== INSTRUCTOR COURSE QUERIES ====================
 

@@ -20,8 +20,8 @@ import {
     Search
 } from "lucide-react";
 
-import { useGetCategoriesWithSubcategories } from "@/services/categories";
-import { CourseLevel, useGetPublishedCourses } from "@/services/courses";
+import { ICategory, useGetCategoriesWithSubcategories } from "@/services/categories";
+import { CourseLevel, ICourse, useGetPublishedCourses } from "@/services/courses";
 import CourseCard from "./CourseCard";
 import CourseCardSkeleton from "./CourseCardSkeleton";
 
@@ -53,7 +53,7 @@ function CoursesPageContent() {
 
     // Filter courses
     const filteredCourses = useMemo(() => {
-        return courses.filter((course) => {
+        return courses.filter((course:ICourse) => {
             // Search filter
             const matchesSearch = searchQuery.trim() === '' ||
                 course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,7 +141,7 @@ function CoursesPageContent() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Categories</SelectItem>
-                            {categories.map((cat) => (
+                            {categories.map((cat: ICategory) => (
                                 <SelectItem key={cat._id} value={cat._id}>
                                     {cat.name}
                                 </SelectItem>
@@ -199,7 +199,7 @@ function CoursesPageContent() {
                 ) : (
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {paginatedCourses.map((course) => (
+                            {paginatedCourses.map((course: ICourse) => (
                                 <CourseCard key={course._id} course={course} />
                             ))}
                         </div>

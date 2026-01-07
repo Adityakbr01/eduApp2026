@@ -1,4 +1,3 @@
-import type { FileTypeEnum } from "../upload.service.js";
 
 interface ValidationRule {
     max: number; // MB
@@ -28,7 +27,7 @@ const RULES: Record<string, ValidationRule> = {
     },
 };
 
-export function validateFile(type: FileTypeEnum, size: number, mime: string): void {
+export function validateFile(type: string, size: number, mime: string): void {
     const rule = RULES[type];
     if (!rule) {
         throw new Error(`Invalid file type: ${type}`);

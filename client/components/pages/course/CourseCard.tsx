@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { ICourse } from "@/services/courses";
+import APP_info from "@/constants/app_info";
 
 
 // Course Card Component
@@ -31,7 +32,7 @@ function CourseCard({ course }: { course: ICourse }) {
                 <div className="relative h-48 overflow-hidden bg-muted">
                     {course.coverImage ? (
                         <Image
-                            src={course.coverImage}
+                            src={`${APP_info.S3_BASE_URL}${course.coverImage}`}
                             alt={course.title}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-110"
