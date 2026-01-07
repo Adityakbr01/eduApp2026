@@ -3,7 +3,7 @@ services:
     image: adityakbr/eduapp2026:frontend-prod
     container_name: eduapp_frontend
     env_file:
-      - .env.frontend.prod
+      - /home/ubuntu/app/.env.frontend.prod   # ABSOLUTE PATH (EC2 pe yahi folder mein files hain)
     restart: always
     ports:
       - "3000:3000"
@@ -16,17 +16,15 @@ services:
         max-file: "3"
 
   backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: adityakbr/eduapp2026:backend-prod   # CI/CD se push hone wala pre-built image use karo (build: hata diya)
     container_name: eduapp_backend
     env_file:
-      - .env.backend.prod
+      - /home/ubuntu/app/.env.backend.prod   # ABSOLUTE PATH
     environment:
-      - NODE_ENV=production   # isProd = true → hardcoded "redis://redis:6379" use karega
+      - NODE_ENV=production   # isProd = true → hardcoded local Redis "redis://redis:6379" use hoga
     restart: always
     ports:
-      - "5000:3001"
+      - "5000:3001"   # Internal server port 3001 (logs se confirm)
     depends_on:
       redis:
         condition: service_healthy
