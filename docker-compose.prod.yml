@@ -1,12 +1,17 @@
+version: "3.9"
+
 services:
   frontend:
     image: adityakbr/eduapp2026:frontend-prod
     container_name: eduapp_frontend
     env_file:
-      - /home/ubuntu/app/.env.frontend.prod   # ABSOLUTE PATH (EC2 pe yahi folder mein files hain)
+      - /home/ubuntu/app/.env.frontend.prod
     restart: always
     ports:
       - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - app-network
     logging:
@@ -16,18 +21,24 @@ services:
         max-file: "3"
 
   backend:
-    image: adityakbr/eduapp2026:backend-prod   # CI/CD se push hone wala pre-built image use karo (build: hata diya)
+    image: adityakbr/eduapp2026:backend-prod
     container_name: eduapp_backend
     env_file:
-      - /home/ubuntu/app/.env.backend.prod   # ABSOLUTE PATH
+      - /home/ubuntu/app/.env.backend.prod
     environment:
-      - NODE_ENV=production   # isProd = true → hardcoded local Redis "redis://redis:6379" use hoga
+      - NODE_ENV=production
     restart: always
     ports:
-      - "5000:3001"   # Internal server port 3001 (logs se confirm)
+      - "5000:3001"
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - app-network
     logging:
@@ -42,13 +53,13 @@ services:
     command: redis-server --appendonly yes --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
+    restart: always
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 12
       start_period: 5s
-    restart: always
     networks:
       - app-network
     logging:

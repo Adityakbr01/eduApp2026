@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import app from "./app.js";
 import connectDB from "./db/mongo.js";
 import logger from "./utils/logger.js";
+import { isProd } from "./configs/env.js";
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,7 @@ const startServer = () => {
             //connect to database here
             await connectDB();
             logger.info(`🚀 Server running on port ${PORT}`);
+            logger.info(`Server Start in ${isProd}`)
         });
     } catch (error) {
         logger.error("❌ Server failed to start", error);

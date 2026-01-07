@@ -1,5 +1,6 @@
 import morgan from "morgan";
-import logger, { isProduction } from "./logger.js";
+import { isProd } from "src/configs/env.js";
+import logger from "./logger.js";
 
 const stream = {
     write: (message: string) => {
@@ -14,6 +15,6 @@ const morganDevFormat = ":method :url :status :res[content-length] - :response-t
 const morganProdFormat = ":method :url :status - :response-time ms";
 
 export const httpLogger = morgan(
-    isProduction ? morganProdFormat : morganDevFormat,
+    isProd ? morganProdFormat : morganDevFormat,
     { stream }
 );

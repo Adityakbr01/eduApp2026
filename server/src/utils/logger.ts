@@ -6,7 +6,7 @@ import DailyRotateFile from "winston-daily-rotate-file";
 const { combine, timestamp, errors, printf, colorize, json } = winston.format;
 
 const environment = env.NODE_ENV || "development";
-export const isProduction = environment === "production";
+const isProduction = environment === "production";
 
 // Logs folder outside src (project root/logs)
 const logsDir = path.join(process.cwd(), "logs");
