@@ -1,12 +1,17 @@
+version: "3.9"
+
 services:
   frontend:
-    image: adityakbr/eduapp2026:frontend-prod   # Agar dev ke liye alag image hai to change kar lena
+    image: adityakbr/eduapp2026:frontend-prod
     container_name: eduapp_frontend
     env_file:
-      - .env.frontend.dev   # Dev ke liye alag env file (agar hai to), warna .env.frontend.prod
+      - .env.frontend.prod
     restart: always
     ports:
       - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - app-network
     logging:
@@ -16,17 +21,24 @@ services:
         max-file: "3"
 
   backend:
-    build:
-      context: ./server   # Ya jo bhi tera backend folder hai
-      dockerfile: Dockerfile
+    image: adityakbr/eduapp2026:backend-prod
     container_name: eduapp_backend
     env_file:
-      - .env.backend.dev   # Isme UPSTASH_REDIS_URL hona chahiye
+      - .env.backend.prod
     environment:
-      - NODE_ENV=development   # isProd = false → Upstash use karega
+      - NODE_ENV=production
     restart: always
     ports:
-      - "5000:3001"   # Internal port 3001 (logs se pata chala)
+      - "5000:3001"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - app-network
     logging:
@@ -35,7 +47,32 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  redis:
+    image: redis:7-alpine
+    container_name: eduapp_redis
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis_data:
+    name: eduapp_redis_data
+
 networks:
   app-network:
     driver: bridge
-    name: eduapp_dev_network
+    name: eduapp_prod_network
