@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1
 
-FROM node:18-alpine AS builder
+# ------------------------
+# Build stage
+# ------------------------
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -12,9 +15,9 @@ COPY . .
 RUN npm run build
 
 # ------------------------
-# Production image
+# Production stage
 # ------------------------
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -28,4 +31,4 @@ COPY --from=builder /app/next.config.js ./
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]   # ✅ next start
+CMD ["npm", "run", "start"]
