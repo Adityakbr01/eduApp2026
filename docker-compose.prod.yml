@@ -1,22 +1,27 @@
-version: "3.9"
-
 services:
   frontend:
-    image: yourdockerhub/next:prod
+    image: adityakbr01/eduapp-frontend:prod
+    container_name: eduapp_frontend
     env_file:
-      - .env.prod
+      - .env.frontend.prod
     restart: always
+    ports:
+      - "3000:3000"
 
   backend:
-    image: yourdockerhub/api:prod
+    image: adityakbr01/eduapp-backend:prod
+    container_name: eduapp_backend
     env_file:
-      - .env.prod
+      - .env.backend.prod
+    restart: always
+    ports:
+      - "5000:5000"
     depends_on:
       - redis
-    restart: always
 
   redis:
     image: redis:7-alpine
+    container_name: eduapp_redis
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
@@ -24,5 +29,3 @@ services:
 
 volumes:
   redis_data:
-
-  DOCKER_PASS

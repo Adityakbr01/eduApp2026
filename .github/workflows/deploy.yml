@@ -1,40 +1,56 @@
-name: Deploy Prod
+name: Deploy Production
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
+    name: Build & Push Images
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: docker/login-action@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
 
-      - run: docker build -t yourhub/api:prod ./backend
-      - run: docker push yourhub/api:prod
+      - name: Build & Push Backend
+        run: |
+          docker build -t adityakbr01/eduapp-backend:prod ./backend
+          docker push adityakbr01/eduapp-backend:prod
 
-      - run: docker build -t yourhub/next:prod ./frontend
-      - run: docker push yourhub/next:prod
+      - name: Build & Push Frontend
+        run: |
+          docker build -t adityakbr01/eduapp-frontend:prod ./frontend
+          docker push adityakbr01/eduapp-frontend:prod
 
   deploy:
+    name: Deploy on EC2
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+
     steps:
-      - uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_IP }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            cd /home/ubuntu/app
-            docker pull yourhub/api:prod
-            docker pull yourhub/next:prod
-            docker compose up -d
+      - name: Pull latest images
+        run: |
+          docker pull adityakbr01/eduapp-backend:prod
+          docker pull adityakbr01/eduapp-frontend:prod
 
+      - name: Stop old containers (safe)
+        run: |
+          cd /home/ubuntu/app
+          docker compose down
 
-            
+      - name: Start new containers
+        run: |
+          cd /home/ubuntu/app
+          docker compose up -d
+
+      - name: Cleanup unused images
+        run: |
+          docker image prune -f
