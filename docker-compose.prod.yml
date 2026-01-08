@@ -1,78 +1,129 @@
-version: "3.9"
+version: "3.9" # Docker Compose file format version
 
 services:
   frontend:
+    # Production-ready frontend image (Next.js standalone build)
     image: adityakbr/eduapp2026:frontend-prod
     container_name: eduapp_frontend
+
+    # Frontend-specific environment variables (secrets/configs)
     env_file:
       - /home/ubuntu/app/.env.frontend.prod
+
+    # Container automatically restart hoga agar crash ya server reboot ho
     restart: always
+
+    # Host ke port 3000 ko container ke port 3000 se bind kar rahe hain
     ports:
       - "3000:3000"
+
+    # Frontend backend ke start hone ka wait karega
+    # (taaki API calls fail na ho on startup)
     depends_on:
       backend:
         condition: service_started
+
+    # Shared private network for internal service communication
     networks:
       - app-network
+
+    # Log rotation config to avoid disk getting full
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "10m"   # Single log file max size
+        max-file: "3"     # Max 3 rotated log files
+
 
   backend:
+    # Production backend API image (Node.js / Express)
     image: adityakbr/eduapp2026:backend-prod
     container_name: eduapp_backend
+
+    # Backend-specific environment variables
     env_file:
       - /home/ubuntu/app/.env.backend.prod
+
+    # Explicitly set production mode
     environment:
       - NODE_ENV=production
+
+    # Container auto-restart for high availability
     restart: always
+
+    # Host port 5000 -> container port 3001 (internal API port)
     ports:
       - "5000:3001"
+
+    # Backend Redis ke healthy hone ka wait karega
+    # (taaki cache/session connection errors na aaye)
     depends_on:
       redis:
         condition: service_healthy
+
+    # Healthcheck API to monitor backend readiness
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
+      interval: 10s       # Har 10 sec me check
+      timeout: 3s        # Max response wait time
+      retries: 10        # Fail hone pe retry count
+      start_period: 10s  # Initial startup grace period
+
+    # Same private network me run hoga
     networks:
       - app-network
+
+    # Log rotation (production safety)
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
+
   redis:
+    # Lightweight & stable Redis image
     image: redis:7-alpine
     container_name: eduapp_redis
+
+    # Redis persistence + optimized logging
     command: redis-server --appendonly yes --save 60 1 --loglevel warning
+
+    # Named volume for Redis data persistence
     volumes:
       - redis_data:/data
+
+    # Always restart Redis if stopped
     restart: always
+
+    # Healthcheck to ensure Redis is ready before backend connects
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 12
       start_period: 5s
+
+    # Internal network only (no public exposure)
     networks:
       - app-network
+
+    # Log rotation for Redis as well
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
+
 volumes:
   redis_data:
+    # Named volume so data survives container recreation
     name: eduapp_redis_data
+
 
 networks:
   app-network:
+    # Bridge network for isolated production traffic
     driver: bridge
     name: eduapp_prod_network

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -20,19 +20,13 @@ import {
     Search
 } from "lucide-react";
 
+import { ITEMS_PER_PAGE, levelOptions } from "@/constants/defoult_constants";
 import { ICategory, useGetCategoriesWithSubcategories } from "@/services/categories";
-import { CourseLevel, ICourse, useGetPublishedCourses } from "@/services/courses";
+import { ICourse, useGetPublishedCourses } from "@/services/courses";
 import CourseCard from "./CourseCard";
 import CourseCardSkeleton from "./CourseCardSkeleton";
 
-const ITEMS_PER_PAGE = 12;
 
-const levelOptions = [
-    { value: "all", label: "All Levels" },
-    { value: CourseLevel.BEGINNER, label: "Beginner" },
-    { value: CourseLevel.INTERMEDIATE, label: "Intermediate" },
-    { value: CourseLevel.ADVANCED, label: "Advanced" },
-];
 
 
 function CoursesPageContent() {
@@ -96,7 +90,7 @@ function CoursesPageContent() {
     return (
         <div className="min-h-screen bg-background">
             {/* Hero Section */}
-            <div className="bg-gradient-to-b from-primary/10 to-background py-12 md:py-16">
+            <div className="bg-linear-to-b from-primary/10 to-background py-12 md:py-16">
                 <div className="container mx-auto px-4">
                     <div className="max-w-3xl mx-auto text-center">
                         <h1 className="text-3xl md:text-4xl font-bold mb-4">
@@ -136,7 +130,7 @@ function CoursesPageContent() {
                         value={selectedCategory}
                         onValueChange={(value) => handleFilterChange('category', value)}
                     >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-45">
                             <SelectValue placeholder="Category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -153,7 +147,7 @@ function CoursesPageContent() {
                         value={selectedLevel}
                         onValueChange={(value) => handleFilterChange('level', value)}
                     >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-45">
                             <SelectValue placeholder="Level" />
                         </SelectTrigger>
                         <SelectContent>

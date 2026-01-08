@@ -20,6 +20,13 @@ const links = {
         MANAGER: "/dashboard/Manager",
     },
 
+    S3:{
+        S3_BASE_URL:"https://eduapp2026-s3-bucket.s3.us-east-1.amazonaws.com/",
+        UPLOAD_TEST: "/s3/upload-test",
+        GET_FILE_TEST: "/s3/get-file-test",
+        
+    }
+
 };
 
 export default links;

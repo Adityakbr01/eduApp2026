@@ -23,8 +23,6 @@ export class UploadService {
         // Example: videos/course-1/lesson-1-<uuid>.mp4
         const s3Key = `${baseFolder}/${uniqueSuffix}`;
 
-        console.log("Getting presigned URL for:", { fileName, size, type, s3Key });
-
         // ------------------- SIMPLE UPLOAD (<5MB) -------------------
         if (size < 5 * 1024 * 1024) {
             const command = new PutObjectCommand({

@@ -10,8 +10,8 @@ jobs:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
     env:
-      BACKEND_TAG: adityakbr/eduapp2026:backend-prod
-      FRONTEND_TAG: adityakbr/eduapp2026:frontend-prod
+      BACKEND_TAG: adityakbr/eduapp2026:backend-prod # match your Docker Hub repo exactly
+      FRONTEND_TAG: adityakbr/eduapp2026:frontend-prod # match your Docker Hub repo exactly
       SHA_TAG: ${{ github.sha }}  # For traceability (short sha optional)
 
     steps:

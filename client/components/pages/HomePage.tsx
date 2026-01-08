@@ -67,8 +67,15 @@ function HomePage() {
 
                         <Button variant="secondary" asChild>
                             <Link href={links.DASHBOARD.ADMIN}>
-                                Admin Dashboard
+                                Admin/Manager Dashboard
                             </Link>
+                            
+                        </Button>
+                        <Button variant="secondary" asChild>
+                            <Link href={links.DASHBOARD.INSTRUCTOR}>
+                                Instructor Dashboard
+                            </Link>
+                            
                         </Button>
                     </div>
                 </div>

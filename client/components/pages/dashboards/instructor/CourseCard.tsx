@@ -14,6 +14,7 @@ import {
 import { MoreVertical, Edit, Trash2, Eye, EyeOff, BookOpen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import links from "@/constants/links";
 
 interface CourseCardProps {
     course: ICourse;
@@ -34,12 +35,12 @@ export function CourseCard({ course, onPublish, onUnpublish, onDelete }: CourseC
     const status = statusConfig[course.status] || statusConfig[CourseStatus.DRAFT];
 
     return (
-        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+        <Card className=" pt-0 overflow-hidden hover:shadow-md transition-shadow">
             {/* Cover Image */}
             <div className="relative h-40 bg-muted">
                 {course.coverImage ? (
                     <Image
-                        src={course.coverImage}
+                        src={links.S3.S3_BASE_URL + course.coverImage}
                         alt={course.title}
                         fill
                         className="object-cover"
