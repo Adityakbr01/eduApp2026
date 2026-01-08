@@ -1,39 +1,25 @@
-import { Types } from "mongoose";
-
-// Utility function to generate slug
-const generateSlug = (text: string): string => {
-    return text
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-')           // Replace spaces with -
-        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-        .replace(/^-+/, '')             // Trim - from start of text
-        .replace(/-+$/, '');            // Trim - from end of text
-};
+import mongoose, { Types } from "mongoose";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
-import {
-    courseRepository,
-    sectionRepository,
-    lessonRepository,
-    lessonContentRepository,
-    contentAttemptRepository,
-} from "src/repositories/course.repository.js";
-import AppError from "src/utils/AppError.js";
 import Course from "src/models/course/course.model.js";
-import Section from "src/models/course/section.model.js";
-import Lesson from "src/models/course/lesson.model.js";
+import CourseStatusRequestSchema from "src/models/course/CourseStatusRequestSchema.js";
 import LessonContent from "src/models/course/lessonContent.model.js";
-import mongoose from "mongoose";
+import {
+    contentAttemptRepository,
+    courseRepository,
+    lessonContentRepository,
+    lessonRepository,
+    sectionRepository,
+} from "src/repositories/course.repository.js";
+import { CourseStatus } from "src/types/course.type.js";
+import AppError from "src/utils/AppError.js";
+import generateSlug from "src/utils/generateSlug.js";
+
 
 // ============================================
 // COURSE SERVICE
 // ============================================
 export const courseService = {
-
-
     // -------------------- GET ALL PUBLISHED COURSES --------------------
     getAllPublishedCourses: async (query: { page?: number; limit?: number; search?: string; category?: string }) => {
         return courseRepository.findAllPublished(query);
@@ -49,7 +35,6 @@ export const courseService = {
 
         return course;
     },
-
 
     // -------------------- CREATE COURSE --------------------
     createCourse: async (instructorId: string, data: any) => {
@@ -159,45 +144,129 @@ export const courseService = {
         return { message: "Course deleted successfully" };
     },
 
-    // -------------------- PUBLISH COURSE --------------------
-    publishCourse: async (courseId: string, instructorId: string) => {
-        const isOwner = await courseRepository.isOwner(courseId, instructorId);
-        if (!isOwner) {
-            throw new AppError(
-                "You don't have permission to publish this course",
-                STATUSCODE.FORBIDDEN,
-                ERROR_CODE.FORBIDDEN
-            );
-        }
+    // -------------------- PUBLISH/ UNPUBLISH COURSE with admin Approval--------------------
+     // -------------------- SUBMIT COURSE STATUS REQUEST (INSTRUCTOR) --------------------
+submitCourseStatusRequest: async (
+  courseId: string,
+  instructorId: string,
+  type: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED
+) => {
+  const isOwner = await courseRepository.isOwner(courseId, instructorId);
+  if (!isOwner) {
+    throw new AppError("Not course owner", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN);
+  }
 
-        // Validate course has required content
-        const sections = await sectionRepository.findByCourse(courseId);
-        if (sections.length === 0) {
-            throw new AppError(
-                "Course must have at least one section to publish",
-                STATUSCODE.BAD_REQUEST,
-                ERROR_CODE.VALIDATION_ERROR
-            );
-        }
+  const course = await courseRepository.findById(courseId);
+  if (!course) {
+    throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+  }
 
-        const course = await courseRepository.updatePublishStatus(courseId, true);
-        return course;
+  // ✅ Validate transitions
+  if (
+    type === CourseStatus.PUBLISHED &&
+    ![CourseStatus.DRAFT, CourseStatus.REJECTED].includes(course.status)
+  ) {
+    throw new AppError(
+      "Course cannot be submitted for publishing",
+      STATUSCODE.BAD_REQUEST,
+      ERROR_CODE.INVALID_ACTION
+    );
+  }
+
+  if (
+    type === CourseStatus.UNPUBLISHED &&
+    course.status !== CourseStatus.PUBLISHED
+  ) {
+    throw new AppError(
+      "Only published courses can be requested for unpublishing",
+      STATUSCODE.BAD_REQUEST,
+      ERROR_CODE.INVALID_ACTION
+    );
+  }
+
+  // ✅ Prevent duplicate pending requests
+  const existingRequest = await CourseStatusRequestSchema.findOne({
+    course: courseId,
+    status: CourseStatus.PENDING_REVIEW,
+  });
+
+  if (existingRequest) {
+    throw new AppError(
+      "A request is already pending review",
+      STATUSCODE.CONFLICT,
+      ERROR_CODE.DUPLICATE_ENTRY
+    );
+  }
+
+  // ✅ Mark course as pending review (important!)
+  await courseRepository.updatePublishStatus(courseId, CourseStatus.PENDING_REVIEW);
+
+  return CourseStatusRequestSchema.create({
+    course: courseId,
+    instructor: instructorId,
+    type,
+  });
+},
+   // -------------------- GET COURSE for admin with pagination and filtering with regex --------------------
+    getCoursesForAdmin: async (query: { page?: number; limit?: number; status?: string; search?: string }) => {
+        return courseRepository.findForAdmin(query);
     },
+  // -------------------- ADMIN APPROVE / REJECT COURSE REQUEST --------------------
+toggleCourseStatusAdmin: async (
+  requestId: string,
+  action: CourseStatus.APPROVED | CourseStatus.REJECTED,
+  adminId: string,
+  reason?: string
+) => {
+    console.log("Admin toggling course status request:", requestId, action);
+  const request = await CourseStatusRequestSchema.findById(requestId);
+  if (!request) {
+    throw new AppError("Request not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+  }
 
-    // -------------------- UNPUBLISH COURSE --------------------
-    unpublishCourse: async (courseId: string, instructorId: string) => {
-        const isOwner = await courseRepository.isOwner(courseId, instructorId);
-        if (!isOwner) {
-            throw new AppError(
-                "You don't have permission to unpublish this course",
-                STATUSCODE.FORBIDDEN,
-                ERROR_CODE.FORBIDDEN
-            );
-        }
+  if (request.status !== CourseStatus.PENDING_REVIEW) {
+    throw new AppError(
+      "Request already processed",
+      STATUSCODE.BAD_REQUEST,
+      ERROR_CODE.INVALID_ACTION
+    );
+  }
 
-        const course = await courseRepository.updatePublishStatus(courseId, false);
-        return course;
-    },
+  const course = await courseRepository.findById(request.course.toString());
+  if (!course) {
+    throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+  }
+
+  if (action === CourseStatus.APPROVED) {
+    // ✅ Apply requested change
+    if (request.type === CourseStatus.PUBLISHED) {
+        console.log("Publishing course:", course._id);
+      await courseRepository.updatePublishStatus(course._id, CourseStatus.PUBLISHED);
+    }
+
+    if (request.type === CourseStatus.UNPUBLISHED) {
+      await courseRepository.updatePublishStatus(course._id, CourseStatus.DRAFT);
+    }
+
+    request.status = CourseStatus.APPROVED;
+  } else {
+    // ❌ Reject → revert course to safe state
+    request.status = CourseStatus.REJECTED;
+    request.reason = reason;
+
+    await courseRepository.updatePublishStatus(
+      course._id,
+      request.type === CourseStatus.PUBLISHED
+        ? CourseStatus.DRAFT
+        : CourseStatus.PUBLISHED
+    );
+  }
+request.admin = new Types.ObjectId(adminId);
+  request.reviewedAt = new Date();
+  await request.save();
+
+  return request;
+},
 };
 
 // ============================================

@@ -1,6 +1,6 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/config/query-keys";
-import { courseApi, publicCourseApi } from "./api";
+import { adminCourseApi, courseApi, publicCourseApi } from "./api";
 import {
     CourseListData,
     ICourse,
@@ -8,6 +8,7 @@ import {
     LessonListData,
     ContentListData,
     CourseDetailData,
+    AdminCoursesResponse,
 } from "./types";
 import { ApiResponse } from "../auth";
 
@@ -119,6 +120,21 @@ export const useGetPublishedCourseById = (
         queryKey: [QUERY_KEYS.COURSES.BY_ID, courseId],
         queryFn: () => publicCourseApi.getPublishedCourseById(courseId),
         enabled: !!courseId,
+        ...options,
+    });
+};
+
+
+
+
+// ==================== ADMIN COURSE QUERIES ====================
+export const useGetCoursesForAdmin = (
+    query: { page?: number; limit?: number; status?: string; search?: string },
+    options?: Omit<UseQueryOptions<ApiResponse<AdminCoursesResponse>>, "queryKey" | "queryFn">
+) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.COURSES.ADMIN_ALL, query],
+        queryFn: () => adminCourseApi.getCoursesForAdmin(query),
         ...options,
     });
 };

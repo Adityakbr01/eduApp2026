@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import {
-    useGetInstructorCourses,
-    usePublishCourse,
-    useUnpublishCourse,
-    useDeleteCourse,
+  useGetInstructorCourses,
+  useSubmitCourseRequest,
+  useDeleteCourse,
+  CourseStatus,
 } from "@/services/courses";
 import { useLogout } from "@/services/auth/mutations";
 import { Button } from "@/components/ui/button";
@@ -14,136 +14,135 @@ import { InstructorHeader } from "./InstructorHeader";
 import { InstructorOverview } from "./InstructorOverview";
 import { CoursesSection } from "./CoursesSection";
 import {
-    instructorSidebarItems,
-    InstructorSidebarValue,
-    calculateStats,
-    getDefaultStats,
-    getRecentCourses,
+  instructorSidebarItems,
+  InstructorSidebarValue,
+  calculateStats,
+  getDefaultStats,
+  getRecentCourses,
 } from "./utils";
 
 export function InstructorDashboard() {
-    const logout = useLogout();
-    const { data, isLoading, error } = useGetInstructorCourses();
-    const publishCourse = usePublishCourse();
-    const unpublishCourse = useUnpublishCourse();
-    const deleteCourse = useDeleteCourse();
+  const logout = useLogout();
+  const { data, isLoading, error } = useGetInstructorCourses();
 
-    // State
-    const [activeSection, setActiveSection] = useState<InstructorSidebarValue>("overview");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const submitCourseRequest = useSubmitCourseRequest();
+  const deleteCourse = useDeleteCourse();
 
-    // Derived data
-    const courses = useMemo(() => data?.data?.courses || [], [data?.data?.courses]);
-    const stats = useMemo(
-        () => (courses.length > 0 ? calculateStats(courses) : getDefaultStats()),
-        [courses]
-    );
-    const recentCourses = useMemo(() => getRecentCourses(courses, 5), [courses]);
+  // State
+  const [activeSection, setActiveSection] =
+    useState<InstructorSidebarValue>("overview");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
-    const activeSectionItem = useMemo(
-        () =>
-            instructorSidebarItems.find((item) => item.value === activeSection) ||
-            instructorSidebarItems[0],
-        [activeSection]
-    );
+  // Derived data
+  const courses = useMemo(
+    () => data?.data?.courses || [],
+    [data?.data?.courses]
+  );
+  const stats = useMemo(
+    () => (courses.length > 0 ? calculateStats(courses) : getDefaultStats()),
+    [courses]
+  );
+  const recentCourses = useMemo(() => getRecentCourses(courses, 5), [courses]);
 
-    // Handlers
-    const handlePublish = (id: string) => {
-        publishCourse.mutate(id);
-    };
+  const activeSectionItem = useMemo(
+    () =>
+      instructorSidebarItems.find((item) => item.value === activeSection) ||
+      instructorSidebarItems[0],
+    [activeSection]
+  );
 
-    const handleUnpublish = (id: string) => {
-        unpublishCourse.mutate(id);
-    };
+  // Handlers
+  const submitCourseRequestHandler = (
+    id: string,
+    status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED
+  ) => {
+    submitCourseRequest.mutate({ id, status });
+  };
 
-    const handleDelete = (id: string) => {
-        if (confirm("Are you sure you want to delete this course?")) {
-            deleteCourse.mutate(id);
-        }
-    };
-
-    const handleLogout = () => {
-        logout.mutate();
-    };
-
-    // Error state
-    if (error) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <div className="text-center">
-                    <p className="text-destructive mb-4">Failed to load dashboard</p>
-                    <Button variant="outline" onClick={() => window.location.reload()}>
-                        Try Again
-                    </Button>
-                </div>
-            </div>
-        );
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this course?")) {
+      deleteCourse.mutate(id);
     }
+  };
 
+  const handleLogout = () => {
+    logout.mutate();
+  };
+
+  // Error state
+  if (error) {
     return (
-        <div className="bg-muted/30 flex h-screen overflow-hidden">
-            {/* Sidebar */}
-            <InstructorSidebar
-                activeSection={activeSection}
-                setActiveSection={setActiveSection}
-                onLogout={handleLogout}
-            />
-
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col h-screen overflow-hidden">
-                <InstructorHeader
-                    sectionTitle={activeSectionItem.label}
-                    activeSection={activeSection}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                />
-
-                <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
-                    {/* Overview Section */}
-                    {activeSection === "overview" && (
-                        <InstructorOverview
-                            stats={stats}
-                            recentCourses={recentCourses}
-                            isLoading={isLoading}
-                            onViewAllCourses={() => setActiveSection("courses")}
-                        />
-                    )}
-
-                    {/* Courses Section */}
-                    {activeSection === "courses" && (
-                        <CoursesSection
-                            courses={courses}
-                            isLoading={isLoading}
-                            searchQuery={searchQuery}
-                            filterStatus={filterStatus}
-                            setFilterStatus={setFilterStatus}
-                            onPublish={handlePublish}
-                            onUnpublish={handleUnpublish}
-                            onDelete={handleDelete}
-                        />
-                    )}
-
-                    {/* Content Library Section */}
-                    {activeSection === "content" && (
-                        <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
-                            <p className="text-muted-foreground">
-                                Content Library coming soon...
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Settings Section */}
-                    {activeSection === "settings" && (
-                        <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
-                            <p className="text-muted-foreground">
-                                Settings coming soon...
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </main>
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load dashboard</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </div>
+      </div>
     );
-}
+  }
 
+  return (
+    <div className="bg-muted/30 flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <InstructorSidebar
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        onLogout={handleLogout}
+      />
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <InstructorHeader
+          sectionTitle={activeSectionItem.label}
+          activeSection={activeSection}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
+
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+          {/* Overview Section */}
+          {activeSection === "overview" && (
+            <InstructorOverview
+              stats={stats}
+              recentCourses={recentCourses}
+              isLoading={isLoading}
+              onViewAllCourses={() => setActiveSection("courses")}
+            />
+          )}
+
+          {/* Courses Section */}
+          {activeSection === "courses" && (
+            <CoursesSection
+              courses={courses}
+              isLoading={isLoading}
+              searchQuery={searchQuery}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              submitCourseRequest={submitCourseRequestHandler}
+              onDelete={handleDelete}
+            />
+          )}
+
+          {/* Content Library Section */}
+          {activeSection === "content" && (
+            <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
+              <p className="text-muted-foreground">
+                Content Library coming soon...
+              </p>
+            </div>
+          )}
+
+          {/* Settings Section */}
+          {activeSection === "settings" && (
+            <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
+              <p className="text-muted-foreground">Settings coming soon...</p>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

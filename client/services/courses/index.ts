@@ -21,8 +21,7 @@ export {
     useCreateCourse,
     useUpdateCourse,
     useDeleteCourse,
-    usePublishCourse,
-    useUnpublishCourse,
+    useSubmitCourseRequest,
     // Section
     useCreateSection,
     useUpdateSection,

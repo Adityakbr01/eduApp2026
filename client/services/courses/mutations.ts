@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { courseApi } from "./api";
+import { adminCourseApi, courseApi } from "./api";
 import {
     CreateCourseDTO,
     UpdateCourseDTO,
@@ -10,6 +10,7 @@ import {
     CreateContentDTO,
     UpdateContentDTO,
     ReorderItemDTO,
+    CourseStatus,
 } from "./types";
 import { mutationHandlers } from "@/services/common/mutation-utils";
 import { QUERY_KEYS } from "@/config/query-keys";
@@ -75,46 +76,41 @@ export const useDeleteCourse = () => {
 };
 
 /**
- * Publish a course
+ * Publish/unpublish a course
  */
-export const usePublishCourse = () => {
+export const useSubmitCourseRequest = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (id: string) => courseApi.publishCourse(id),
-        onSuccess: (response, id) => {
-            mutationHandlers.success(response.message || "Course published successfully");
-            queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES],
-            });
-            queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.COURSES.DETAIL(id)],
-            });
+        mutationFn: (data: { id: string; status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED }) =>
+            courseApi.toggleCourseStatus(data),
+        onSuccess: (response, data) => {
+            mutationHandlers.success(response.message || "Course Status change submitted, wait for review");
+           queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES], }); 
+           queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES.DETAIL(data.id)], });
         },
         onError: (error) => mutationHandlers.error(error),
     });
 };
 
-/**
- * Unpublish a course
- */
-export const useUnpublishCourse = () => {
+export const useAdminReviewCourseRequest = () => {
     const queryClient = useQueryClient();
-
     return useMutation({
-        mutationFn: (id: string) => courseApi.unpublishCourse(id),
-        onSuccess: (response, id) => {
-            mutationHandlers.success(response.message || "Course unpublished successfully");
+        mutationFn: (data: { requestId: string, action: CourseStatus.APPROVED | CourseStatus.REJECTED; reason?: string }) =>
+            adminCourseApi.toggleCourseStatusAdmin(data),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Course status request reviewed successfully");
             queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES],
+                queryKey: [QUERY_KEYS.COURSES.ADMIN_ALL],
             });
-            queryClient.invalidateQueries({
-                queryKey: [QUERY_KEYS.COURSES.DETAIL(id)],
-            });
-        },
+        }
+        ,
         onError: (error) => mutationHandlers.error(error),
     });
 };
+
+
+
 
 // ==================== SECTION MUTATIONS ====================
 

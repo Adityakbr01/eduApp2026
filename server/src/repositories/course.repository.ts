@@ -1,10 +1,11 @@
 import mongoose, { Types } from "mongoose";
-import type { FilterQuery, UpdateQuery } from "mongoose";
+import type { FilterQuery, PipelineStage, UpdateQuery } from "mongoose";
 import Course from "src/models/course/course.model.js";
 import Section from "src/models/course/section.model.js";
 import Lesson from "src/models/course/lesson.model.js";
 import LessonContent from "src/models/course/lessonContent.model.js";
 import ContentAttempt from "src/models/course/contentAttempt.model.js";
+import  { CourseStatus } from "src/types/course.type.js";
 
 // ============================================
 // COURSE REPOSITORY
@@ -288,9 +289,6 @@ export const courseRepository = {
 
         return result.length > 0 ? result[0] : null;
     },
-
-
-
     // Create
     create: async (data: any) => {
         return Course.create(data);
@@ -376,17 +374,24 @@ export const courseRepository = {
     },
 
     // Publish/Unpublish course
-    updatePublishStatus: async (id: string | Types.ObjectId, isPublished: boolean) => {
-        const updateData: any = { isPublished };
-        if (isPublished) {
-            updateData.publishedAt = new Date();
-            updateData.status = "published";
-        } else {
-            updateData.status = "draft";
-        }
-        return Course.findByIdAndUpdate(id, updateData, { new: true });
-    },
+  updatePublishStatus: async (
+  id: string | Types.ObjectId,
+  status: CourseStatus
+) => {
+  const updateData: any = { status };
 
+  if (status === CourseStatus.PUBLISHED) {
+    updateData.isPublished = true;
+    updateData.publishedAt = new Date();
+  } else if (status === CourseStatus.DRAFT) {
+    updateData.isPublished = false;
+    updateData.publishedAt = null;
+  } else if (status === CourseStatus.REJECTED) {
+    updateData.isPublished = false;
+  }
+
+  return Course.findByIdAndUpdate(id, updateData, { new: true });
+},
     // Check ownership
     isOwner: async (courseId: string | Types.ObjectId, instructorId: string | Types.ObjectId) => {
         const course = await Course.findOne({
@@ -398,6 +403,143 @@ export const courseRepository = {
         });
         return !!course;
     },
+    // -------------------- FIND COURSES FOR ADMIN WITH PAGINATION AND FILTERING WITH REGEX --------------------
+  findForAdmin : async (
+  query: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+  } = {}
+) => {
+  const { page = 1, limit = 10, status, search } = query;
+  const skip = (page - 1) * limit;
+
+  /* ------------------------------ match ------------------------------ */
+  const match: Record<string, any> = {};
+
+  if (status) match.status = status;
+
+  if (search) {
+    const regex = new RegExp(search, "i");
+    match.$or = [{ title: regex }, { description: regex }];
+  }
+
+  /* ----------------------------- pipeline ---------------------------- */
+  const pipeline: PipelineStage[] = [
+    { $match: match },
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+
+    /* --------------------------- instructor --------------------------- */
+    {
+      $lookup: {
+        from: "users",
+        localField: "instructor",
+        foreignField: "_id",
+        as: "instructor",
+      },
+    },
+    { $unwind: "$instructor" },
+
+    /* ---------------------------- category ---------------------------- */
+    {
+      $lookup: {
+        from: "categories",
+        localField: "category",
+        foreignField: "_id",
+        as: "category",
+      },
+    },
+    { $unwind: "$category" },
+
+    /* --------------------- course status request ---------------------- */
+    {
+      $lookup: {
+        from: "coursestatusrequests",
+        let: { courseId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$course", "$$courseId"] },
+                  {
+                    $eq: [
+                      "$status",
+                      CourseStatus.PENDING_REVIEW,
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              type: 1,
+              status: 1,
+              createdAt: 1,
+            },
+          },
+        ],
+        as: "statusRequest",
+      },
+    },
+    {
+      $unwind: {
+        path: "$statusRequest",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
+    /* ----------------------------- project ---------------------------- */
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        status: 1,
+        isPublished: 1,
+        createdAt: 1,
+
+        // 🔑 review info
+        requestId: "$statusRequest._id",
+        requestType: "$statusRequest.type",
+        requestStatus: "$statusRequest.status",
+        requestCreatedAt: "$statusRequest.createdAt",
+
+        instructor: {
+          _id: "$instructor._id",
+          name: "$instructor.name",
+          email: "$instructor.email",
+          avatar: "$instructor.avatar",
+        },
+
+        category: {
+          _id: "$category._id",
+          name: "$category.name",
+          slug: "$category.slug",
+        },
+      },
+    },
+  ];
+
+  /* ------------------------------ run ------------------------------ */
+  const courses = await Course.aggregate(pipeline);
+
+  const total = await Course.countDocuments(match);
+
+  return {
+    courses,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+},
 };
 
 // ============================================

@@ -38,8 +38,10 @@ export enum CourseStatus {
     DRAFT = "draft",
     PENDING_REVIEW = "pending_review",
     PUBLISHED = "published",
+    UNPUBLISHED = "unpublished",
     ARCHIVED = "archived",
     REJECTED = "rejected",
+    APPROVED = "approved",
 }
 
 export enum Currency {
@@ -418,4 +420,48 @@ export interface ReviewListData {
     total: number;
     page?: number;
     limit?: number;
+}
+
+
+
+
+export interface AdminCourse {
+  _id: string;
+  title: string;
+  description: string;
+
+  // Optional request info
+  requestId?: string; // ID of the pending request
+  requestType?: "published" | "unpublished"; // type of request
+  requestStatus?: "pending_review" | "approved" | "rejected"; // status of request
+  requestCreatedAt?: string; // when the request was created
+
+  status: "draft" | "published" | "pending_review"; // course status
+  isPublished: boolean;
+  createdAt: string;
+
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
+
+  instructor: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string; // optional avatar
+  };
+}
+
+
+export interface AdminCoursesResponse {
+  success: boolean;
+    courses: AdminCourse[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
 }

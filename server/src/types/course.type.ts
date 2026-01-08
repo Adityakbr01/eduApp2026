@@ -42,6 +42,8 @@ export enum CourseStatus {
     PUBLISHED = "published",
     ARCHIVED = "archived",
     REJECTED = "rejected",
+    APPROVED = "approved",
+    UNPUBLISHED = "unpublished",
 }
 
 export enum Currency {

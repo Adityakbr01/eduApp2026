@@ -74,8 +74,7 @@ instructorRouter.put("/section/:sectionId/lessons/reorder", validateRequest(reor
 instructorRouter.put("/lesson/:lessonId/contents/reorder", validateRequest(reorderContentsSchema), lessonContentController.reorderContents);
 
 // 8️⃣ PUBLISH & UNPUBLISH COURSE
-instructorRouter.put("/:id/publish", courseController.publishCourse);
-instructorRouter.put("/:id/unpublish", courseController.unpublishCourse);
+instructorRouter.put("/:id/toggleCourseStatus", courseController.togglePublishCourse);
 
 // 9️⃣ TOGGLE VISIBILITY OF SECTION, LESSONS & CONTENT
 instructorRouter.put("/section/:id/visibility", sectionController.toggleVisibility);
@@ -85,12 +84,25 @@ instructorRouter.put("/content/:id/visibility", lessonContentController.toggleVi
 // Mount instructor routes
 router.use("/instructor", instructorRouter);
 
+
+// mount admin routes
+
+const adminRouter = Router();
+adminRouter.use(authMiddleware);
+adminRouter.use(checkRole(ROLES.ADMIN.code));
+
+// GET COURSES FOR ADMIN WITH PAGINATION AND FILTERING
+adminRouter.get("/", courseController.GetCourseForAdmin);
+adminRouter.put("/course-status-requests/:requestId/review", courseController.toggleCourseStatusAdmin);
+
+router.use("/admin", adminRouter);
+
 // ============================================
 // 👨‍🎓 STUDENT ROUTES - PROGRESS TRACKING
 // ============================================
 const studentRouter = Router();
 studentRouter.use(authMiddleware);
-studentRouter.use(checkRole(ROLES.STUDENT.code, ROLES.ADMIN.code));
+studentRouter.use(checkRole(ROLES.STUDENT.code));
 
 // Content Progress
 studentRouter.post("/content/:contentId/progress", validateRequest(saveProgressSchema), contentProgressController.saveProgress);

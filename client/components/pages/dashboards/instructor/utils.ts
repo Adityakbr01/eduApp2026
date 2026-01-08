@@ -147,4 +147,14 @@ export const statusConfig: Record<
         variant: "destructive",
         className: "bg-red-100 text-red-800",
     },
+    [CourseStatus.UNPUBLISHED]: {
+        label: "Unpublished",
+        variant: "destructive",
+        className: "bg-red-100 text-red-800",
+    },
+    [CourseStatus.APPROVED]: {
+        label: "Approved",
+        variant: "default",
+        className: "bg-emerald-100 text-emerald-800",
+    },
 };

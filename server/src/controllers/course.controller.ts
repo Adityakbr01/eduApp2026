@@ -14,7 +14,6 @@ import { sendResponse } from "src/utils/sendResponse.js";
 // COURSE CONTROLLER (INSTRUCTOR)
 // ============================================
 const courseController = {
-
     // -------------------- GET ALL PUBLISHED COURSES --------------------
     getAllPublishedCourses: catchAsync(async (req, res) => {
         const { page, limit, search, category } = req.query as any;
@@ -75,18 +74,29 @@ const courseController = {
         sendResponse(res, 200, "Course deleted successfully", result);
     }),
 
-    // -------------------- PUBLISH COURSE --------------------
-    publishCourse: catchAsync<{ id: string }>(async (req, res) => {
+    // -------------------- PUBLISH/UNPUBLISH COURSE --------------------
+    togglePublishCourse: catchAsync<{ id: string }>(async (req, res) => {
         const instructorId = req.user!.id;
-        const result = await courseService.publishCourse(req.params.id, instructorId);
-        sendResponse(res, 200, "Course published successfully", result);
+        const result = await courseService.submitCourseStatusRequest(req.params.id, instructorId, req.body.status);
+        sendResponse(res, 200, "Course publish status updated, please wait for approval", result);
     }),
-
-    // -------------------- UNPUBLISH COURSE --------------------
-    unpublishCourse: catchAsync<{ id: string }>(async (req, res) => {
-        const instructorId = req.user!.id;
-        const result = await courseService.unpublishCourse(req.params.id, instructorId);
-        sendResponse(res, 200, "Course unpublished successfully", result);
+    // -------------------- GET COURSES FOR ADMIN WITH PAGINATION AND FILTERING --------------------
+    GetCourseForAdmin: catchAsync(async (req, res) => {
+        const { page, limit, status, search } = req.query as any;
+        const result = await courseService.getCoursesForAdmin({
+            page: page ? parseInt(page) : undefined,
+            limit: limit ? parseInt(limit) : undefined,
+            status,
+            search,
+        });
+        sendResponse(res, 200, "Courses fetched successfully for Admin", result);
+    }),
+    // -------------------- TOGGLE COURSE STATUS (ADMIN) --------------------
+    toggleCourseStatusAdmin: catchAsync<{ requestId: string }>(async (req, res) => {
+        const adminId = req.user!.id;
+        console.log(req.body);
+        const result = await courseService.toggleCourseStatusAdmin(req.params.requestId, req.body.action, adminId, req.body.reason);
+        sendResponse(res, 200, "Course status updated successfully by Admin", result);
     }),
 };
 

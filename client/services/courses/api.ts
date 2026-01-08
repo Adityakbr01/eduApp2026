@@ -17,12 +17,14 @@ import {
     CreateContentDTO,
     UpdateContentDTO,
     ReorderItemDTO,
+    CourseStatus,
 } from "./types";
 import { ApiResponse } from "../auth";
 
 // ==================== BASE PATH ====================
 
 const INSTRUCTOR_BASE = "/courses/instructor";
+const ADMIN_BASE = "/courses/admin";
 
 // ==================== COURSE API (INSTRUCTOR) ====================
 
@@ -72,20 +74,14 @@ export const courseApi = {
     },
 
     /**
-     * Publish course
+     * Publish/unpublish course
      */
-    publishCourse: async (id: string): Promise<ApiResponse<CourseDetailData>> => {
-        const response = await apiClient.put(`${INSTRUCTOR_BASE}/${id}/publish`);
-        return response.data;
-    },
+    toggleCourseStatus: async (data: { id: string; status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED }) => {
+    const { id, status } = data;
+    const response = await apiClient.put(`${INSTRUCTOR_BASE}/${id}/toggleCourseStatus`, { status });
+    return response.data;
+},
 
-    /**
-     * Unpublish course
-     */
-    unpublishCourse: async (id: string): Promise<ApiResponse<CourseDetailData>> => {
-        const response = await apiClient.put(`${INSTRUCTOR_BASE}/${id}/unpublish`);
-        return response.data;
-    },
 
     // ============================
     // 📂 SECTION CRUD
@@ -261,5 +257,29 @@ export const publicCourseApi = {
     getPublishedCourseById: async (id: string): Promise<ApiResponse<CourseDetailData>> => {
         const response = await apiClient.get(`/courses/${id}`);
         return response.data;
+    },
+};
+
+
+
+
+
+    interface ToggleCourseStatusAdminPayload {
+  requestId: string;
+  action: CourseStatus.APPROVED | CourseStatus.REJECTED;
+  reason?: string;
+}
+// ==================== ADMIN COURSE API ====================
+
+export const adminCourseApi = {
+    getCoursesForAdmin: async (query: { page?: number; limit?: number; status?: string; search?: string }) => {
+        const response = await apiClient.get(`${ADMIN_BASE}`, { params: query });
+        return response.data;
+    },
+
+ toggleCourseStatusAdmin : async (data: ToggleCourseStatusAdminPayload) => {
+    const { requestId, action, reason } = data;
+    const response = await apiClient.put(`${ADMIN_BASE}/course-status-requests/${requestId}/review`, { action, reason });
+    return response.data;
     },
 };
