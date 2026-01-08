@@ -1,1 +1,0 @@
-ssh -i "<path-to-your-private-key.pem>" ubuntu@ec2-44-199-169-98.compute-1.amazonaws.com

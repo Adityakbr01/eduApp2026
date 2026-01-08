@@ -1,37 +1,64 @@
+#Run this command for first time to give acces chmod +x deploy.dev.sh in bash terminal
+# Then run the script using ./deploy.dev.sh
+
 #!/bin/bash
 set -e
-# set -e ka matlab:
-# Agar koi command fail ho jaaye to script turant exit kar de
-# Dev environment me bhi fail-fast helpful hota hai debugging ke liye
+# set -e: agar koi command fail ho jaaye to script turant exit ho jaaye
 
-# Deployment script for DEV environment
+# -----------------------------
+# CONFIG
+# -----------------------------
+FRONTEND_IMAGE=adityakbr/eduapp2026:frontend-dev
+BACKEND_IMAGE=adityakbr/eduapp2026:backend-dev
+COMPOSE_FILE=docker-compose.dev.yml
 
-echo "🔵 [DEV] Building frontend image..."
-# Frontend (Next.js) ka DEV image build kar rahe hain
-# Usually ye image next dev / hot-reload ke liye hoti hai
-docker build -t adityakbr/eduapp2026:frontend-dev ./client
+# -----------------------------
+# HELPER FUNCTION: check if image exists locally
+# -----------------------------
+image_exists() {
+  docker image inspect "$1" > /dev/null 2>&1
+}
 
-echo "🔵 [DEV] Building backend image..."
-# Backend (Node.js / API) ka DEV image build kar rahe hain
-docker build -t adityakbr/eduapp2026:backend-dev ./server
+# -----------------------------
+# FRONTEND
+# -----------------------------
+if image_exists $FRONTEND_IMAGE; then
+  echo "✅ Frontend image exists locally: $FRONTEND_IMAGE"
+else
+  echo "🔨 Frontend image not found. Building..."
+  docker build -t $FRONTEND_IMAGE ./client
+  echo "📦 Pushing frontend image to Docker Hub..."
+  docker push $FRONTEND_IMAGE
+fi
 
-echo "🟢 [DEV] Pushing DEV images to Docker Hub..."
-# Dev images push kar rahe hain taaki same image
-# multiple machines / teammates use kar saken
-docker push adityakbr/eduapp2026:frontend-dev
-docker push adityakbr/eduapp2026:backend-dev
+# -----------------------------
+# BACKEND
+# -----------------------------
+if image_exists $BACKEND_IMAGE; then
+  echo "✅ Backend image exists locally: $BACKEND_IMAGE"
+else
+  echo "🔨 Backend image not found. Building..."
+  docker build -t $BACKEND_IMAGE ./server
+  echo "📦 Pushing backend image to Docker Hub..."
+  docker push $BACKEND_IMAGE
+fi
 
-echo "🛑 [DEV] Stopping old DEV containers..."
-# Purane DEV containers stop & remove kar rahe hain
-# taaki fresh state ke saath start ho
-docker compose -f docker-compose.dev.yml down
+# -----------------------------
+# PULL LATEST (ensure latest images from Docker Hub)
+# -----------------------------
+echo "⬇️ Pulling latest images from Docker Hub..."
+docker compose -f $COMPOSE_FILE pull
 
-echo "⬇️ [DEV] Pulling latest DEV images..."
-# Latest DEV images pull kar rahe hain (consistency ke liye)
-docker compose -f docker-compose.dev.yml pull
+# -----------------------------
+# STOP OLD CONTAINERS
+# -----------------------------
+echo "🛑 Stopping old DEV containers..."
+docker compose -f $COMPOSE_FILE down
 
-echo "🚀 [DEV] Starting DEV containers..."
-# DEV environment containers detached mode me start honge
-docker compose -f docker-compose.dev.yml up -d
+# -----------------------------
+# START DEV CONTAINERS
+# -----------------------------
+echo "🚀 Starting DEV containers..."
+docker compose -f $COMPOSE_FILE up -d
 
 echo "✅ DEV DEPLOYMENT COMPLETE"

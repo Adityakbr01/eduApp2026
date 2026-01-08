@@ -1,65 +1,61 @@
-version: "3.9" # Docker Compose spec version
-
+# --------------------------------------
+# DEV Docker Compose - optimized
+# --------------------------------------
 services:
   frontend:
-    # DEV frontend image (ya to local build, ya dev-tagged image)
     image: adityakbr/eduapp2026:frontend-dev
     container_name: eduapp_frontend_dev
 
-    # Frontend DEV environment variables
+    # Optional build if local image missing
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: builder  # agar multistage Dockerfile hai
+    # ⚡ If image exists, compose will use it instead of rebuilding
+
     env_file:
-      - .env.frontend.dev
+      - ./client/.env.docker
 
-    # Dev me auto-restart useful hota hai, but crash-loop avoid ke liye on-failure better
     restart: on-failure
-
-    # Local development ke liye port expose
     ports:
       - "3000:3000"
 
-    # Backend ke start hone ka wait karega
     depends_on:
       backend:
         condition: service_started
 
-    # Shared internal dev network
     networks:
       - app-network
 
-    # Dev logs zyada verbose hote hain, isliye rotation relaxed rakhi hai
     logging:
       driver: "json-file"
       options:
         max-size: "20m"
         max-file: "2"
 
-
   backend:
-    # DEV backend image
     image: adityakbr/eduapp2026:backend-dev
     container_name: eduapp_backend_dev
 
-    # Backend DEV environment variables
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: builder
+
     env_file:
-      - .env.backend.dev
+      - ./server/.env
 
-    # Dev mode enable (hot reload, detailed logs, etc.)
     environment:
-      - NODE_ENV=development
+      NODE_ENV: development
 
-    # Dev me auto restart useful hai, but prod jaisa strict nahi
     restart: on-failure
-
-    # Host port → backend dev server port
     ports:
       - "5000:3001"
 
-    # Redis ke ready hone ka wait
     depends_on:
       redis:
         condition: service_healthy
 
-    # Dev healthcheck (optional but helpful)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
       interval: 15s
@@ -70,20 +66,15 @@ services:
     networks:
       - app-network
 
-    # Dev logs thode relaxed
     logging:
       driver: "json-file"
       options:
         max-size: "20m"
         max-file: "2"
 
-
   redis:
-    # Redis same hi rehta hai (dev/prod both)
     image: redis:7-alpine
     container_name: eduapp_redis_dev
-
-    # Dev ke liye persistence optional hoti hai, but rakhi hai for realism
     command: redis-server --appendonly yes --save 60 1 --loglevel notice
 
     volumes:
@@ -91,7 +82,6 @@ services:
 
     restart: on-failure
 
-    # Redis readiness check
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -108,15 +98,17 @@ services:
         max-size: "10m"
         max-file: "2"
 
-
+# -----------------------------
+# Volumes
+# -----------------------------
 volumes:
   redis_data:
-    # Dev Redis data volume
     name: eduapp_redis_data_dev
 
-
+# -----------------------------
+# Networks
+# -----------------------------
 networks:
   app-network:
-    # Dev isolated bridge network
     driver: bridge
     name: eduapp_dev_network
