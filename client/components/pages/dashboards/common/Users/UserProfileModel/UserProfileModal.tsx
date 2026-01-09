@@ -253,7 +253,7 @@ function UserProfileModal({ open, onOpenChange, user }: UserProfileModalProps) {
     );
 
     const debuggerPayload = user.sourceUser ?? user;
-    const targetUserId = user.sourceUser?._id ?? user.id;
+    const targetUserId = user.sourceUser?.id ?? user.id;
 
     const permissionOptions = useMemo<PermissionOption[]>(() => {
         if (!allRolesAndPermissions?.length) return [];

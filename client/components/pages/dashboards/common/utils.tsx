@@ -264,7 +264,7 @@ const mapApiUserToRow = (user: User): UserRow => {
     : [...new Set(rolePermissions)];
 
   return {
-    id: user._id!,
+    id: user.id!,
     name: user.name || "Unnamed",
     email: user.email! || "no email",
     roleLabel: user.roleName || user.roleId?.name || "Unknown role",

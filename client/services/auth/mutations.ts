@@ -69,7 +69,7 @@ export const useLogin = (
         mutationFn: authApi.login,
         onSuccess: (data) => {
             setUser({
-                userId: data.userId!,
+                userId: data.id!,
                 name: data.name!,
                 roleId: data.roleId,
                 phone: data.phone,
