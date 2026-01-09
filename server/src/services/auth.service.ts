@@ -19,6 +19,7 @@ import { generateOtp, verifyOtpHash } from "src/utils/OtpUtils.js";
 import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "../cache/userCache.js";
 import userCache from "../cache/userCache.js";
+import { enrollmentService } from "./enrollment.service.js";
 
 
 export const authService = {
@@ -253,6 +254,7 @@ export const authService = {
             throw new AppError("User not found", STATUSCODE.NOT_FOUND);
         }
 
+
         CheckUserEmailAndBanned(user);
         checkUserEmailVerified(user);
 
@@ -330,6 +332,8 @@ export const authService = {
             String(user._id),
             customPermissionsDTO
         );
+
+
 
         return {
             message: "Login successful",
@@ -504,6 +508,13 @@ export const authService = {
         const rolePermissions = await userCache.getRolePermissions(String(user._id));
         const EffectivePermissions = await userCache.getEffectivePermissions(String(user._id));
 
+
+        let enrolledCourses = [];
+        //Featch enrolled courses if student
+            if (user.roleId.name === ROLES.STUDENT.code) {
+                enrolledCourses = await enrollmentService.getEnrolmentCoursesIds(userId);
+            }
+
         const responseUser = {
             id: user._id,
             name: user.name,
@@ -517,6 +528,7 @@ export const authService = {
             rolePermissions,
             EffectivePermissions,
             phone: user.phone,
+            enrolledCourses: enrolledCourses,
         };
 
         await sessionService.createUserProfile(userId, responseUser);
@@ -525,7 +537,7 @@ export const authService = {
     },
 
     getSessionInfoService: async (req: any) => ({
-        userId: req.user.id,
+        id: req.user.id,
         roleId: req.user.roleId,
         roleName: req.user.roleName,
         sessionId: req.user.sessionId,

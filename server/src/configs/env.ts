@@ -1,10 +1,11 @@
 import dotenv from "dotenv";
+import logger from "src/utils/logger.js";
 import { z } from "zod";
 
 dotenv.config();
 
 export const isProd = process.env.NODE_ENV === "production";
-console.log("Environment:", process.env.NODE_ENV), isProd;
+logger.info("Environment:", process.env.NODE_ENV), isProd;
 
 
 const envSchema = z.object({

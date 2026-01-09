@@ -6,7 +6,6 @@ export * from "./types";
 
 // Queries
 export {
-    useCheckEnrollmentStatus,
     useGetMyEnrolledCourses,
     useGetMyPayments,
     useGetPaymentDetails,

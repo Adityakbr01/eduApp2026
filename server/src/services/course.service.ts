@@ -218,7 +218,6 @@ toggleCourseStatusAdmin: async (
   adminId: string,
   reason?: string
 ) => {
-    console.log("Admin toggling course status request:", requestId, action);
   const request = await CourseStatusRequestSchema.findById(requestId);
   if (!request) {
     throw new AppError("Request not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
@@ -240,7 +239,6 @@ toggleCourseStatusAdmin: async (
   if (action === CourseStatus.APPROVED) {
     // ✅ Apply requested change
     if (request.type === CourseStatus.PUBLISHED) {
-        console.log("Publishing course:", course._id);
       await courseRepository.updatePublishStatus(course._id, CourseStatus.PUBLISHED);
     }
 
@@ -589,7 +587,6 @@ export const lessonContentService = {
 
     // -------------------- UPDATE CONTENT --------------------
     updateContent: async (contentId: string, instructorId: string, data: any) => {
-        console.log("Updating content:", contentId, data);
         const content = await lessonContentRepository.findById(contentId);
         if (!content) {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);

@@ -281,6 +281,42 @@ class UserCacheService {
         ]);
         logger.info(`✅ All user data cleared | userId=${userId}`);
     }
+
+    async addCourseToUserCache(
+    userId: string,
+    course: {
+        courseId: string;
+        enrollmentId: string;
+        purchasedAt: number;
+    }
+): Promise<void> {
+    const profile = await this.getUserProfile(userId);
+
+    // If profile not cached yet → do nothing (lazy rebuild later)
+    if (!profile) return;
+
+    const exists = profile.enrolledCourses?.some(
+        (c: any) => c.courseId === course.courseId
+    );
+
+    if (exists) return;
+
+    profile.enrolledCourses = [
+        ...(profile.enrolledCourses ?? []),
+        course,
+    ];
+
+    await cacheManager.set(
+        this.getProfileKey(userId),
+        {
+            ...profile,
+            cachedAt: Date.now(),
+        },
+        TTL.ONE_WEEK
+    );
+}
+
+
 }
 
 export default new UserCacheService();

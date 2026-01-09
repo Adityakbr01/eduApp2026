@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
-import { EnrollmentStatus } from "src/models/enrollment.model.js";
+import Enrollment, { EnrollmentStatus } from "src/models/enrollment.model.js";
 import { PaymentStatus } from "src/models/payment.model.js";
 import { enrollmentRepository } from "src/repositories/enrollment.repository.js";
 import { paymentRepository } from "src/repositories/payment.repository.js";
@@ -9,6 +9,7 @@ import { courseRepository } from "src/repositories/course.repository.js";
 import AppError from "src/utils/AppError.js";
 import razorpayUtils from "src/utils/razorpay.js";
 import logger from "src/utils/logger.js";
+import sessionService from "../cache/userCache.js";
 
 // ============================================
 // INTERFACES
@@ -198,6 +199,12 @@ export const enrollmentService = {
             totalPaidEnrollments: totalPayments.count,
         };
     },
+
+    getEnrolmentCoursesIds: async (userId: string) => {
+        const courseIds = await Enrollment.find({ userId }).distinct("courseId").exec();
+        return courseIds;
+    },
+
 };
 
 // ============================================
@@ -428,9 +435,20 @@ export const paymentService = {
         );
 
         // Increment course enrollment count
-        await courseRepository.updateById(payment.courseId.toString(), {
-            $inc: { totalEnrollments: 1 },
-        });
+      await Promise.all([
+    courseRepository.updateById(payment.courseId.toString(), {
+        $inc: { totalEnrollments: 1 },
+    }),
+
+    sessionService.addCourseToUserCache(userId, {
+        courseId: payment.courseId.toString(),
+        enrollmentId: enrollment._id.toString(),
+        purchasedAt: Date.now(),
+    }),
+]);
+
+
+
 
         logger.info("Payment verified and enrollment activated", {
             userId,
@@ -494,9 +512,4 @@ export const paymentService = {
 
         return payment;
     },
-};
-
-export default {
-    enrollmentService,
-    paymentService,
 };

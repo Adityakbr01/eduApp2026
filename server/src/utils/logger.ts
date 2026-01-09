@@ -1,11 +1,10 @@
 import path from "path";
-import { env } from "src/configs/env.js";
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 
 const { combine, timestamp, errors, printf, colorize, json } = winston.format;
 
-const environment = env.NODE_ENV || "development";
+const environment = process.env.NODE_ENV || "development";
 const isProduction = environment === "production";
 
 // Logs folder outside src (project root/logs)

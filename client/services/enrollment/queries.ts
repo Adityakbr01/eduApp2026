@@ -6,18 +6,6 @@ import { EnrollmentStatus } from "./types";
 // ==================== ENROLLMENT QUERIES ====================
 
 /**
- * Check enrollment status for a course
- */
-export const useCheckEnrollmentStatus = (courseId: string, enabled: boolean = true) => {
-    return useQuery({
-        queryKey: QUERY_KEYS.ENROLLMENT.STATUS(courseId),
-        queryFn: () => enrollmentApi.checkEnrollmentStatus(courseId),
-        enabled: enabled && !!courseId,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-    });
-};
-
-/**
  * Get user's enrolled courses
  */
 export const useGetMyEnrolledCourses = (params?: {

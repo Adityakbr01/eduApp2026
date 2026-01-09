@@ -43,7 +43,6 @@ export function S3Uploader({
   const [items, setItems] = useState<UploadItem[]>([]);
   const activeUploads = useRef(0);
 
-  console.log(uploadType, accept)
 
   // ---------- INITIAL ----------
   useEffect(() => {

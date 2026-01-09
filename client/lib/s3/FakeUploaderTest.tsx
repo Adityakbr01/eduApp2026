@@ -11,7 +11,6 @@ export default function FakeUploaderTest() {
             <h1 className="text-xl font-bold">Fake S3 Uploader Test</h1>
             <S3Uploader
                 onUploaded={(keys) => {
-                    console.log("Here is keys", keys);
                     if (keys.length > 0) {
                         setVideoKey(keys[0]);
                     }

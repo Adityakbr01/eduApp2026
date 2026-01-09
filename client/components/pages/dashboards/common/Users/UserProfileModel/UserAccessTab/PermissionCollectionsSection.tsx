@@ -7,7 +7,6 @@ type Props = {
 };
 
 function PermissionCollectionsSection({ permissionCollections }: Props) {
-    console.log("Permission Collections hai bhau:", permissionCollections);
     return (
         <div>
             <p className="text-sm font-semibold">Scoped Permissions</p>

@@ -38,8 +38,6 @@ export function CourseDetailPage({ slug }: CourseDetailPageProps) {
     const [bookmarked, setBookmarked] = useState(false);
 
     const course = courseData?.data;
-    console.log("Course Data:", course);
-
     const toggleBookmark = () => setBookmarked(!bookmarked);
 
     if (isLoading) {

@@ -11,7 +11,7 @@ interface roleIdInterface {
 
 export interface User {
     userId?: string;
-    _id?: string;
+    id?: string;
     name?: string;
     email?: string;
     phone?: string;
@@ -30,6 +30,7 @@ export interface User {
     approvedBy?: string | null;
     sessionId?: string;
     actualRoleId?: string;
+    enrolledCourses?: EnrolledCourse[];
 }
 
 
@@ -82,10 +83,19 @@ export interface ChangePasswordRequest {
     newPassword: string;
 }
 
+
+interface EnrolledCourse {
+    courseId: string;
+    enrollmentId: string;
+    purchasedAt: number;
+}
+
+
+
 // Response Types
 export interface AuthResponse {
     message: string;
-    userId?: string;
+    id?: string;
     name?: string;
     roleId: roleIdInterface;
     roleName?: string;
@@ -96,6 +106,7 @@ export interface AuthResponse {
     approvalStatus?: approvalStatusEnum;
     accessToken?: string;
     refreshToken?: string;
+    enrolledCourses?: EnrolledCourse[];
 
 }
 
@@ -150,7 +161,7 @@ export interface SessionData {
     sessionId: string,
     roleName: string,
     roleId: string
-    userId: string,
+    id: string,
 }
 
 // Generic API Response Wrapper
