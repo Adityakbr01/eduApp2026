@@ -13,7 +13,7 @@ const PROD_BUCKET = process.env.VIDEO_BUCKET_PROD!;
 const VIDEO_KEY = process.env.VIDEO_KEY!;
 const VIDEO_ID = process.env.VIDEO_ID!;
 
-const OUTPUT_PREFIX_BASE = "hls";
+const OUTPUT_PREFIX_BASE = "uploads/hls";
 
 async function main() {
   log("INFO", "🎬 Video ECS worker started", {

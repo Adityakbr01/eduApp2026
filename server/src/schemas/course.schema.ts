@@ -113,19 +113,19 @@ export const createContentSchema = z.object({
 
     // 🎥 VIDEO/AUDIO (nested)
     video: z.object({
-        url: z.string().optional(),
+        rawKey: z.string().optional(),
         duration: z.number().min(0).optional(),
         minWatchPercent: z.number().min(0).max(100).default(90),
     }).optional(),
 
     // 📄 PDF (nested)
     pdf: z.object({
-        url: z.string().optional(),
+        rawKey: z.string().optional(),
         totalPages: z.number().min(1).optional(),
     }).optional(),
 
     audio: z.object({
-        url: z.string().optional(),
+        rawKey: z.string().optional(),
         duration: z.number().min(0).optional(),
     }).optional(),
 
@@ -136,15 +136,15 @@ export const createContentSchema = z.object({
     }).optional(),
 }).refine((data) => {
     // Validate video type has video.url
-    if (data.type === "video" && !data.video?.url) {
+    if (data.type === "video" && !data.video?.rawKey) {
         return false;
     }
     // Validate audio type has video.url (audio uses video object)
-    if (data.type === "audio" && !data.video?.url) {
+    if (data.type === "audio" && !data.video?.rawKey) {
         return false;
     }
     // Validate pdf type has pdf.url
-    if (data.type === "pdf" && !data.pdf?.url) {
+    if (data.type === "pdf" && !data.pdf?.rawKey) {
         return false;
     }
     return true;

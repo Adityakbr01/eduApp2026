@@ -1,30 +1,29 @@
 import { Router } from "express";
 import { ROLES } from "src/constants/roles.js";
-import courseController, {
-    sectionController,
-    lessonController,
-    lessonContentController,
-    contentProgressController,
-    courseProgressController,
-} from "src/controllers/course.controller.js";
+import { contentProgressController } from "src/controllers/contentProgress.Controller.js";
+import courseController from "src/controllers/course.controller.js";
+import { courseProgressController } from "src/controllers/courseProgress.Controller.js";
+import { lessonController } from "src/controllers/lesson.Controller.js";
+import { lessonContentController } from "src/controllers/lessonContent.Controller.js";
+import { sectionController } from "src/controllers/section.Controller.js";
 import { validateRequest } from "src/middlewares/custom/validateRequest.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import checkRole from "src/middlewares/system/checkRole.js";
 import {
-    createCourseSchema,
-    updateCourseSchema,
-    createSectionSchema,
-    updateSectionSchema,
-    reorderSectionsSchema,
-    createLessonSchema,
-    updateLessonSchema,
-    reorderLessonsSchema,
     createContentSchema,
-    updateContentSchema,
-    reorderContentsSchema,
-    saveProgressSchema,
-    updateResumeSchema,
+    createCourseSchema,
+    createLessonSchema,
+    createSectionSchema,
     markCompletedSchema,
+    reorderContentsSchema,
+    reorderLessonsSchema,
+    reorderSectionsSchema,
+    saveProgressSchema,
+    updateContentSchema,
+    updateCourseSchema,
+    updateLessonSchema,
+    updateResumeSchema,
+    updateSectionSchema,
 } from "src/schemas/course.schema.js";
 
 const router = Router();

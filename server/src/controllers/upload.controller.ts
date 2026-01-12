@@ -10,6 +10,7 @@ export const uploadController = {
             type,
             key,
         } = req.body;
+
         const result = await UploadService.getPresignedUrl(
             filename,
             size,

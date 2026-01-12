@@ -1,6 +1,9 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { env } from "./env.js";
 
+
+
+
 export const s3 = new S3Client({
     region: env.AWS_REGION,
     credentials: {
@@ -10,9 +13,9 @@ export const s3 = new S3Client({
 });
 
 // export const BUCKET = env.AWS_S3_BUCKET_NAME;
-export const TEMP_BUCKET = "eduapp-video-temp";
-export const PROD_BUCKET = "eduapp-video-prod";
-export const VIDEO_QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/121635831580/video-processing-queue"
+// export const TEMP_BUCKET = "eduapp-video-temp";
+// export const PROD_BUCKET = "eduapp-video-prod";
+// export const VIDEO_QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/121635831580/video-processing-queue"
 
 
 // VIDEO_QUEUE_URL : https://sqs.us-east-1.amazonaws.com/121635831580/video-processing-queue

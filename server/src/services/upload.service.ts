@@ -1,11 +1,12 @@
 import {
-    CreateMultipartUploadCommand,
-    UploadPartCommand,
     CompleteMultipartUploadCommand,
+    CreateMultipartUploadCommand,
     PutObjectCommand,
+    UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { s3, TEMP_BUCKET } from "src/configs/s3.js";
+import { env } from "src/configs/env.js";
+import { s3 } from "src/configs/s3.js";
 import { generateIntentId, getPartSize } from "src/utils/upload.utils.js";
 
 export class UploadService {
@@ -22,11 +23,11 @@ export class UploadService {
 
         // Example: videos/course-1/lesson-1-<uuid>.mp4
         const s3Key = `${baseFolder}/${uniqueSuffix}`;
-
+        console.log("🚀 Generated S3 Key:", s3Key);
         // ------------------- SIMPLE UPLOAD (<5MB) -------------------
         if (size < 5 * 1024 * 1024) {
             const command = new PutObjectCommand({
-                Bucket: TEMP_BUCKET,
+                Bucket: env.AWS_S3_BUCKET_NAME,
                 Key: s3Key,
                 ContentType: type,
             });
@@ -42,6 +43,9 @@ export class UploadService {
             };
         }
 
+        console.log("🚀 Using multipart upload for file:", fileName);
+        console.log("🚀 S3 Key:", s3Key);
+
         // ------------------- MULTIPART -------------------
         return {
             mode: "multipart",
@@ -52,7 +56,7 @@ export class UploadService {
     static async initMultipart(intentId: string, size: number) {
         const res = await s3.send(
             new CreateMultipartUploadCommand({
-                Bucket: TEMP_BUCKET,
+                Bucket: env.AWS_S3_BUCKET_NAME,
                 Key: intentId,
             })
         );
@@ -72,7 +76,7 @@ export class UploadService {
         partNumber: number
     ) {
         const command = new UploadPartCommand({
-            Bucket: TEMP_BUCKET,
+            Bucket: env.AWS_S3_BUCKET_NAME,
             Key: intentId,
             UploadId: uploadId,
             PartNumber: partNumber,
@@ -88,7 +92,7 @@ export class UploadService {
     ) {
         await s3.send(
             new CompleteMultipartUploadCommand({
-                Bucket: TEMP_BUCKET,
+                Bucket: env.AWS_S3_BUCKET_NAME,
                 Key: intentId,
                 UploadId: uploadId,
                 MultipartUpload: { Parts: parts },

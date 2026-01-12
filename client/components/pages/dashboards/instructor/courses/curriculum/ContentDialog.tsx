@@ -36,12 +36,14 @@ interface ContentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lessonId: string;
+  courseId: string;
 }
 
 export function ContentDialog({
   open,
   onOpenChange,
   lessonId,
+  courseId,
 }: ContentDialogProps) {
   const [contentType, setContentType] = useState<ContentType>(
     ContentType.VIDEO
@@ -57,7 +59,6 @@ export function ContentDialog({
 
   // Duration - calculated locally
   const [duration, setDuration] = useState<number>(0);
-  const [isDurationCalculated, setIsDurationCalculated] = useState(false);
 
   const createContent = useCreateContent();
 
@@ -69,7 +70,6 @@ export function ContentDialog({
     setUploadedKey(null);
     setFileName("");
     setDuration(0);
-    setIsDurationCalculated(false);
     setContentType(ContentType.VIDEO);
   };
 
@@ -172,7 +172,6 @@ export function ContentDialog({
     setUploadedKey(null);
     setFileName("");
     setDuration(0);
-    setIsDurationCalculated(false);
   };
 
   return (
@@ -262,7 +261,9 @@ export function ContentDialog({
                   maxFileSizeMB={500}
                   uploadType={FileType.VIDEO}
                   getKey={(file) =>
-                    `lessons/${lessonId}/videos/${Date.now()}-${file.name}`
+                    `courses/${courseId}/lessons/${lessonId}/videos/${Date.now()}-${
+                      file.name
+                    }`
                   }
                   onDrop={async (files) => {
                     if (files.length > 0) {
@@ -270,7 +271,6 @@ export function ContentDialog({
                       setFileName(file.name);
                       const dur = await calculateDurationLocally(file);
                       setDuration(dur);
-                      setIsDurationCalculated(true);
                     }
                   }}
                   onUploaded={([key]) => {
@@ -316,7 +316,9 @@ export function ContentDialog({
                   maxFileSizeMB={50}
                   uploadType={FileType.AUDIO}
                   getKey={(file) =>
-                    `lessons/${lessonId}/audios/${Date.now()}-${file.name}`
+                    `courses/${courseId}/lessons/${lessonId}/audios/${Date.now()}-${
+                      file.name
+                    }`
                   }
                   onDrop={async (files) => {
                     if (files.length > 0) {
@@ -324,7 +326,6 @@ export function ContentDialog({
                       setFileName(file.name);
                       const dur = await calculateDurationLocally(file);
                       setDuration(dur);
-                      setIsDurationCalculated(true);
                     }
                   }}
                   onUploaded={([key]) => setUploadedKey(key)}
@@ -340,7 +341,9 @@ export function ContentDialog({
                   maxFileSizeMB={20}
                   uploadType={FileType.DOCUMENT}
                   getKey={(file) =>
-                    `lessons/${lessonId}/pdfs/${Date.now()}-${file.name}`
+                    `courses/${courseId}/lessons/${lessonId}/pdfs/${Date.now()}-${
+                      file.name
+                    }`
                   }
                   onDrop={(files) => {
                     if (files.length > 0) {

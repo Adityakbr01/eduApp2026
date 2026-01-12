@@ -1,5 +1,4 @@
 import apiClient from "@/lib/api/axios";
-import { ApiResponse } from "../auth";
 import { FileTypeEnum } from "./types";
 
 

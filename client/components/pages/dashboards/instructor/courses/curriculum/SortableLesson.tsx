@@ -135,7 +135,7 @@ export function SortableLesson({ lesson, index, sectionId, courseId }: SortableL
         const newContents = arrayMove(contents, oldIndex, newIndex);
         setLocalContents(newContents as ILessonContent[]);
 
-        const reorderData = newContents.map((content:any, idx) => ({
+        const reorderData = newContents.map((content: ILessonContent, idx) => ({
             id: content._id,
             order: idx,
         }));
@@ -272,7 +272,7 @@ export function SortableLesson({ lesson, index, sectionId, courseId }: SortableL
                                         variant="ghost"
                                         size="sm"
                                         className="mt-1"
-                                        onClick={() => setContentDialogOpen(true)}
+                                        onClick={() => setContentDialogOpen(true) }
                                     >
                                         <Plus className="h-3 w-3 mr-1" />
                                         Add Content
@@ -320,6 +320,7 @@ export function SortableLesson({ lesson, index, sectionId, courseId }: SortableL
                 open={contentDialogOpen}
                 onOpenChange={setContentDialogOpen}
                 lessonId={lesson._id}
+                courseId={courseId}
             />
 
             {/* Delete Confirmation */}

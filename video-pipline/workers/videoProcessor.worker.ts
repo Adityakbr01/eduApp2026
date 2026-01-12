@@ -64,6 +64,8 @@ export async function startVideoWorker() {
 
         console.log("✅ ECS task triggered for:", videoId);
 
+        
+
         // 🧹 Delete message ONLY after successful RunTask
         await deleteMessage(msg.ReceiptHandle);
       } catch (err) {
