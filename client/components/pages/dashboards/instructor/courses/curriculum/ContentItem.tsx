@@ -150,7 +150,7 @@ export function ContentItem({ content, lessonId, courseId, icon }: ContentItemPr
 
             if (content.type === ContentType.VIDEO) {
                 updateData.video = {
-                    url: newFileKey || content.video?.url || "",
+                    rawKey: newFileKey || content.video?.url || "",
                     duration: editDuration < 10 ? 10 : editDuration,
                     minWatchPercent: editMinWatchPercent,
                 };
@@ -158,14 +158,14 @@ export function ContentItem({ content, lessonId, courseId, icon }: ContentItemPr
 
             if (content.type === ContentType.AUDIO) {
                 updateData.audio = {
-                    url: newFileKey || content.audio?.url || "",
+                    rawKey: newFileKey || content.audio?.url || "",
                     duration: editDuration < 10 ? 10 : editDuration,
                 };
             }
 
             if (content.type === ContentType.PDF) {
                 updateData.pdf = {
-                    url: newFileKey || content.pdf?.url || "",
+                    rawKey: newFileKey || content.pdf?.url || "",
                 };
             }
 
