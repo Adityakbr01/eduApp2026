@@ -5,7 +5,7 @@ import {
     PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { BUCKET, s3 } from "src/configs/s3.js";
+import { s3, TEMP_BUCKET } from "src/configs/s3.js";
 import { generateIntentId, getPartSize } from "src/utils/upload.utils.js";
 
 export class UploadService {
@@ -26,7 +26,7 @@ export class UploadService {
         // ------------------- SIMPLE UPLOAD (<5MB) -------------------
         if (size < 5 * 1024 * 1024) {
             const command = new PutObjectCommand({
-                Bucket: BUCKET,
+                Bucket: TEMP_BUCKET,
                 Key: s3Key,
                 ContentType: type,
             });
@@ -52,7 +52,7 @@ export class UploadService {
     static async initMultipart(intentId: string, size: number) {
         const res = await s3.send(
             new CreateMultipartUploadCommand({
-                Bucket: BUCKET,
+                Bucket: TEMP_BUCKET,
                 Key: intentId,
             })
         );
@@ -72,7 +72,7 @@ export class UploadService {
         partNumber: number
     ) {
         const command = new UploadPartCommand({
-            Bucket: BUCKET,
+            Bucket: TEMP_BUCKET,
             Key: intentId,
             UploadId: uploadId,
             PartNumber: partNumber,
@@ -88,7 +88,7 @@ export class UploadService {
     ) {
         await s3.send(
             new CompleteMultipartUploadCommand({
-                Bucket: BUCKET,
+                Bucket: TEMP_BUCKET,
                 Key: intentId,
                 UploadId: uploadId,
                 MultipartUpload: { Parts: parts },

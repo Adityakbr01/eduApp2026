@@ -3,16 +3,18 @@ name: Deploy Production
 on:
   push:
     branches:
-      - main  # Trigger only on push to main
+      - main
 
 jobs:
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
+
     env:
-      BACKEND_TAG: adityakbr/eduapp2026:backend-prod # match your Docker Hub repo exactly
-      FRONTEND_TAG: adityakbr/eduapp2026:frontend-prod # match your Docker Hub repo exactly
-      SHA_TAG: ${{ github.sha }}  # For traceability (short sha optional)
+      BACKEND_TAG: adityakbr/eduapp2026:backend-prod
+      FRONTEND_TAG: adityakbr/eduapp2026:frontend-prod
+      VIDEO_WORKER_TAG: adityakbr/eduapp2026:video-worker-prod
+      SHA_TAG: ${{ github.sha }}
 
     steps:
       - name: Checkout code
@@ -27,6 +29,7 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
 
+      # ---------------- BACKEND ----------------
       - name: Build & Push Backend Image
         uses: docker/build-push-action@v6
         with:
@@ -37,6 +40,7 @@ jobs:
             ${{ env.BACKEND_TAG }}
             adityakbr/eduapp2026:backend-${{ github.sha }}
 
+      # ---------------- FRONTEND ----------------
       - name: Build & Push Frontend Image
         uses: docker/build-push-action@v6
         with:
@@ -47,10 +51,22 @@ jobs:
             ${{ env.FRONTEND_TAG }}
             adityakbr/eduapp2026:frontend-${{ github.sha }}
 
+      # ---------------- VIDEO WORKER ----------------
+      - name: Build & Push Video Worker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./video-pipline
+          file: ./video-pipline/Dockerfile
+          push: true
+          tags: |
+            ${{ env.VIDEO_WORKER_TAG }}
+            adityakbr/eduapp2026:video-worker-${{ github.sha }}
+
   deploy:
     name: Deploy to EC2
     needs: build-and-push
-    runs-on: self-hosted  # Your EC2 self-hosted runner
+    runs-on: self-hosted
+
     env:
       COMPOSE_FILE: docker-compose.prod.yml
 
@@ -58,7 +74,7 @@ jobs:
       - name: Checkout repo on EC2
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub (if images are private)
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
@@ -72,15 +88,11 @@ jobs:
         run: |
           docker compose -f ${{ env.COMPOSE_FILE }} up -d --remove-orphans
 
-      - name: Wait for services to be healthy (optional but recommended)
+      - name: Verify services
         run: |
           docker compose -f ${{ env.COMPOSE_FILE }} ps
-          echo "Waiting for backend to be healthy..."
-          timeout 120 bash -c "while ! docker compose -f ${{ env.COMPOSE_FILE }} ps | grep backend | grep healthy; do sleep 5; done"
-          echo "Deployment successful!"
 
       - name: Cleanup unused Docker resources
         run: |
           docker image prune -f
-          docker volume prune -f  # Optional: remove unused volumes (be careful!)
-          docker system prune -f --volumes
+          docker system prune -f

@@ -1,0 +1,20 @@
+{
+  "name": "video-worker",
+  "version": "1.0.0",
+  "main": "dist/workers/videoWorker.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/workers/videoWorker.js",
+    "deploy": "ts-node deploy.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ecs": "^3.965.0",
+    "@aws-sdk/client-s3": "^3.540.0",
+    "@aws-sdk/client-sqs": "^3.540.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

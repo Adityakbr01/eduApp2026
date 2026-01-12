@@ -25,3 +25,8 @@ document/vpcSetup.md
 # Deployment scripts (optional)
 # ===============================
 scripts/deploy.sh
+
+
+# ===============================
+./node_modules
+# ===============================

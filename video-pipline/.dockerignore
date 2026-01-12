@@ -1,0 +1,24 @@
+# dependencies
+node_modules
+.next
+
+# git
+.git
+.gitignore
+
+# docker / compose
+Dockerfile
+docker-compose*.yml
+
+# env
+.env
+.env.*
+.env.local
+
+# logs
+npm-debug.log
+yarn-error.log
+
+# misc
+README.md
+.vscode

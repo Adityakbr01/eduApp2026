@@ -282,16 +282,16 @@ export interface CreateContentDTO {
     isVisible?: boolean;
     isPreview?: boolean;
     video?: {
-        url?: string;
+        rawKey?: string;
         duration?: number;
         minWatchPercent?: number;
     };
     audio?: {
-        url?: string;
+        rawKey?: string;
         duration?: number;
     };
     pdf?: {
-        url?: string;
+        rawKey?: string;
         totalPages?: number;
     };
     assessment?: {

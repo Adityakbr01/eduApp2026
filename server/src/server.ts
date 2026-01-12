@@ -3,6 +3,7 @@ import app from "./app.js";
 import connectDB from "./db/mongo.js";
 import logger from "./utils/logger.js";
 import { isProd } from "./configs/env.js";
+// import { startVideoWorker } from "../../video-pipline/workers/videoProcessor.worker.js";
 
 // Load environment variables
 dotenv.config();
@@ -28,10 +29,12 @@ const startServer = () => {
             logger.info(`🚀 Server running on port ${PORT}`);
             logger.info(`Server Start in ${isProd}`)
         });
+        // startVideoWorker();
     } catch (error) {
         logger.error("❌ Server failed to start", error);
         process.exit(1);
     }
+    
 };
 
 startServer();

@@ -4,10 +4,17 @@ import mongoose from "mongoose";
 import { ContentType } from "src/types/course.type.js";
 
 const videoSchema = new mongoose.Schema({
-    url: { type: String, required: true },
-    duration: { type: Number, required: true }, // seconds
-    minWatchPercent: { type: Number, default: 90, min: 0, max: 100 },
+  rawKey: { type: String },          // temp mp4 key
+  hlsKey: { type: String },          // prod hls path
+  duration: Number,
+  minWatchPercent: Number,
+  status: {
+    type: String,
+    enum: ["UPLOADED", "PROCESSING", "READY", "FAILED"],
+    default: "UPLOADED",
+  },
 });
+
 
 const pdfSchema = new mongoose.Schema({
     url: { type: String, required: true },

@@ -80,6 +80,34 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  video-worker:
+    image: adityakbr/eduapp2026:video-worker-prod
+    container_name: eduapp_video_worker
+
+    # AWS + Worker specific env
+    env_file:
+      - /home/ubuntu/app/.env.video-worker.prod
+
+    environment:
+      - NODE_ENV=production
+      - AWS_REGION=us-east-1
+
+    # Ye service kisi pe depend nahi karti
+    restart: always
+
+    # Same private network (not required but clean)
+    networks:
+      - app-network
+
+    # No ports (background worker)
+    # ❌ ports:
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 
   redis:
     # Lightweight & stable Redis image
