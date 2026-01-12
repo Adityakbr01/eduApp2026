@@ -17,7 +17,7 @@ services:
     ports:
       - "3000:3000"
 
-    # Frontend backend ke start hone ka wait karega
+    # Frontend backend ke start hone ka wait karega a
     # (taaki API calls fail na ho on startup)
     depends_on:
       backend:
