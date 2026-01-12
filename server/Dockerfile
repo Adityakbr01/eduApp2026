@@ -2,8 +2,6 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# ✅ curl add (for healthcheck)
-RUN apk add --no-cache curl
 
 COPY package*.json tsconfig.json ./
 RUN npm ci
@@ -14,6 +12,10 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+
+
+# ✅ curl add (for healthcheck Optional)
+RUN apk add --no-cache curl
 
 
 COPY --from=builder /app/dist ./dist
