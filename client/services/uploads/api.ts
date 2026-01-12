@@ -20,6 +20,46 @@ export type PresignedUploadResponse =
 // ==================== UPLOAD API ====================
 
 export const uploadApi = {
+   getCourseImagePresignedUrl: async (
+  filename: string,
+  size: number,
+  mimeType: string, // ✅ REAL MIME
+  courseId: string
+): Promise<PresignedUploadResponse> => {
+  const res = await apiClient.post(
+    "/upload/course/presigned-url/image",
+    {
+      filename,
+      size,
+      type: mimeType, // backend expects this
+      courseId,
+    }
+  );
+  return res.data.data;
+},
+
+
+getLessonVideoPresignedUrl: async (
+  file: File,
+  courseId: string,
+  lessonId: string
+): Promise<PresignedUploadResponse> => {
+  const res = await apiClient.post(
+    "/upload/course/lesson/presigned-url/video",
+    {
+      filename: file.name,
+      size: file.size,
+      mimeType: file.type,
+      courseId,
+      lessonId,
+    }
+  );
+  return res.data.data;
+},
+
+
+
+
     /**
      * Get a presigned URL for direct S3 upload
      */

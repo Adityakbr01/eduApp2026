@@ -3,6 +3,45 @@ import { UploadService } from "src/services/upload.service.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 
 export const uploadController = {
+
+
+
+    getCourseImagePresignedUrl: async (req: Request, res: Response) => {
+        const { filename, size, type,courseId } = req.body;
+        const result = await UploadService.getCourseImagePresignedUrl(
+            filename,
+            size,
+            type,
+            courseId
+        );
+        sendResponse(res, 200, "Course image presigned URL fetched successfully", { ...result, key: result.intentId,mode:"simple" });
+    },
+
+
+    getLessonVideoPresignedUrl: async (req: Request, res: Response) => {
+  const { filename, size, mimeType, courseId, lessonId } = req.body;
+
+  const result = await UploadService.getLessonVideoPresignedUrl(
+    filename,
+    size,
+    mimeType,
+    courseId,
+    lessonId
+  );
+
+  sendResponse(
+    res,
+    200,
+    "Lesson video presigned URL fetched successfully",
+    {
+      ...result,
+      key: result.intentId,
+    }
+  );
+},
+
+
+
     getPresignedUrl: async (req: Request, res: Response) => {
         const {
             filename,

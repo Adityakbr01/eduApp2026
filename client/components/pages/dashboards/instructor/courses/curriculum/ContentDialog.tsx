@@ -22,15 +22,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
-
-import { S3Uploader } from "@/lib/s3/S3Uploader";
 import {
   ContentType,
   CreateContentDTO,
   useCreateContent,
 } from "@/services/courses";
-import { FileType } from "@/services/uploads";
+import { Loader2 } from "lucide-react";
 
 interface ContentDialogProps {
   open: boolean;
@@ -53,11 +50,8 @@ export function ContentDialog({
   const [isPreview, setIsPreview] = useState(false);
   const [minWatchPercent, setMinWatchPercent] = useState<number>(90);
 
-  // Raw S3 key
+  // S3
   const [uploadedKey, setUploadedKey] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string>("");
-
-  // Duration - calculated locally
   const [duration, setDuration] = useState<number>(0);
 
   const createContent = useCreateContent();
@@ -68,7 +62,6 @@ export function ContentDialog({
     setIsPreview(false);
     setMinWatchPercent(90);
     setUploadedKey(null);
-    setFileName("");
     setDuration(0);
     setContentType(ContentType.VIDEO);
   };
@@ -78,37 +71,9 @@ export function ContentDialog({
     onOpenChange(isOpen);
   };
 
-  // LOCAL duration calculation from File object
-  const calculateDurationLocally = (file: File): Promise<number> => {
-    return new Promise((resolve) => {
-      const url = URL.createObjectURL(file);
-      const media = file.type.startsWith("audio/")
-        ? new Audio(url)
-        : document.createElement("video");
-
-      media.preload = "metadata";
-      media.onloadedmetadata = () => {
-        URL.revokeObjectURL(url);
-        resolve(Math.round(media.duration || 0));
-      };
-      media.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(0);
-      };
-      media.src = url;
-    });
-  };
-
-  const formatDuration = (seconds: number): string => {
-    if (seconds === 0) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !uploadedKey) return;
+    if (!title.trim()) return;
 
     const contentData: CreateContentDTO = {
       title: title.trim(),
@@ -127,19 +92,19 @@ export function ContentDialog({
       isPreview,
     };
 
-    // Always send duration (even if 0)
     if (
-      contentType === ContentType.VIDEO ||
-      contentType === ContentType.AUDIO
+      (contentType === ContentType.VIDEO ||
+        contentType === ContentType.AUDIO) &&
+      uploadedKey
     ) {
       contentData.video = {
-        rawKey: uploadedKey, // Raw key only
-        duration: duration, // Always number
+        rawKey: uploadedKey,
+        duration,
         minWatchPercent,
       };
     }
 
-    if (contentType === ContentType.PDF) {
+    if (contentType === ContentType.PDF && uploadedKey) {
       contentData.pdf = {
         rawKey: uploadedKey,
       };
@@ -151,8 +116,8 @@ export function ContentDialog({
         data: contentData,
       });
       handleOpenChange(false);
-    } catch (error) {
-      console.error("Error creating content:", error);
+    } catch (err) {
+      console.error("Create content error:", err);
     }
   };
 
@@ -168,19 +133,13 @@ export function ContentDialog({
     return true;
   };
 
-  const clearUpload = () => {
-    setUploadedKey(null);
-    setFileName("");
-    setDuration(0);
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Content</DialogTitle>
           <DialogDescription>
-            Add new content to this lesson. Files are auto-uploaded to S3.
+            Files are uploaded directly to S3.
           </DialogDescription>
         </DialogHeader>
 
@@ -193,17 +152,17 @@ export function ContentDialog({
                 value={contentType}
                 onValueChange={(v) => {
                   setContentType(v as ContentType);
-                  clearUpload();
+                  setUploadedKey(null);
+                  setDuration(0);
                 }}
-                disabled={createContent.isPending}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ContentType.VIDEO}>Video</SelectItem>
                   <SelectItem value={ContentType.AUDIO}>Audio</SelectItem>
-                  <SelectItem value={ContentType.PDF}>PDF Document</SelectItem>
+                  <SelectItem value={ContentType.PDF}>PDF</SelectItem>
                   <SelectItem value={ContentType.QUIZ}>Quiz</SelectItem>
                   <SelectItem value={ContentType.ASSIGNMENT}>
                     Assignment
@@ -215,12 +174,7 @@ export function ContentDialog({
             {/* Title */}
             <div className="space-y-2">
               <Label>Title</Label>
-              <Input
-                placeholder="e.g., Introduction to React"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={createContent.isPending}
-              />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
 
             {/* Marks & Preview */}
@@ -231,139 +185,40 @@ export function ContentDialog({
                   type="number"
                   min={0}
                   value={marks}
-                  onChange={(e) => setMarks(parseInt(e.target.value) || 0)}
-                  disabled={createContent.isPending}
+                  onChange={(e) => setMarks(+e.target.value || 0)}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Free Preview</Label>
                 <div className="flex items-center gap-2 h-10">
-                  <Switch
-                    checked={isPreview}
-                    onCheckedChange={setIsPreview}
-                    disabled={createContent.isPending}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {isPreview ? "Yes" : "No"}
-                  </span>
+                  <Switch checked={isPreview} onCheckedChange={setIsPreview} />
+                  <span className="text-sm">{isPreview ? "Yes" : "No"}</span>
                 </div>
               </div>
             </div>
 
-            {/* File Upload Tabs */}
+            {/* Upload Tabs */}
             <Tabs value={contentType}>
               {/* VIDEO */}
-              <TabsContent value={ContentType.VIDEO} className="space-y-4">
-                <S3Uploader
-                  accept={{ "video/*": [] }}
-                  multiple={false}
-                  maxFiles={1}
-                  maxFileSizeMB={500}
-                  uploadType={FileType.VIDEO}
-                  getKey={(file) =>
-                    `courses/${courseId}/lessons/${lessonId}/videos/${Date.now()}-${
-                      file.name
-                    }`
-                  }
-                  onDrop={async (files) => {
-                    if (files.length > 0) {
-                      const file = files[0];
-                      setFileName(file.name);
-                      const dur = await calculateDurationLocally(file);
-                      setDuration(dur);
-                    }
-                  }}
-                  onUploaded={([key]) => {
-                    setUploadedKey(key);
-                  }}
-                />
 
-                {uploadedKey && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Duration (seconds)</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={duration}
-                          onChange={(e) => setDuration(+e.target.value || 0)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Min Watch %</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          value={minWatchPercent}
-                          onChange={(e) =>
-                            setMinWatchPercent(+e.target.value || 90)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </TabsContent>
-
-              {/* AUDIO */}
-              <TabsContent value={ContentType.AUDIO} className="space-y-4">
-                <S3Uploader
-                  accept={{ "audio/*": [] }}
-                  multiple={false}
-                  maxFiles={1}
-                  maxFileSizeMB={50}
-                  uploadType={FileType.AUDIO}
-                  getKey={(file) =>
-                    `courses/${courseId}/lessons/${lessonId}/audios/${Date.now()}-${
-                      file.name
-                    }`
-                  }
-                  onDrop={async (files) => {
-                    if (files.length > 0) {
-                      const file = files[0];
-                      setFileName(file.name);
-                      const dur = await calculateDurationLocally(file);
-                      setDuration(dur);
-                    }
-                  }}
-                  onUploaded={([key]) => setUploadedKey(key)}
-                />
-              </TabsContent>
+              {/* upload AUDIO directlt to prod */}
+              <TabsContent value={ContentType.AUDIO}></TabsContent>
 
               {/* PDF */}
-              <TabsContent value={ContentType.PDF} className="space-y-4">
-                <S3Uploader
-                  accept={{ "application/pdf": [] }}
-                  multiple={false}
-                  maxFiles={1}
-                  maxFileSizeMB={20}
-                  uploadType={FileType.DOCUMENT}
-                  getKey={(file) =>
-                    `courses/${courseId}/lessons/${lessonId}/pdfs/${Date.now()}-${
-                      file.name
-                    }`
-                  }
-                  onDrop={(files) => {
-                    if (files.length > 0) {
-                      setFileName(files[0].name);
-                    }
-                  }}
-                  onUploaded={([key]) => setUploadedKey(key)}
-                />
+              <TabsContent value={ContentType.PDF}>
+                {/* upload pdf direct to prod */}
               </TabsContent>
 
               {/* QUIZ */}
               <TabsContent value={ContentType.QUIZ}>
-                <div className="p-6 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
-                  Quiz will be created after saving. Add questions later.
+                <div className="p-6 bg-muted rounded-lg text-center text-sm">
+                  Quiz will be configured after saving.
                 </div>
               </TabsContent>
 
               {/* ASSIGNMENT */}
               <TabsContent value={ContentType.ASSIGNMENT}>
-                <div className="p-6 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
+                <div className="p-6 bg-muted rounded-lg text-center text-sm">
                   Assignment will be configured after saving.
                 </div>
               </TabsContent>
@@ -371,11 +226,7 @@ export function ContentDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={createContent.isPending}
-            >
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
             <Button

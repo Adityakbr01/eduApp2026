@@ -7,6 +7,23 @@ const router = express.Router();
 
 // All upload routes require authentication
 router.use(authMiddleware);
+
+
+
+// Course Image Upload
+router.post(
+  "/course/presigned-url/image",
+    uploadController.getCourseImagePresignedUrl
+);
+
+
+// Lesson Video Upload
+router.post(
+  "/course/lesson/presigned-url/video",
+  uploadController.getLessonVideoPresignedUrl
+);
+
+
 router.post("/presigned-url", uploadController.getPresignedUrl);
 router.post("/multipart/init", uploadController.initMultipart);
 router.post("/multipart/sign-part", uploadController.signPart);

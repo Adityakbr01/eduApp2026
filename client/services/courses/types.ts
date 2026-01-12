@@ -224,6 +224,8 @@ export interface ContentDetailData {
 // ==================== DTO INTERFACES ====================
 
 export interface CreateCourseDTO {
+    _id?: string;
+    draftId?: string;
     title: string;
     description: string;
     shortDescription: string;

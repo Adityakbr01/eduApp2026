@@ -35,23 +35,22 @@ export const courseService = {
     },
 
     // -------------------- CREATE COURSE --------------------
-    createCourse: async (instructorId: string, data: any) => {
-        // Generate unique slug
-        let slug = generateSlug(data.title);
-        const existingSlug = await courseRepository.slugExists(slug);
-        if (existingSlug) {
-            slug = `${slug}-${Date.now()}`;
-        }
+createCourse: async (instructorId: string, data: any) => {
+  let slug = generateSlug(data.title);
+  const existingSlug = await courseRepository.slugExists(slug);
+  if (existingSlug) {
+    slug = `${slug}-${Date.now()}`;
+  }
 
-        const courseData = {
-            ...data,
-            slug,
-            instructor: instructorId,
-        };
+  const courseData = {
+    ...data,
+    draftId: data.draftId, // ✅ store UUID separately
+    slug,
+    instructor: instructorId,
+  };
 
-        const course = await courseRepository.create(courseData);
-        return course;
-    },
+  return courseRepository.create(courseData);
+},
 
     // -------------------- GET INSTRUCTOR COURSES --------------------
     getInstructorCourses: async (
@@ -103,6 +102,8 @@ export const courseService = {
             }
             data.slug = slug;
         }
+
+        console.log("Updating course with data:", data);
 
         const course = await courseRepository.updateById(courseId, data);
 

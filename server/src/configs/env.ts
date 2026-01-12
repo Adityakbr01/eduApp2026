@@ -56,6 +56,7 @@ const envSchema = z.object({
     // AWS_ENDPOINT_URL_IAM: z.string().url(),
     AWS_REGION: z.string().min(2),
     AWS_S3_BUCKET_NAME: z.string().min(3),
+    AWS_S3_BUCKET_NAME_PROD: z.string().min(3),
 
 
     //Redis

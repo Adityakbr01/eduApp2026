@@ -291,6 +291,7 @@ export const courseRepository = {
     },
     // Create
     create: async (data: any) => {
+        console.log("Creating course with data:", data);
         return Course.create(data);
     },
 

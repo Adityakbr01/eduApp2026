@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "eduapp2026-s3-bucket.s3.us-east-1.amazonaws.com" },
+      { protocol: "https", hostname: "eduapp-bucket-prod.s3.us-east-1.amazonaws.com" },
+      { protocol: "https", hostname: "eduapp-bucket-temp.s3.us-east-1.amazonaws.com" },
     ],
   },
 };

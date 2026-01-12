@@ -5,6 +5,7 @@ import { z } from "zod";
 // COURSE SCHEMAS
 // ============================================
 export const createCourseSchema = z.object({
+    courseID : z.string().optional(),
     title: z.string()
         .min(5, "Title must be at least 5 characters")
         .max(150, "Title cannot exceed 150 characters"),
@@ -36,6 +37,7 @@ export const createCourseSchema = z.object({
 });
 
 export const updateCourseSchema = z.object({
+    courseID : z.string().optional(),
     title: z.string()
         .min(5, "Title must be at least 5 characters")
         .max(150, "Title cannot exceed 150 characters")

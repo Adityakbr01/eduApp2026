@@ -6,6 +6,14 @@ import { CourseLevel, CourseStatus, Currency, DeliveryMode, Language } from "../
 import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
+
+     draftId: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
+
     // Categorization
     category: {
         type: Schema.Types.ObjectId,
