@@ -3,6 +3,8 @@ import { AWS_REGION, ecsClient } from "../config/aws";
 
 const ECS_CLUSTER = process.env.ECS_CLUSTER!;
 const TASK_DEFINITION = process.env.ECS_TASK_DEFINITION!;
+const ECS_TASK_FAMILY = process.env.ECS_TASK_FAMILY! || "video-processor-task-defination-eduapp"; // ✅ ONLY FAMILY
+
 
 const ECS_SUBNETS = process.env.ECS_SUBNETS!.split(",");
 const ECS_SECURITY_GROUPS = process.env.ECS_SECURITY_GROUPS!.split(",");
@@ -22,47 +24,50 @@ interface RunVideoTaskParams {
   receiptHandle: string;
 }
 
-export async function runVideoTask({ key, videoId,receiptHandle }: RunVideoTaskParams) {
-  const command = new RunTaskCommand({
-    cluster: ECS_CLUSTER,
-    taskDefinition: TASK_DEFINITION,
-    launchType: "FARGATE",
+export async function runVideoTask({
+  key,
+  draftId,
+  receiptHandle,
+}: {
+  key: string;
+  draftId: string;
+  receiptHandle: string;
+}) {
+  return ecsClient.send(
+    new RunTaskCommand({
+      cluster: ECS_CLUSTER,
+      taskDefinition: TASK_DEFINITION,
+      launchType: "FARGATE",
 
-    networkConfiguration: {
-      awsvpcConfiguration: {
-        subnets: ECS_SUBNETS,
-        securityGroups: ECS_SECURITY_GROUPS,
-        assignPublicIp: "ENABLED",
-      },
-    },
-
-    overrides: {
-      containerOverrides: [
-        {
-          name: "video-worker",
-          environment: [
-            {name:"AWS_ACCESS_KEY_ID", value: AWS_ACCESS_KEY_ID},
-            {name:"AWS_SECRET_ACCESS_KEY", value: AWS_SECRET_ACCESS_KEY},
-            { name: "VIDEO_BUCKET_TEMP", value: TEMP_BUCKET },
-            { name: "VIDEO_BUCKET_PROD", value: PROD_BUCKET },
-            { name: "VIDEO_KEY", value: key },
-            { name: "VIDEO_ID", value: videoId },
-            { name: "AWS_REGION", value: AWS_REGION },
-            { name: "MONGODB_URI", value: MONGODB_URI },
-            { name: "MONGODB_DB_NAME", value: MONGODB_DB_NAME },
-            { name: "DYNAMO_TABLE", value: DYNAMO_TABLE },
-            {name:"SQS_QUEUE_URL", value: SQS_QUEUE_URL},
-            {
-              name: "SQS_RECEIPT_HANDLE",
-              value: receiptHandle,
-            },
-          ],
+      networkConfiguration: {
+        awsvpcConfiguration: {
+          subnets: ECS_SUBNETS,
+          securityGroups: ECS_SECURITY_GROUPS,
+          assignPublicIp: "ENABLED",
         },
-      ],
-    },
-  });
+      },
 
-  return ecsClient.send(command);
+      overrides: {
+        containerOverrides: [
+          {
+            name: "video-worker",
+            environment: [
+              { name: "VIDEO_KEY", value: key },
+              { name: "DRAFT_ID", value: draftId },
+              { name: "SQS_RECEIPT_HANDLE", value: receiptHandle },
+
+              { name: "VIDEO_BUCKET_TEMP", value: process.env.VIDEO_BUCKET_TEMP! },
+              { name: "VIDEO_BUCKET_PROD", value: process.env.VIDEO_BUCKET_PROD! },
+              { name: "AWS_REGION", value: process.env.AWS_REGION! },
+              { name: "MONGODB_URI", value: process.env.MONGODB_URI! },
+              { name: "MONGODB_DB_NAME", value: process.env.MONGODB_DB_NAME! },
+              { name: "DYNAMO_TABLE", value: process.env.DYNAMO_TABLE! },
+            ],
+          },
+        ],
+      },
+    })
+  );
 }
 
 
@@ -70,7 +75,7 @@ export async function hasActiveVideoTask(): Promise<boolean> {
   const running = await ecsClient.send(
     new ListTasksCommand({
       cluster: ECS_CLUSTER,
-      family: TASK_DEFINITION,
+      family: ECS_TASK_FAMILY,
       desiredStatus: "RUNNING",
     })
   );
@@ -80,7 +85,7 @@ export async function hasActiveVideoTask(): Promise<boolean> {
   const pending = await ecsClient.send(
     new ListTasksCommand({
       cluster: ECS_CLUSTER,
-      family: TASK_DEFINITION,
+      family: ECS_TASK_FAMILY,
       desiredStatus: "PENDING",
     })
   );

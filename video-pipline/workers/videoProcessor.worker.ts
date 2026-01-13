@@ -79,9 +79,9 @@
 
 
 
-import crypto from "crypto";
 import { receiveOneMessage, deleteMessage } from "../service/sqs.service";
 import { runVideoTask, hasActiveVideoTask } from "../service/ecs.service";
+import { extractDraftIdFromKey } from "../utils/extractDraftId";
 
 const QUEUE_URL = process.env.SQS_QUEUE_URL!;
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -91,9 +91,9 @@ export async function startVideoScheduler() {
 
   while (true) {
     try {
-      // 1️⃣ Check ECS state FIRST
-      const ecsBusy = await hasActiveVideoTask();
-      if (ecsBusy) {
+      // 1️⃣ ECS busy → do NOTHING
+      const busy = await hasActiveVideoTask();
+      if (busy) {
         console.log("⏳ ECS busy (pending/running). Waiting...");
         await sleep(5000);
         continue;
@@ -108,7 +108,7 @@ export async function startVideoScheduler() {
       try {
         body = JSON.parse(msg.Body);
       } catch {
-        await deleteMessage( msg.ReceiptHandle);
+        await deleteMessage(msg.ReceiptHandle);
         continue;
       }
 
@@ -118,27 +118,22 @@ export async function startVideoScheduler() {
         continue;
       }
 
-      // 3️⃣ Unique job identity (NOT filename)
-      const videoId = crypto
-        .createHash("sha256")
-        .update(key)
-        .digest("hex");
+      // 3️⃣ draftId ONLY
+      const draftId = extractDraftIdFromKey(key);
+      console.log("📥 Scheduling video:", draftId);
 
-      console.log("📥 Scheduling video:", videoId);
-
-      // 4️⃣ Start ECS task (ONE ONLY)
+      // 4️⃣ Start ECS (ONLY ONE)
       await runVideoTask({
         key,
-        videoId,
+        draftId,
         receiptHandle: msg.ReceiptHandle,
       });
 
-      console.log("🚀 ECS task started:", videoId);
+      console.log("🚀 ECS task started:", draftId);
 
-      // ❗ DO NOT delete SQS message here
-      // Worker will delete on success/failure
+      // ❌ DO NOT delete SQS here
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Scheduler error:", err);
       await sleep(3000);
     }

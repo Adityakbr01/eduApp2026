@@ -1,7 +1,10 @@
-import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
-import { ddb } from "../workers/videoWorker";
-import { HEARTBEAT_INTERVAL, LOCK_EXTEND_SECONDS } from "../workers/videoWorker";
+import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { log } from "./logger.js";
+
+export const ddb = new DynamoDBClient({ region: process.env.AWS_REGION || "us-east-1" });
+
+export const HEARTBEAT_INTERVAL = 120; // 2 min
+export const LOCK_EXTEND_SECONDS = 15 * 60; // 15 min
 
 
 let heartbeatTimer: NodeJS.Timeout | null = null;
