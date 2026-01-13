@@ -18,9 +18,10 @@ const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL;
 interface RunVideoTaskParams {
   key: string;
   videoId: string;
+  receiptHandle: string;
 }
 
-export async function runVideoTask({ key, videoId }: RunVideoTaskParams) {
+export async function runVideoTask({ key, videoId,receiptHandle }: RunVideoTaskParams) {
   const command = new RunTaskCommand({
     cluster: ECS_CLUSTER,
     taskDefinition: TASK_DEFINITION,
@@ -43,11 +44,15 @@ export async function runVideoTask({ key, videoId }: RunVideoTaskParams) {
             { name: "VIDEO_BUCKET_PROD", value: PROD_BUCKET },
             { name: "VIDEO_KEY", value: key },
             { name: "VIDEO_ID", value: videoId },
-            { name: "AWS_REGION", value: AWS_REGION! },
+            { name: "AWS_REGION", value: AWS_REGION },
             { name: "MONGODB_URI", value: MONGODB_URI },
             { name: "MONGODB_DB_NAME", value: MONGODB_DB_NAME },
             { name: "DYNAMO_TABLE", value: DYNAMO_TABLE },
-            {name:"SQS_QUEUE_URL", value: SQS_QUEUE_URL!}
+            {name:"SQS_QUEUE_URL", value: SQS_QUEUE_URL},
+            {
+              name: "SQS_RECEIPT_HANDLE",
+              value: receiptHandle,
+            },
           ],
         },
       ],

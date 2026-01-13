@@ -43,7 +43,7 @@ export async function startVideoWorker() {
       }
 
       // 🚀 START ECS TASK
-      await runVideoTask({ key, videoId });
+      await runVideoTask({ key, videoId, receiptHandle: msg.ReceiptHandle });
       console.log("🚀 ECS task started:", videoId);
 
       /**
