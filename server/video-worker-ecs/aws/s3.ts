@@ -8,9 +8,15 @@ import fs from "fs";
 import path from "path";
 import { pipeline } from "stream/promises";
 import { log } from "../utils/logger";
+import { AWS_REGION,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY } from "../workers/videoWorker";
+
 
 const s3 = new S3Client({
-  region: process.env.AWS_REGION,
+  region: AWS_REGION,
+  credentials:{
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  }
 });
 
 /**

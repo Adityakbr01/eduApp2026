@@ -41,11 +41,14 @@ function requireEnv(name: string): string {
 }
 
 // Required ENV
-const AWS_REGION = requireEnv("AWS_REGION");
+export const AWS_REGION = requireEnv("AWS_REGION");
 const TEMP_BUCKET = requireEnv("VIDEO_BUCKET_TEMP");
 const PROD_BUCKET = requireEnv("VIDEO_BUCKET_PROD");
 const VIDEO_KEY = requireEnv("VIDEO_KEY");
 const VIDEO_ID = requireEnv("VIDEO_ID");
+export const AWS_SECRET_ACCESS_KEY = requireEnv("AWS_SECRET_ACCESS_KEY");
+export const AWS_ACCESS_KEY_ID = requireEnv("AWS_ACCESS_KEY_ID");
+
 
 const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
 const SQS_RECEIPT_HANDLE = requireEnv("SQS_RECEIPT_HANDLE");
