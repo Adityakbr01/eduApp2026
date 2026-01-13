@@ -32,7 +32,7 @@ const TEMP_BUCKET = requireEnv("VIDEO_BUCKET_TEMP");
 const PROD_BUCKET = requireEnv("VIDEO_BUCKET_PROD");
 const VIDEO_KEY = requireEnv("VIDEO_KEY");
 
-const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
+// const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
 const SQS_RECEIPT_HANDLE = requireEnv("SQS_RECEIPT_HANDLE");
 
 const MONGODB_URI = requireEnv("MONGODB_URI");
@@ -47,7 +47,7 @@ const ddb = new DynamoDBClient({ region: AWS_REGION });
 async function deleteSqsMessage() {
   await sqs.send(
     new DeleteMessageCommand({
-      QueueUrl: SQS_QUEUE_URL,
+      QueueUrl: "https://sqs.us-east-1.amazonaws.com/121635831580/video-processing-queue",
       ReceiptHandle: SQS_RECEIPT_HANDLE,
     })
   );
