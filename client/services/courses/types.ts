@@ -283,6 +283,7 @@ export interface CreateContentDTO {
     marks: number;
     isVisible?: boolean;
     isPreview?: boolean;
+    draftID: string;
     video?: {
         rawKey?: string;
         duration?: number;

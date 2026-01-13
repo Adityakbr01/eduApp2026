@@ -112,6 +112,7 @@ export const createContentSchema = z.object({
     marks: z.number().min(0, "Marks must be a positive number"),
     isVisible: z.boolean().default(true),
     isPreview: z.boolean().default(false),
+    draftID: z.string(),
 
     // 🎥 VIDEO/AUDIO (nested)
     video: z.object({

@@ -13,6 +13,8 @@ const ECS_SECURITY_GROUPS = process.env.ECS_SECURITY_GROUPS!.split(",");
 
 const TEMP_BUCKET = process.env.VIDEO_BUCKET_TEMP!;
 const PROD_BUCKET = process.env.VIDEO_BUCKET_PROD!;
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME!;
+const MONGODB_URI = process.env.MONGODB_URI!;
 
 
 if(!ECS_CLUSTER || !TASK_DEFINITION || !TASK_FAMILY || !ECS_SUBNETS.length || !ECS_SECURITY_GROUPS.length || !TEMP_BUCKET || !PROD_BUCKET){
@@ -48,7 +50,10 @@ export async function runVideoTask({ key, videoId }: RunVideoTaskParams) {
             { name: "VIDEO_BUCKET_PROD", value: PROD_BUCKET },
             { name: "VIDEO_KEY", value: key },
             { name: "VIDEO_ID", value: videoId },
+            {name: "AWS_NODEJS_CONNECTION_REUSE_ENABLED", value: "1" },
             { name: "AWS_REGION", value: process.env.AWS_REGION! },
+            { name: "MONGODB_URI", value: MONGODB_URI },
+            { name: "MONGODB_DB_NAME", value: MONGODB_DB_NAME },
           ],
         },
       ],

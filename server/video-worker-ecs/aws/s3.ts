@@ -40,16 +40,24 @@ export async function downloadFromS3(
 /**
  * Upload entire directory to S3 (PURE FUNCTION)
  */
+function joinS3Key(...parts: string[]) {
+  return parts
+    .filter(Boolean)
+    .map((p) => p.replace(/^\/+|\/+$/g, ""))
+    .join("/");
+}
+
 export async function uploadDirectory(
   localDir: string,
   bucket: string,
   jobId: string,
   outputPrefix: string
 ) {
-  log("INFO", "⬆️ Uploading directory to S3", {
+  log("INFO", "⬆️ Starting directory upload to S3", {
     bucket,
-    jobId,
+    jobId: jobId || "(none)",
     outputPrefix,
+    localDir,
   });
 
   const walk = (dir: string): string[] =>
@@ -62,23 +70,42 @@ export async function uploadDirectory(
 
   const files = walk(localDir);
 
+  log("INFO", "📂 Files discovered for upload", {
+    count: files.length,
+  });
+
   for (const filePath of files) {
-    const relativePath = path.relative(localDir, filePath);
-    const s3Key = `${outputPrefix}/${jobId}/${relativePath}`.replace(
-      /\\/g,
-      "/"
-    );
+   const relativePath = path
+  .relative(localDir, filePath)
+  .replace(/\\/g, "/")
+  .replace(/^\/+/, ""); // 🔥 THIS LINE
+
+   const s3Key = joinS3Key(outputPrefix, relativePath);
+
+
+    log("INFO", "⬆️ Uploading file to S3", {
+      bucket,
+      s3Key,
+      file: relativePath,
+    });
 
     await s3.send(
       new PutObjectCommand({
-        Bucket: bucket, // ✅ ONLY PROD bucket comes here
+        Bucket: bucket,
         Key: s3Key,
         Body: fs.createReadStream(filePath),
         ContentType: getContentType(filePath),
       })
     );
   }
+
+  log("INFO", "✅ Directory upload completed", {
+    bucket,
+    outputPrefix,
+    filesUploaded: files.length,
+  });
 }
+
 
 /**
  * Optional cleanup
@@ -91,6 +118,7 @@ export async function deleteS3Object(bucket: string, key: string) {
     })
   );
 }
+
 
 /**
  * Content-Type helper

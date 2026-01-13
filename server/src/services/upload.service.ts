@@ -52,14 +52,15 @@ static async getLessonVideoPresignedUrl(
   size: number,
   mimeType: string,
   courseId: string,
-  lessonId: string
+  lessonId: string,
+  draftID: string // 🔥 REAL ID
 ) {
-  if (!courseId || !lessonId) {
-    throw new Error("courseId and lessonId are required");
+  if (!courseId || !lessonId || !draftID) {
+    throw new Error("courseId, lessonId, draftID required");
   }
 
   if (!mimeType.startsWith("video/")) {
-    throw new Error("Only video files are allowed");
+    throw new Error("Only video files allowed");
   }
 
   const MAX_SIZE = 10 * 1024 * 1024 * 1024;
@@ -67,19 +68,29 @@ static async getLessonVideoPresignedUrl(
 
   const ext = fileName.split(".").pop() || "mp4";
 
-  const s3Key =
-    `upload/courses/${courseId}/lessons/${lessonId}/video/source.${ext}`;
+  const s3Key = [
+    "upload",
+    "courses",
+    courseId,
+    "lessons",
+    lessonId,
+    "lessoncontents",
+    draftID, // use draftID for staging
+    "video",
+    `source.${ext}`,
+  ].join("/");
 
-  // SIMPLE
+  // SIMPLE UPLOAD (<100MB)
   if (size < 100 * 1024 * 1024) {
     const command = new PutObjectCommand({
-      Bucket: env.AWS_S3_BUCKET_NAME, // 🔥 RAW bucket
+      Bucket: env.AWS_S3_BUCKET_NAME,
       Key: s3Key,
       ContentType: mimeType,
       Metadata: {
-        entity: "lesson-video",
+        entity: "lesson-content-video",
         courseId,
         lessonId,
+        draftID,
       },
     });
 
@@ -89,6 +100,7 @@ static async getLessonVideoPresignedUrl(
       mode: "simple",
       uploadUrl,
       intentId: s3Key,
+      draftID,
     };
   }
 
@@ -96,9 +108,9 @@ static async getLessonVideoPresignedUrl(
   return {
     mode: "multipart",
     intentId: s3Key,
+    draftID,
   };
 }
-
     static async getPresignedUrl(
         fileName: string,
         size: number,

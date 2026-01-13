@@ -3,9 +3,6 @@ import { UploadService } from "src/services/upload.service.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 
 export const uploadController = {
-
-
-
     getCourseImagePresignedUrl: async (req: Request, res: Response) => {
         const { filename, size, type,courseId } = req.body;
         const result = await UploadService.getCourseImagePresignedUrl(
@@ -19,14 +16,15 @@ export const uploadController = {
 
 
     getLessonVideoPresignedUrl: async (req: Request, res: Response) => {
-  const { filename, size, mimeType, courseId, lessonId } = req.body;
+  const { filename, size, mimeType, courseId, lessonId, draftID } = req.body;
 
   const result = await UploadService.getLessonVideoPresignedUrl(
     filename,
     size,
     mimeType,
     courseId,
-    lessonId
+    lessonId,
+    draftID
   );
 
   sendResponse(

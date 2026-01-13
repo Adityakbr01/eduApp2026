@@ -13,6 +13,7 @@ const videoSchema = new mongoose.Schema({
     enum: ["UPLOADED", "PROCESSING", "READY", "FAILED"],
     default: "UPLOADED",
   },
+  isEmailSent: { type: Boolean, default: false },
 });
 
 
@@ -63,7 +64,9 @@ const lessonContentSchema = new mongoose.Schema({
     pdf: { type: pdfSchema, sparse: true },
     assessment: { type: assessmentSchema },
     audio: { type: audioSchema, sparse: true },
+    draftID: { type: String }, //draftid for ecs worker
 
+    // VISIBILITY
     isVisible: { type: Boolean, default: true },
     isPreview: { type: Boolean, default: false }, // Add this too!
 }, { timestamps: true });

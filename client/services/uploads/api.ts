@@ -42,7 +42,8 @@ export const uploadApi = {
 getLessonVideoPresignedUrl: async (
   file: File,
   courseId: string,
-  lessonId: string
+  lessonId: string,
+    draftID: string
 ): Promise<PresignedUploadResponse> => {
   const res = await apiClient.post(
     "/upload/course/lesson/presigned-url/video",
@@ -52,6 +53,7 @@ getLessonVideoPresignedUrl: async (
       mimeType: file.type,
       courseId,
       lessonId,
+        draftID,
     }
   );
   return res.data.data;

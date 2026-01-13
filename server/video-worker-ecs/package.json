@@ -10,7 +10,8 @@
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.965.0",
     "@aws-sdk/client-s3": "^3.540.0",
-    "@aws-sdk/client-sqs": "^3.540.0"
+    "@aws-sdk/client-sqs": "^3.540.0",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@types/node": "^25.0.5",

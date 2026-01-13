@@ -3,61 +3,62 @@
 import { useState } from "react";
 
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-    useAssignmentByContentId,
-    useQuizByContentId,
+  useAssignmentByContentId,
+  useQuizByContentId,
 } from "@/services/assessments";
 import {
-    ContentType,
-    ILessonContent,
-    UpdateContentDTO,
-    useDeleteContent,
-    useUpdateContent,
+  ContentType,
+  ILessonContent,
+  UpdateContentDTO,
+  useDeleteContent,
+  useUpdateContent,
 } from "@/services/courses";
 import { FileType, FileTypeEnum } from "@/services/uploads";
 import {
-    ClipboardList,
-    Clock,
-    Eye,
-    EyeOff,
-    HelpCircle,
-    Loader2,
-    MoreVertical,
-    Pencil,
-    Star,
-    Trash2,
+  ClipboardList,
+  Clock,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  Loader2,
+  MoreVertical,
+  Pencil,
+  Star,
+  Trash2,
 } from "lucide-react";
 import { AssignmentDialog } from "./AssignmentDialog";
 import { QuizDialog } from "./QuizDialog";
+import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
 
 interface ContentItemProps {
   content: ILessonContent;
@@ -404,7 +405,42 @@ export function ContentItem({
             {(content.type === ContentType.VIDEO ||
               content.type === ContentType.AUDIO ||
               content.type === ContentType.PDF) && (
-              <div className="space-y-4"></div>
+              <div className="space-y-4">
+                <Label>Replace File</Label>
+
+                {/* VIDEO / AUDIO */}
+                {(content.type === ContentType.VIDEO ||
+                  content.type === ContentType.AUDIO) && (
+                  <LessonVideoUpload
+                    courseId={courseId}
+                    lessonId={lessonId}
+                    onUploaded={(key) => {
+                      setNewFileKey(key);
+                    }}
+                  />
+                )}
+
+                {/* PDF (future: separate simple uploader if you want) */}
+                {content.type === ContentType.PDF && (
+                  <LessonVideoUpload
+                    courseId={courseId}
+                    lessonId={lessonId}
+                    onUploaded={(key) => {
+                      setNewFileKey(key);
+                    }}
+                  />
+                )}
+
+                {/* New file preview */}
+                {newFileKey && (
+                  <div className="rounded-md border p-3 text-xs bg-muted">
+                    <p className="font-medium">New file uploaded</p>
+                    <p className="break-all text-muted-foreground">
+                      {newFileKey}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
 
             {(content.type === ContentType.VIDEO ||

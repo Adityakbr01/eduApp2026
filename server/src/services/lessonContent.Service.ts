@@ -8,6 +8,7 @@ import {
 } from "src/repositories/course.repository.js";
 import AppError from "src/utils/AppError.js";
 import extractS3Path from "src/utils/extractS3Path.js";
+import normalizeVideoPayload from "src/utils/normalizeVideoPayload.js";
 
 
 
@@ -19,43 +20,37 @@ import extractS3Path from "src/utils/extractS3Path.js";
 // ============================================
 export const lessonContentService = {
     // -------------------- CREATE CONTENT --------------------
-    createContent: async (lessonId: string, instructorId: string, data: any) => {
-        const lesson = await lessonRepository.findById(lessonId);
-        if (!lesson) {
-            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
-        }
+   createContent: async (lessonId: string, instructorId: string, data) => {
+  const lesson = await lessonRepository.findById(lessonId);
+  if (!lesson) {
+    throw new AppError("Lesson not found", 404, ERROR_CODE.NOT_FOUND);
+  }
 
-        const isOwner = await courseRepository.isOwner(lesson.courseId.toString(), instructorId);
-        if (!isOwner) {
-            throw new AppError(
-                "You don't have permission to add content",
-                STATUSCODE.FORBIDDEN,
-                ERROR_CODE.FORBIDDEN
-            );
-        }
+  const isOwner = await courseRepository.isOwner(
+    lesson.courseId.toString(),
+    instructorId
+  );
+  if (!isOwner) {
+    throw new AppError("Forbidden", 403, ERROR_CODE.FORBIDDEN);
+  }
 
-        const maxOrder = await lessonContentRepository.getMaxOrder(lessonId);
+  const maxOrder = await lessonContentRepository.getMaxOrder(lessonId);
 
+  // 🔥 VIDEO STATUS INIT
+  if (data.type === "video" && data.video?.rawKey) {
+    data.video = normalizeVideoPayload(data.video);
+  }
 
+  const contentData = {
+    ...data,
+    lessonId,
+    courseId: lesson.courseId,
+    order: maxOrder + 1,
+  };
 
-    // 🔥 filter & cut raw URL
-   if (data.type === "video" && data.video?.rawKey) {
-    data.video.rawKey = extractS3Path(data.video.rawKey);
-}
+  return lessonContentRepository.create(contentData);
+},
 
-        console.log(data)
-
-    
-
-        const contentData = {
-            ...data,
-            lessonId,
-            courseId: lesson.courseId,
-            order: maxOrder + 1,
-        };
-
-        return lessonContentRepository.create(contentData);
-    },
 
     // -------------------- GET CONTENTS BY LESSON --------------------
     getContentsByLesson: async (lessonId: string, instructorId: string) => {
@@ -77,33 +72,30 @@ export const lessonContentService = {
     },
 
     // -------------------- UPDATE CONTENT --------------------
-   updateContent: async (contentId: string, instructorId: string, data: any) => {
-    const content = await lessonContentRepository.findById(contentId);
-    if (!content) {
-        throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
-    }
+   updateContent: async (contentId, instructorId, data) => {
+  const content = await lessonContentRepository.findById(contentId);
+  if (!content) {
+    throw new AppError("Content not found", 404, ERROR_CODE.NOT_FOUND);
+  }
 
-    const isOwner = await courseRepository.isOwner(
-        content.courseId.toString(),
-        instructorId
-    );
-    if (!isOwner) {
-        throw new AppError(
-            "You don't have permission to update this content",
-            STATUSCODE.FORBIDDEN,
-            ERROR_CODE.FORBIDDEN
-        );
-    }
+  const isOwner = await courseRepository.isOwner(
+    content.courseId.toString(),
+    instructorId
+  );
+  if (!isOwner) {
+    throw new AppError("Forbidden", 403, ERROR_CODE.FORBIDDEN);
+  }
 
-    let updateData = { ...data };
+  const updateData = { ...data };
 
-    // 🔥 normalize video raw url
-    if (data.type === "video" && data.rowUrl) {
-        updateData.rowUrl = extractS3Path(data.rowUrl);
-    }
+  // 🔥 VIDEO RE-UPLOAD HANDLING
+  if (content.type === "video" && data.video?.rawKey) {
+    updateData.video = normalizeVideoPayload(data.video);
+  }
 
-    return lessonContentRepository.updateById(contentId, updateData);
+  return lessonContentRepository.updateById(contentId, updateData);
 },
+
 
     // -------------------- DELETE CONTENT --------------------
     deleteContent: async (contentId: string, instructorId: string) => {

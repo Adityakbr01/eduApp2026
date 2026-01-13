@@ -26,6 +26,8 @@ export async function startVideoWorker() {
         continue;
       }
 
+
+      console.log(`📨 Received ${messages.length} message(s)`);
       const msg = messages[0];
       if (!msg.Body || !msg.ReceiptHandle) {
         continue;

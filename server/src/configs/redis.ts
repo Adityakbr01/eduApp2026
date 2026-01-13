@@ -5,6 +5,7 @@ import { env, isProd } from "./env.js";
 // Dev me Upstash (cloud Redis) use karega
 // Prod me local Docker Redis use karega (hardcoded)
 const redisUrl = isProd ? "redis://redis:6379" : env.UPSTASH_REDIS_URL;
+console.log("Redis URL:", redisUrl);
 
 // Regular Redis client
 export const redis = new Redis(redisUrl!, {
