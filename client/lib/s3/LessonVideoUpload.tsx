@@ -7,7 +7,7 @@ import { multipartUpload } from "./multipartUpload";
 interface Props {
   courseId: string;
   lessonId: string;
-  draftID: string;
+  draftID?: string;
   onUploaded: (s3Key: string) => void; // 🔥 important
 }
 
@@ -33,7 +33,7 @@ export default function LessonVideoUpload({
         file,
         courseId,
         lessonId,
-        draftID
+        draftID!
       );
 
       // ---------------- SIMPLE ----------------
