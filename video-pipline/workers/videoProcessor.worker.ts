@@ -1,17 +1,25 @@
+import crypto from "crypto";
 import { receiveMessages, deleteMessage } from "../service/sqs.service";
 import { runVideoTask } from "../service/ecs.service";
 import { acquireVideoLock } from "../service/dynamo.service";
 
 const WORKER_ID = "video-scheduler-1";
 
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function startVideoWorker() {
-  console.log("🎬 Video worker started...");
+  console.log("🎬 Video scheduler started...");
 
   while (true) {
     try {
       // 📥 Receive exactly ONE message
       const messages = await receiveMessages();
-      if (!messages.length) continue;
+
+      if (!messages.length) {
+        await sleep(2000); // 💤 prevent tight loop
+        continue;
+      }
 
       const msg = messages[0];
       if (!msg.Body || !msg.ReceiptHandle) continue;
@@ -20,6 +28,7 @@ export async function startVideoWorker() {
       try {
         body = JSON.parse(msg.Body);
       } catch {
+        // invalid message → safe to delete
         await deleteMessage(msg.ReceiptHandle);
         continue;
       }
@@ -30,29 +39,40 @@ export async function startVideoWorker() {
         continue;
       }
 
-      const videoId = key.split("/").pop()!.replace(".mp4", "");
+      // ✅ FIX 1: UNIQUE videoId (hash of full S3 key)
+      const videoId = crypto
+        .createHash("sha256")
+        .update(key)
+        .digest("hex");
+
       console.log("📥 Video detected:", videoId);
 
       // 🔐 DYNAMODB LOCK
       const locked = await acquireVideoLock(videoId, WORKER_ID);
 
+      // ✅ FIX 2: DO NOT delete SQS message on lock fail
       if (!locked) {
-        console.log("⏭️ Already processing, skipping:", videoId);
-        await deleteMessage(msg.ReceiptHandle);
-        continue;
+        console.log("⏭️ Locked, retry later:", videoId);
+        continue; // visibility timeout ke baad retry hoga
       }
 
       // 🚀 START ECS TASK
-      await runVideoTask({ key, videoId, receiptHandle: msg.ReceiptHandle });
+      await runVideoTask({
+        key,
+        videoId,
+        receiptHandle: msg.ReceiptHandle,
+      });
+
       console.log("🚀 ECS task started:", videoId);
 
       /**
        * ❌ DO NOT delete SQS message here
-       * ECS task ke end me delete hoga
+       * ECS worker khud delete karega (correct design)
        */
 
     } catch (err) {
-      console.error("❌ Worker error:", err);
+      console.error("❌ Scheduler error:", err);
+      await sleep(2000); // safety backoff
     }
   }
 }
