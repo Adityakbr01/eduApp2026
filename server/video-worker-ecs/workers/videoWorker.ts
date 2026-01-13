@@ -75,25 +75,42 @@ function extractDraftId(videoKey: string): string {
 }
 
 async function markJobDone(videoId: string) {
+  const now = Math.floor(Date.now() / 1000);
+
   await ddb.send(
     new UpdateItemCommand({
       TableName: DYNAMO_TABLE,
       Key: { videoId: { S: videoId } },
-      UpdateExpression: "SET #s = :d",
-      ExpressionAttributeNames: { "#s": "status" },
-      ExpressionAttributeValues: { ":d": { S: "DONE" } },
+      UpdateExpression:
+        "SET #s = :d, updatedAt = :now REMOVE lockTTL, lockedBy",
+      ExpressionAttributeNames: {
+        "#s": "status",
+      },
+      ExpressionAttributeValues: {
+        ":d": { S: "DONE" },
+        ":now": { N: now.toString() },
+      },
     })
   );
 }
 
+
 async function markJobFailed(videoId: string) {
+  const now = Math.floor(Date.now() / 1000);
+
   await ddb.send(
     new UpdateItemCommand({
       TableName: DYNAMO_TABLE,
       Key: { videoId: { S: videoId } },
-      UpdateExpression: "SET #s = :f",
-      ExpressionAttributeNames: { "#s": "status" },
-      ExpressionAttributeValues: { ":f": { S: "FAILED" } },
+      UpdateExpression:
+        "SET #s = :f, updatedAt = :now REMOVE lockTTL, lockedBy",
+      ExpressionAttributeNames: {
+        "#s": "status",
+      },
+      ExpressionAttributeValues: {
+        ":f": { S: "FAILED" },
+        ":now": { N: now.toString() },
+      },
     })
   );
 }
