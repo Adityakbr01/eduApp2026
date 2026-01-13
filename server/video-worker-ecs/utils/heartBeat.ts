@@ -1,9 +1,6 @@
 import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { ddb } from "../workers/videoWorker";
-import {
-  HEARTBEAT_INTERVAL,
-  LOCK_EXTEND_SECONDS,
-} from "../workers/videoWorker.js";
+import { HEARTBEAT_INTERVAL, LOCK_EXTEND_SECONDS } from "../workers/videoWorker";
 import { log } from "./logger.js";
 
 

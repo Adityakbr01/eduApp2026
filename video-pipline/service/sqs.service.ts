@@ -27,3 +27,14 @@ export async function deleteMessage(receiptHandle: string) {
 
   await sqsClient.send(command);
 }
+
+
+export async function receiveOneMessage(queueUrl: string) {
+  return sqsClient.send(
+    new ReceiveMessageCommand({
+      QueueUrl: queueUrl,
+      MaxNumberOfMessages: 1,
+      WaitTimeSeconds: 10, // long polling
+    })
+  );
+}

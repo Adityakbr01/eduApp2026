@@ -1,4 +1,4 @@
-import { RunTaskCommand } from "@aws-sdk/client-ecs";
+import { ListTasksCommand, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { AWS_REGION, ecsClient } from "../config/aws";
 
 const ECS_CLUSTER = process.env.ECS_CLUSTER!;
@@ -63,4 +63,27 @@ export async function runVideoTask({ key, videoId,receiptHandle }: RunVideoTaskP
   });
 
   return ecsClient.send(command);
+}
+
+
+export async function hasActiveVideoTask(): Promise<boolean> {
+  const running = await ecsClient.send(
+    new ListTasksCommand({
+      cluster: ECS_CLUSTER,
+      family: TASK_DEFINITION,
+      desiredStatus: "RUNNING",
+    })
+  );
+
+  if (running.taskArns?.length) return true;
+
+  const pending = await ecsClient.send(
+    new ListTasksCommand({
+      cluster: ECS_CLUSTER,
+      family: TASK_DEFINITION,
+      desiredStatus: "PENDING",
+    })
+  );
+
+  return (pending.taskArns?.length ?? 0) > 0;
 }
