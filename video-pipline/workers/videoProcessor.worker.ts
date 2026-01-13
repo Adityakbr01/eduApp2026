@@ -138,7 +138,7 @@ export async function startVideoScheduler() {
       // ❗ DO NOT delete SQS message here
       // Worker will delete on success/failure
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("❌ Scheduler error:", err);
       await sleep(3000);
     }
