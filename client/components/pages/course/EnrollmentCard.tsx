@@ -81,7 +81,7 @@ function EnrollmentCard({
       toast("Please log in to enroll in this course.", {
         icon: "🔒",
       });
-      router.push(`/auth/login?redirect=/course/${course.slug || course._id}`);
+      router.push(`/auth/signin?redirect=/course/${course.slug || course._id}`);
       return;
     }
 
