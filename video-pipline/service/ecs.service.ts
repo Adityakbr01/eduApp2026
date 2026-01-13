@@ -1,12 +1,8 @@
-import {
-  ListTasksCommand,
-  RunTaskCommand,
-} from "@aws-sdk/client-ecs";
+import { RunTaskCommand } from "@aws-sdk/client-ecs";
 import { ecsClient } from "../config/aws";
 
 const ECS_CLUSTER = process.env.ECS_CLUSTER!;
 const TASK_DEFINITION = process.env.ECS_TASK_DEFINITION!;
-const TASK_FAMILY = process.env.ECS_TASK_FAMILY!;
 
 const ECS_SUBNETS = process.env.ECS_SUBNETS!.split(",");
 const ECS_SECURITY_GROUPS = process.env.ECS_SECURITY_GROUPS!.split(",");
@@ -15,12 +11,7 @@ const TEMP_BUCKET = process.env.VIDEO_BUCKET_TEMP!;
 const PROD_BUCKET = process.env.VIDEO_BUCKET_PROD!;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME!;
 const MONGODB_URI = process.env.MONGODB_URI!;
-
-
-if(!ECS_CLUSTER || !TASK_DEFINITION || !TASK_FAMILY || !ECS_SUBNETS.length || !ECS_SECURITY_GROUPS.length || !TEMP_BUCKET || !PROD_BUCKET){
-  throw new Error("One or more ECS or Bucket environment variables are missing");
-}
-
+const DYNAMO_TABLE = process.env.DYNAMO_TABLE! || "video-processing-jobs";
 
 interface RunVideoTaskParams {
   key: string;
@@ -50,10 +41,10 @@ export async function runVideoTask({ key, videoId }: RunVideoTaskParams) {
             { name: "VIDEO_BUCKET_PROD", value: PROD_BUCKET },
             { name: "VIDEO_KEY", value: key },
             { name: "VIDEO_ID", value: videoId },
-            {name: "AWS_NODEJS_CONNECTION_REUSE_ENABLED", value: "1" },
             { name: "AWS_REGION", value: process.env.AWS_REGION! },
             { name: "MONGODB_URI", value: MONGODB_URI },
             { name: "MONGODB_DB_NAME", value: MONGODB_DB_NAME },
+            { name: "DYNAMO_TABLE", value: DYNAMO_TABLE },
           ],
         },
       ],
@@ -61,16 +52,4 @@ export async function runVideoTask({ key, videoId }: RunVideoTaskParams) {
   });
 
   return ecsClient.send(command);
-}
-
-export async function hasRunningVideoTask() {
-  const res = await ecsClient.send(
-    new ListTasksCommand({
-      cluster: ECS_CLUSTER,
-      family: TASK_FAMILY,
-      desiredStatus: "RUNNING",
-    })
-  );
-
-  return (res.taskArns?.length || 0) > 0;
 }
