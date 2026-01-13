@@ -1,15 +1,15 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } from "@aws-sdk/client-sqs";
-import { AWS_REGION,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY } from "../workers/videoWorker";
-
 import { AwsCredentialIdentity } from "@aws-sdk/types";
-const credentials: AwsCredentialIdentity = {
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY,
+
+
+export const credentialsLocal: AwsCredentialIdentity = {
+  accessKeyId: "AKIARYUQPP4OK5IHUR4H",
+  secretAccessKey: "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",
 };
 
 export const sqsClient = new SQSClient({
-  region: AWS_REGION,
-  credentials,
+  region: process.env.AWS_REGION! || "us-east-1",
+  credentials:credentialsLocal
 });
 
 export async function receiveMessages(queueUrl: string) {

@@ -12,7 +12,8 @@ const PROD_BUCKET = process.env.VIDEO_BUCKET_PROD!;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME!;
 const MONGODB_URI = process.env.MONGODB_URI!;
 const DYNAMO_TABLE = process.env.DYNAMO_TABLE! || "video-processing-jobs";
-
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID!;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY!;
 const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL;
 
 interface RunVideoTaskParams {
@@ -40,8 +41,8 @@ export async function runVideoTask({ key, videoId,receiptHandle }: RunVideoTaskP
         {
           name: "video-worker",
           environment: [
-            {name:"AWS_ACCESS_KEY_ID,", value:process.env.AWS_ACCESS_KEY_ID!},
-            {name:"AWS_SECRET_ACCESS_KEY", value:process.env.AWS_SECRET_ACCESS_KEY!},
+            {name:"AWS_ACCESS_KEY_ID", value: AWS_ACCESS_KEY_ID},
+            {name:"AWS_SECRET_ACCESS_KEY", value: AWS_SECRET_ACCESS_KEY},
             { name: "VIDEO_BUCKET_TEMP", value: TEMP_BUCKET },
             { name: "VIDEO_BUCKET_PROD", value: PROD_BUCKET },
             { name: "VIDEO_KEY", value: key },
