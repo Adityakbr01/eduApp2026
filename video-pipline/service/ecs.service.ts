@@ -1,5 +1,5 @@
 import { RunTaskCommand } from "@aws-sdk/client-ecs";
-import { ecsClient } from "../config/aws";
+import { AWS_REGION, ecsClient } from "../config/aws";
 
 const ECS_CLUSTER = process.env.ECS_CLUSTER!;
 const TASK_DEFINITION = process.env.ECS_TASK_DEFINITION!;
@@ -12,6 +12,8 @@ const PROD_BUCKET = process.env.VIDEO_BUCKET_PROD!;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME!;
 const MONGODB_URI = process.env.MONGODB_URI!;
 const DYNAMO_TABLE = process.env.DYNAMO_TABLE! || "video-processing-jobs";
+
+const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL;
 
 interface RunVideoTaskParams {
   key: string;
@@ -41,10 +43,11 @@ export async function runVideoTask({ key, videoId }: RunVideoTaskParams) {
             { name: "VIDEO_BUCKET_PROD", value: PROD_BUCKET },
             { name: "VIDEO_KEY", value: key },
             { name: "VIDEO_ID", value: videoId },
-            { name: "AWS_REGION", value: process.env.AWS_REGION! },
+            { name: "AWS_REGION", value: AWS_REGION! },
             { name: "MONGODB_URI", value: MONGODB_URI },
             { name: "MONGODB_DB_NAME", value: MONGODB_DB_NAME },
             { name: "DYNAMO_TABLE", value: DYNAMO_TABLE },
+            {name:"SQS_QUEUE_URL", value: SQS_QUEUE_URL!}
           ],
         },
       ],
