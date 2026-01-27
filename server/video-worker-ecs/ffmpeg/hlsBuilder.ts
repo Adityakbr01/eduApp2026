@@ -18,31 +18,37 @@ export function buildHlsArgs({
   enhancement,
 }: HlsBuilderOptions): string[] {
 
-  const filterChains: string[] = [];
+  const filters: string[] = [];
   const maps: string[] = [];
   const varMaps: string[] = [];
 
   profiles.forEach((p, i) => {
     const enhance = getEnhancementFilter(enhancement);
+
     const vf = [
       `scale=${p.width}:-2:flags=lanczos`,
-      enhance
-    ].filter(Boolean).join(",");
+      enhance,
+    ]
+      .filter(Boolean)
+      .join(",");
 
-    filterChains.push(`[0:v]${vf}[v${i}]`);
+    filters.push(`[0:v]${vf}[v${i}]`);
     maps.push("-map", `[v${i}]`);
-    varMaps.push(hasAudio
-      ? `v:${i},a:0,name:${p.name}`
-      : `v:${i},name:${p.name}`
-    );
+
+    // 🔥 AUDIO ONLY ON FIRST VARIANT
+    if (hasAudio && i === 0) {
+      varMaps.push(`v:${i},a:0,name:${p.name}`);
+    } else {
+      varMaps.push(`v:${i},name:${p.name}`);
+    }
   });
 
-  const args: string[] = [
+  return [
     "-y",
     "-i", input,
 
     "-filter_complex",
-    filterChains.join(";"),
+    filters.join(";"),
 
     ...maps,
     ...(hasAudio ? ["-map", "0:a:0"] : []),
@@ -76,6 +82,4 @@ export function buildHlsArgs({
     "-var_stream_map", varMaps.join(" "),
     path.join(outDir, "%v", "index.m3u8"),
   ];
-
-  return args;
 }

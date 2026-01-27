@@ -138,7 +138,8 @@ export async function main() {
 
     /* 5️⃣ Download → Transcode */
     await downloadFromS3(TEMP_BUCKET, VIDEO_KEY, inputPath);
-    await generateHLS(inputPath, outputDir);
+    //send to sqs latter for 
+   const { durationSeconds, durationMs } = await generateHLS(inputPath, outputDir);
 
     /* 6️⃣ Upload HLS */
     const outputPrefix = buildHlsOutputPrefix({
@@ -152,7 +153,7 @@ export async function main() {
 
     /* 7️⃣ Mark READY */
     const masterUrl = `${outputPrefix}/master.m3u8`;
-    await updateVideoStatus(lessonContentId, "READY", masterUrl);
+    await updateVideoStatus(lessonContentId, "READY", masterUrl, durationSeconds);
 
     /* 8️⃣ Cleanup */
     await deleteS3Object(TEMP_BUCKET, VIDEO_KEY).catch(() => {});

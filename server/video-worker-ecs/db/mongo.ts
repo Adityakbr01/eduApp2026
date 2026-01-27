@@ -22,7 +22,8 @@ export async function disconnectDB() {
 export async function updateVideoStatus(
   contentId: string,
   status: "PROCESSING" | "READY" | "FAILED",
-  hlsKey?: string
+  hlsKey?: string,
+  durationSeconds?: number
 ) {
   const db = mongoose.connection.db;
   if (!db) throw new Error("DB not connected");
@@ -31,6 +32,7 @@ export async function updateVideoStatus(
     contentId,
     status,
     ...(hlsKey && { hlsKey }),
+    ...(durationSeconds && { durationSeconds }),
   });
 
   await db.collection("lessoncontents").updateOne(
@@ -39,10 +41,12 @@ export async function updateVideoStatus(
       $set: {
         "video.status": status,
         ...(hlsKey && { "video.hlsKey": hlsKey }),
+        ...(durationSeconds && { "video.duration": durationSeconds }),
       },
     }
   );
 }
+
 
 export async function findLessonContentById(lessonContentId: string) {
   const db = mongoose.connection.db;
