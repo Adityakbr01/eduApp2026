@@ -55,8 +55,8 @@ jobs:
       - name: Build & Push Video Worker Image
         uses: docker/build-push-action@v6
         with:
-          context: ./video-pipline
-          file: ./video-pipline/Dockerfile
+          context: ./video-pipline-consumer
+          file: ./video-pipline-consumer/Dockerfile
           push: true
           tags: |
             ${{ env.VIDEO_WORKER_TAG }}
