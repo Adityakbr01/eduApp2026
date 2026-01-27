@@ -20,14 +20,6 @@ export async function runVideoTask({
   console.log("📦 VIDEO_KEY:", key);
   console.log("🧾 ReceiptHandle:", receiptHandle);
 
-  // 🔍 VERY IMPORTANT — env sanity check
-  console.log("🔍 ENV CHECK (consumer)", {
-    VIDEO_BUCKET_TEMP: process.env.VIDEO_BUCKET_TEMP,
-    VIDEO_BUCKET_PROD: process.env.VIDEO_BUCKET_PROD,
-    AWS_REGION: process.env.AWS_REGION,
-    MONGODB_DB_NAME: process.env.MONGODB_DB_NAME,
-    DYNAMO_TABLE: process.env.DYNAMO_TABLE,
-  });
 
   const command = new RunTaskCommand({
     cluster: ECS_CLUSTER,
