@@ -59,7 +59,7 @@ export default function CourseImageUploader({
           throw new Error("Multipart upload not supported for images");
         }
 
-        const { uploadUrl, key, version } = res;
+        const { uploadUrl, rawKey, version } = res;
 
         const uploadResponse = await fetch(uploadUrl, {
           method: "PUT",
@@ -74,7 +74,7 @@ export default function CourseImageUploader({
         }
 
         // ✅ Send the thumbnail object to parent
-        onChange({ key, version });
+        onChange({ key: rawKey, version });
       } catch (err: any) {
         setError(err.message || "Upload failed");
       } finally {
@@ -82,7 +82,7 @@ export default function CourseImageUploader({
       onUploadStateChange?.(false); // notify parent
       }
     },
-    [courseId, onChange]
+    [courseId, onChange, onUploadStateChange]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
