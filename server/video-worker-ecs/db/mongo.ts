@@ -44,23 +44,21 @@ export async function updateVideoStatus(
   );
 }
 
-export async function findLessonContentByDraftId(draftId: string) {
+export async function findLessonContentByDraftId(lessonContentId: string) {
   const db = mongoose.connection.db;
   if (!db) throw new Error("DB not connected");
 
-  log("INFO", "🔍 Finding lessonContent by draftID", { draftId });
+  log("INFO", "🔍 Finding lessonContent by lessonContentId", { lessonContentId });
 
   const doc = await db
     .collection("lessoncontents")
-    .findOne({ draftID: draftId });
-
+    .findOne({ _id: new mongoose.Types.ObjectId(lessonContentId) });
   if (!doc) {
-    throw new Error(`LessonContent not found for draftID=${draftId}`);
+    throw new Error(`LessonContent not found for lessonContentId=${lessonContentId}`);
   }
 
   log("INFO", "✅ LessonContent resolved", {
-    draftId,
-    lessonContentId: doc._id.toString(),
+    lessonContentId,
   });
 
   return doc; // raw MongoDB document

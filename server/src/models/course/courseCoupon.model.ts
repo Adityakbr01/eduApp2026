@@ -222,7 +222,6 @@ const courseCouponSchema = new mongoose.Schema(
 );
 
 // Indexes for efficient querying
-courseCouponSchema.index({ code: 1, status: 1 });
 courseCouponSchema.index({ startDate: 1, endDate: 1, status: 1 });
 courseCouponSchema.index({ "usedBy.user": 1 });
 

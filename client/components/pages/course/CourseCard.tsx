@@ -24,7 +24,7 @@ function CourseCard({ course }: { course: ICourse }) {
     typeof course.instructor === "object" ? course.instructor.name : "";
 
   // ✅ Convert S3 key → public URL
-  const coverImageUrl = getS3PublicUrl(course.coverImage);
+  const coverImageUrl = getS3PublicUrl(course.thumbnail?.key || "");
 
   return (
     <Link href={`/course/${course.slug || course._id}`} className="h-full">

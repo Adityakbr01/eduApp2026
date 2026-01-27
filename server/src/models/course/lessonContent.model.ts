@@ -4,8 +4,8 @@ import mongoose from "mongoose";
 import { ContentType } from "src/types/course.type.js";
 
 const videoSchema = new mongoose.Schema({
-  rawKey: { type: String },          // temp mp4 key
-  hlsKey: { type: String },          // prod hls path
+  rawKey: { type: String,required: false },          // temp mp4 key
+  hlsKey: { type: String, required: false },          // prod hls path
   duration: Number,
   minWatchPercent: Number,
   status: {
@@ -13,6 +13,8 @@ const videoSchema = new mongoose.Schema({
     enum: ["UPLOADED", "PROCESSING", "READY", "FAILED"],
     default: "UPLOADED",
   },
+failureReason: { type: String, required: false },
+version: { type: Number, required: false },
   isEmailSent: { type: Boolean, default: false },
 });
 

@@ -1,7 +1,7 @@
 import APP_info from "@/constants/app_info";
 import { user_roles } from "@/constants/roles";
 import RoleGate from "@/Providers/RoleGate";
-import { CourseForm } from "@/components/pages/dashboards/instructor/courses/CourseForm";
+import { CourseForm } from "@/components/pages/dashboards/instructor/courses/CourseFormComp/CourseForm";
 
 export const metadata = {
     title: `Create Course | ${APP_info.NAME}`,

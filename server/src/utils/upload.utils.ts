@@ -1,9 +1,5 @@
 import crypto from "crypto";
 
-export const generateIntentId = (fileName: string) => {
-    const ext = fileName.split(".").pop();
-    return `${crypto.randomUUID()}.${ext}`;
-};
 
 export const getPartSize = (fileSize: number) => {
     const MIN = 5 * 1024 * 1024; // 5MB (AWS rule)

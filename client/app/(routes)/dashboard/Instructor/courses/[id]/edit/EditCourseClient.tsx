@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { CourseForm } from "@/components/pages/dashboards/instructor/courses/CourseForm";
+import { CourseForm } from "@/components/pages/dashboards/instructor/courses/CourseFormComp/CourseForm";
 import { useGetCourseById } from "@/services/courses";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

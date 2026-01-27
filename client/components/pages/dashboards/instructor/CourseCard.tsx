@@ -49,7 +49,7 @@ export function CourseCard({
     statusConfig[course.status] || statusConfig[CourseStatus.DRAFT];
 
   // ✅ Convert S3 key → Public URL
-  const coverImageUrl = getS3PublicUrl(course.coverImage);
+  const coverImageUrl = getS3PublicUrl(course.thumbnail?.key || "");
 
   return (
     <Card className="pt-0 overflow-hidden hover:shadow-md transition-shadow">

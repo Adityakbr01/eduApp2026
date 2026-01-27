@@ -10,7 +10,7 @@ router.use(authMiddleware);
 
 
 
-// Course Image Upload
+// Course Image Upload //Tested
 router.post(
   "/course/presigned-url/image",
     uploadController.getCourseImagePresignedUrl
@@ -23,8 +23,7 @@ router.post(
   uploadController.getLessonVideoPresignedUrl
 );
 
-
-router.post("/presigned-url", uploadController.getPresignedUrl);
+// Multipart Upload for Large Files
 router.post("/multipart/init", uploadController.initMultipart);
 router.post("/multipart/sign-part", uploadController.signPart);
 router.post("/multipart/complete", uploadController.completeMultipart);

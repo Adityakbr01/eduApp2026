@@ -131,9 +131,6 @@ paymentSchema.index({ userId: 1, status: 1 });
 // Index for course payments
 paymentSchema.index({ courseId: 1, status: 1 });
 
-// Index for order lookups
-paymentSchema.index({ razorpayOrderId: 1 });
-
 // ==================== VIRTUALS ====================
 paymentSchema.virtual("user", {
     ref: "User",

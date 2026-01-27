@@ -117,7 +117,6 @@ const assignmentSchema = new Schema<IAssignment>(
 
 // Indexes
 assignmentSchema.index({ courseId: 1, lessonId: 1 });
-assignmentSchema.index({ contentId: 1 }, { unique: true });
 
 const Assignment = mongoose.model<IAssignment>("Assignment", assignmentSchema);
 

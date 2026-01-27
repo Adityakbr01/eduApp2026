@@ -151,10 +151,6 @@ quizSchema.pre("save", function (next) {
     next();
 });
 
-// Indexes
-quizSchema.index({ courseId: 1, lessonId: 1 });
-quizSchema.index({ contentId: 1 }, { unique: true });
-
 const Quiz = mongoose.model<IQuiz>("Quiz", quizSchema);
 
 export default Quiz;

@@ -7,7 +7,7 @@ import { multipartUpload } from "./multipartUpload";
 interface Props {
   courseId: string;
   lessonId: string;
-  draftID?: string;
+  lessonContentId?: string;
   onUploaded: (s3Key: string) => void; // 🔥 important
 }
 
@@ -15,7 +15,7 @@ export default function LessonVideoUpload({
   courseId,
   lessonId,
   onUploaded,
-  draftID,
+  lessonContentId,
 }: Props) {
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -33,7 +33,7 @@ export default function LessonVideoUpload({
         file,
         courseId,
         lessonId,
-        draftID!
+        lessonContentId!
       );
 
       // ---------------- SIMPLE ----------------
@@ -44,8 +44,9 @@ export default function LessonVideoUpload({
           headers: { "Content-Type": file.type },
         });
 
+        console.log("🚀 Simple upload complete",presign);
         setProgress(100);
-        onUploaded(presign.intentId); // ✅ RETURN KEY
+        onUploaded(presign.rawKey); // ✅ RETURN KEY
         return;
       }
 

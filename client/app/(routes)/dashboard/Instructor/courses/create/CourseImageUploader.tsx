@@ -5,16 +5,23 @@ import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { getS3PublicUrl } from "./getS3PublicUrl";
 
+interface Thumbnail {
+  key: string;
+  version: number;
+}
+
 interface Props {
-  draftId: string; // draftId OR real courseId
-  value?: string; // S3 key
-  onChange: (value: string) => void;
+  courseId: string;
+  value?: string | Thumbnail; // can be S3 key string or object
+  onChange: (value: Thumbnail) => void;
+  onUploadStateChange?: (isUploading: boolean) => void; // 🔥 new
 }
 
 export default function CourseImageUploader({
-  draftId,
+  courseId,
   value,
   onChange,
+  onUploadStateChange,
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +30,8 @@ export default function CourseImageUploader({
   // 🟢 Handle EDIT MODE image
   useEffect(() => {
     if (value) {
-      setPreview(getS3PublicUrl(value));
+      const key = typeof value === "string" ? value : value.key;
+      setPreview(getS3PublicUrl(key));
     }
   }, [value]);
 
@@ -32,6 +40,7 @@ export default function CourseImageUploader({
       const file = acceptedFiles[0];
       if (!file) return;
 
+       onUploadStateChange?.(true); // notify parent
       setLoading(true);
       setError(null);
 
@@ -43,17 +52,14 @@ export default function CourseImageUploader({
           file.name,
           file.size,
           file.type,
-          draftId
+          courseId
         );
-
-        console.log("Presigned URL response:", res);
 
         if (res.mode !== "simple") {
           throw new Error("Multipart upload not supported for images");
         }
 
-        // ✅ TypeScript now knows uploadUrl exists
-        const { uploadUrl, intentId } = res;
+        const { uploadUrl, key, version } = res;
 
         const uploadResponse = await fetch(uploadUrl, {
           method: "PUT",
@@ -67,14 +73,16 @@ export default function CourseImageUploader({
           throw new Error("Upload failed");
         }
 
-        onChange(intentId);
+        // ✅ Send the thumbnail object to parent
+        onChange({ key, version });
       } catch (err: any) {
         setError(err.message || "Upload failed");
       } finally {
         setLoading(false);
+      onUploadStateChange?.(false); // notify parent
       }
     },
-    [draftId, onChange]
+    [courseId, onChange]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

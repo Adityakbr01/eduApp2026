@@ -8,12 +8,12 @@ import fs from "fs";
 import path from "path";
 import { pipeline } from "stream/promises";
 import { log } from "../utils/logger";
-import{ credentialsLocal as credentials} from "./sqs";
+import { credentialsLocal } from "../workers/videoWorker";
 
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION! || "us-east-1",
-  credentials:credentials
+  credentials:credentialsLocal
 });
 
 /**

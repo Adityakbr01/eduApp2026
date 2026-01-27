@@ -28,8 +28,7 @@ import {
   useCreateContent,
 } from "@/services/courses";
 import { Loader2 } from "lucide-react";
-import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
-import { v4 as uuidv4 } from "uuid";
+
 
 interface ContentDialogProps {
   open: boolean;
@@ -42,7 +41,6 @@ export function ContentDialog({
   open,
   onOpenChange,
   lessonId,
-  courseId,
 }: ContentDialogProps) {
   const [contentType, setContentType] = useState<ContentType>(
     ContentType.VIDEO
@@ -51,8 +49,6 @@ export function ContentDialog({
   const [marks, setMarks] = useState<number>(10);
   const [isPreview, setIsPreview] = useState(false);
   const [minWatchPercent, setMinWatchPercent] = useState<number>(90);
-  const [draftID, setDraftID] = useState<string>(uuidv4());
-
   // S3
   const [uploadedKey, setUploadedKey] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
@@ -93,7 +89,6 @@ export function ContentDialog({
       marks,
       isVisible: true,
       isPreview,
-      draftID,
     };
 
     if (
@@ -128,7 +123,7 @@ export function ContentDialog({
   const isFormValid = () => {
     if (!title.trim()) return false;
     if (
-      [ContentType.VIDEO, ContentType.AUDIO, ContentType.PDF].includes(
+      [ContentType.AUDIO, ContentType.PDF].includes(
         contentType
       )
     ) {
@@ -141,7 +136,7 @@ export function ContentDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Content</DialogTitle>
+          <DialogTitle>Add Content </DialogTitle>
           <DialogDescription>
             Files are uploaded directly to S3.
           </DialogDescription>
@@ -206,26 +201,6 @@ export function ContentDialog({
               {/* VIDEO upload lesson video to s3 */}
               <TabsContent value={ContentType.VIDEO}>
                 <div className="space-y-4">
-                  {/* Upload */}
-                  <LessonVideoUpload
-                    courseId={courseId}
-                    lessonId={lessonId}
-                    draftID={draftID}
-                    onUploaded={(key) => {
-                      setUploadedKey(key);
-                    }}
-                  />
-
-                  {/* Uploaded state */}
-                  {uploadedKey && (
-                    <div className="rounded-md border p-3 text-sm bg-muted">
-                      <p className="font-medium">Uploaded Successfully</p>
-                      <p className="text-xs text-muted-foreground break-all">
-                        {uploadedKey}
-                      </p>
-                    </div>
-                  )}
-
                   {/* Min Watch % */}
                   <div className="space-y-2">
                     <Label>Minimum Watch Percentage</Label>

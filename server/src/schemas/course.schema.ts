@@ -5,7 +5,6 @@ import { z } from "zod";
 // COURSE SCHEMAS
 // ============================================
 export const createCourseSchema = z.object({
-    courseID : z.string().optional(),
     title: z.string()
         .min(5, "Title must be at least 5 characters")
         .max(150, "Title cannot exceed 150 characters"),
@@ -112,7 +111,6 @@ export const createContentSchema = z.object({
     marks: z.number().min(0, "Marks must be a positive number"),
     isVisible: z.boolean().default(true),
     isPreview: z.boolean().default(false),
-    draftID: z.string(),
 
     // 🎥 VIDEO/AUDIO (nested)
     video: z.object({
@@ -138,21 +136,17 @@ export const createContentSchema = z.object({
         type: z.enum(["quiz", "assignment"]).optional(),
     }).optional(),
 }).refine((data) => {
-    // Validate video type has video.url
-    if (data.type === "video" && !data.video?.rawKey) {
+    // Validate audio type has (audio uses video object)
+    if (data.type === "audio" && !data.audio?.rawKey) {
         return false;
     }
-    // Validate audio type has video.url (audio uses video object)
-    if (data.type === "audio" && !data.video?.rawKey) {
-        return false;
-    }
-    // Validate pdf type has pdf.url
+    // Validate pdf type has pdf.rawKey
     if (data.type === "pdf" && !data.pdf?.rawKey) {
         return false;
     }
     return true;
 }, {
-    message: "Video/Audio content requires video.url, PDF content requires pdf.url",
+    message: "Audio content requires audio.rawKey, PDF content requires pdf.rawKey",
 });
 
 export const updateContentSchema = z.object({

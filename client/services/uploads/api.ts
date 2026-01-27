@@ -8,12 +8,13 @@ export type PresignedUploadResponse =
         mode: "simple";
         intentId: string;
         uploadUrl: string;
-        key: string;
+        rawKey: string;
+        version: number;
     }
     | {
         mode: "multipart";
         intentId: string;
-        key: string;
+        rawKey: string;
     };
 
 
@@ -43,7 +44,7 @@ getLessonVideoPresignedUrl: async (
   file: File,
   courseId: string,
   lessonId: string,
-    draftID: string
+lessonContentId: string
 ): Promise<PresignedUploadResponse> => {
   const res = await apiClient.post(
     "/upload/course/lesson/presigned-url/video",
@@ -53,7 +54,7 @@ getLessonVideoPresignedUrl: async (
       mimeType: file.type,
       courseId,
       lessonId,
-        draftID,
+    lessonContentId,
     }
   );
   return res.data.data;

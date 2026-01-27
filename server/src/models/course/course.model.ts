@@ -7,13 +7,6 @@ import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
 
-     draftId: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-
     // Categorization
     category: {
         type: Schema.Types.ObjectId,
@@ -40,7 +33,7 @@ const courseSchema = new mongoose.Schema({
         enum: Object.values(CourseLevel),
         default: CourseLevel.BEGINNER,
     },
-    language: {
+    courseLanguage: {
         type: String,
         enum: Object.values(Language),
         default: Language.ENGLISH,
@@ -110,9 +103,12 @@ const courseSchema = new mongoose.Schema({
         required: [true, "Short description is required"],
         maxlength: [500, "Short description cannot exceed 500 characters"],
     },
-    coverImage: { type: String },
     previewVideoUrl: { type: String },
-    thumbnailUrl: { type: String },
+   thumbnail: {
+  key: { type: String },          // S3 key
+  version: { type: Number, default: 0 },
+},
+
 
 
     location: { type: String },

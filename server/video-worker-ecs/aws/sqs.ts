@@ -1,14 +1,9 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } from "@aws-sdk/client-sqs";
-import { AwsCredentialIdentity } from "@aws-sdk/types";
+import { AWS_REGION, credentialsLocal } from "../workers/videoWorker";
 
-
-export const credentialsLocal: AwsCredentialIdentity = {
-  accessKeyId: "AKIARYUQPP4OK5IHUR4H",
-  secretAccessKey: "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",
-};
 
 export const sqsClient = new SQSClient({
-  region: process.env.AWS_REGION! || "us-east-1",
+  region: AWS_REGION,
   credentials:credentialsLocal
 });
 

@@ -125,27 +125,6 @@ export function ContentItem({
 
   const isLoading = updateContent.isPending;
 
-  // Local duration calculation from File object
-  const calculateDurationLocally = (file: File): Promise<number> => {
-    return new Promise((resolve) => {
-      const url = URL.createObjectURL(file);
-      const media = file.type.startsWith("audio/")
-        ? new Audio(url)
-        : document.createElement("video");
-
-      media.preload = "metadata";
-      media.onloadedmetadata = () => {
-        URL.revokeObjectURL(url);
-        resolve(Math.round(media.duration || 0));
-      };
-      media.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve(0);
-      };
-      media.src = url;
-    });
-  };
-
   const handleEditOpen = () => {
     setEditTitle(content.title);
     setEditMarks(content.marks);
@@ -219,24 +198,6 @@ export function ContentItem({
     return undefined;
   };
 
-  const getFileAccept = (): string => {
-    switch (content.type) {
-      case ContentType.VIDEO:
-        return "video/*";
-      case ContentType.AUDIO:
-        return "audio/*";
-      case ContentType.PDF:
-        return "application/pdf";
-      default:
-        return "*/*";
-    }
-  };
-
-  const getUploadType = (): FileTypeEnum => {
-    return content.type === ContentType.PDF
-      ? FileType.DOCUMENT
-      : FileType.VIDEO;
-  };
 
   return (
     <>
@@ -414,6 +375,7 @@ export function ContentItem({
                   <LessonVideoUpload
                     courseId={courseId}
                     lessonId={lessonId}
+                    lessonContentId={content._id}
                     onUploaded={(key) => {
                       setNewFileKey(key);
                     }}

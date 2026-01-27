@@ -44,7 +44,6 @@ createCourse: async (instructorId: string, data: any) => {
 
   const courseData = {
     ...data,
-    draftId: data.draftId, // ✅ store UUID separately
     slug,
     instructor: instructorId,
   };

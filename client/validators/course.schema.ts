@@ -6,36 +6,36 @@ import { z } from "zod";
 // COURSE SCHEMAS
 // ============================================
 export const createCourseSchema = z.object({
-    title: z.string()
-        .min(5, "Title must be at least 5 characters")
-        .max(150, "Title cannot exceed 150 characters"),
-    description: z.string()
-        .min(10, "Description must be at least 10 characters"),
-    shortDescription: z.string()
-        .max(500, "Short description cannot exceed 500 characters"),
-    category: z.string().min(1, "Category is required"), // category mongoId 
-    subCategory: z.string().min(1, "SubCategory is required"), // subcategory mongoId
-    level: z.nativeEnum(CourseLevel).optional(),
-    language: z.nativeEnum(Language).default(Language.ENGLISH),
-    deliveryMode: z.nativeEnum(DeliveryMode).optional(),
-    coverImage: z.string().optional(),
-    previewVideoUrl: z.string().optional(),
-    thumbnailUrl: z.string().optional(),
-    pricing: z.object({
-        originalPrice: z.number().min(0, "Original price is required"),
-        price: z.number().min(0).optional(), // Auto-calculated by server
-        discountPercentage: z.number().min(0).max(100).optional(),
-        discountExpiresAt: z.string().optional(),
-        currency: z.enum(["USD", "EUR", "INR", "GBP"]).optional(),
-        isFree: z.boolean().optional(),
-    }).optional(),
-    tags: z.array(z.string()).max(10, "Cannot have more than 10 tags").optional(),
-    accessDuration: z.number().min(0).optional(),
-    maxEnrollments: z.number().min(1).optional(),
-    curriculum: z.string().optional(),
-    durationWeeks: z.number().min(1).max(520).optional(),
-});
-
+  title: z.string().min(5, "Title must be at least 5 characters").max(150, "Title cannot exceed 150 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  shortDescription: z.string().max(500, "Short description cannot exceed 500 characters"),
+  category: z.string().min(1, "Category is required"),
+  subCategory: z.string().min(1, "SubCategory is required"),
+  // 🔥 FIX: .optional() add karo default values ke liye
+  level: z.nativeEnum(CourseLevel).default(CourseLevel.BEGINNER).optional(),
+  language: z.nativeEnum(Language).default(Language.ENGLISH).optional(),
+  deliveryMode: z.nativeEnum(DeliveryMode).default(DeliveryMode.RECORDED).optional(),
+  thumbnail: z.object({
+    key: z.string(),
+    version: z.number(),
+  }).optional(),
+  tags: z.array(z.string()).max(10, "Cannot have more than 10 tags").default([]),
+  pricing: z.object({
+    price: z.number().min(0).default(0),
+    originalPrice: z.number().min(0).default(0),
+    discountPercentage: z.number().min(0).max(100).default(0),
+    discountExpiresAt: z.string().optional(),
+    currency: z.enum(["USD", "EUR", "INR", "GBP"]).default("USD"),
+    isFree: z.boolean().default(true),
+  }).default({
+    price: 0,
+    originalPrice: 0,
+    discountPercentage: 0,
+    currency: "USD",
+    isFree: true,
+  }),
+  durationWeeks: z.number().min(1).max(520).default(1),
+})
 export const updateCourseSchema = z.object({
     title: z.string()
         .min(5, "Title must be at least 5 characters")
@@ -48,7 +48,12 @@ export const updateCourseSchema = z.object({
     level: z.nativeEnum(CourseLevel).optional(),
     language: z.nativeEnum(Language).optional(),
     deliveryMode: z.nativeEnum(DeliveryMode).optional(),
-    coverImage: z.string().optional(),
+       // ✅ Thumbnail as object
+    thumbnail: z.object({
+        key: z.string(),
+        version: z.number(),
+    }).optional(),
+
     previewVideoUrl: z.string().optional(),
     thumbnailUrl: z.string().optional(),
     pricing: z.object({

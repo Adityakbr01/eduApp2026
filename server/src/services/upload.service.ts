@@ -7,201 +7,174 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "src/configs/env.js";
 import { s3 } from "src/configs/s3.js";
-import { generateIntentId, getPartSize } from "src/utils/upload.utils.js";
+import { LessonContent } from "src/models/course/index.js";
+import { courseRepository } from "src/repositories/course.repository.js";
+import { getPartSize } from "src/utils/upload.utils.js";
 
 export class UploadService {
+  // ------------------- COURSE IMAGE UPLOAD (Tested) -------------------
+  static async getCourseImagePresignedUrl(
+    fileName: string,
+    size: number,
+    type: string,
+    courseId: string,
+  ) {
+    const MAX_SIZE = 5 * 1024 * 1024;
 
-    // ------------------- COURSE IMAGE UPLOAD -------------------
-static async getCourseImagePresignedUrl(
-  fileName: string,
-  size: number,
-  type: string,
-  draftId: string
-) {
-  const MAX_SIZE = 5 * 1024 * 1024;
+    if (!courseId) throw new Error("courseId is required");
+    if (!type.startsWith("image/")) throw new Error("Only image files allowed");
+    if (size > MAX_SIZE) throw new Error("Image size must be < 5MB");
 
-  if (!draftId) throw new Error("draftId is required");
-  if (!type.startsWith("image/")) throw new Error("Only image files allowed");
-  if (size > MAX_SIZE) throw new Error("Image size must be < 5MB");
+    // 🔹 Fetch course from DB
+    const course = await courseRepository.findById(courseId);
+    if (!course) throw new Error("Course not found");
 
-  const ext = fileName.split(".").pop() || "jpg";
+    const nextVersion = (course.thumbnail?.version ?? 0) + 1;
 
-  const s3Key = `upload/courses/drafts/${draftId}/cover/source.${ext}`;
+    const ext = fileName.split(".").pop() || "jpg";
 
-  const command = new PutObjectCommand({
-    Bucket: env.AWS_S3_BUCKET_NAME_PROD,
-    Key: s3Key,
-    ContentType: type,
-    Metadata: {
-      entity: "course",
-      draftId,
-      type: "cover",
-    },
-  });
+    const s3Key = `prod/public/courses/${courseId}/thumbnail/v${nextVersion}.${ext}`;
 
-  const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
-
-  return {
-    uploadUrl,
-    intentId: s3Key,
-  };
-}
-// ------------------- LESSON VIDEO UPLOAD -------------------
-static async getLessonVideoPresignedUrl(
-  fileName: string,
-  size: number,
-  mimeType: string,
-  courseId: string,
-  lessonId: string,
-  draftID: string // 🔥 REAL ID
-) {
-  if (!courseId || !lessonId || !draftID) {
-    throw new Error("courseId, lessonId, draftID required");
-  }
-
-  if (!mimeType.startsWith("video/")) {
-    throw new Error("Only video files allowed");
-  }
-
-  const MAX_SIZE = 10 * 1024 * 1024 * 1024;
-  if (size > MAX_SIZE) throw new Error("Video too large");
-
-  const ext = fileName.split(".").pop() || "mp4";
-
-  const s3Key = [
-    "upload",
-    "courses",
-    courseId,
-    "lessons",
-    lessonId,
-    "lessoncontents",
-    draftID, // use draftID for staging
-    "video",
-    `source.${ext}`,
-  ].join("/");
-
-  // SIMPLE UPLOAD (<100MB)
-  if (size < 100 * 1024 * 1024) {
     const command = new PutObjectCommand({
-      Bucket: env.AWS_S3_BUCKET_NAME,
+      Bucket: env.AWS_S3_BUCKET_NAME_PROD,
       Key: s3Key,
-      ContentType: mimeType,
+      ContentType: type,
+      CacheControl: "public, max-age=31536000",
       Metadata: {
-        entity: "lesson-content-video",
+        entity: "course",
         courseId,
-        lessonId,
-        draftID,
+        asset: "thumbnail",
+        version: `v${nextVersion}`,
       },
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
 
     return {
-      mode: "simple",
       uploadUrl,
-      intentId: s3Key,
-      draftID,
+      key: s3Key,
+      version: nextVersion,
     };
   }
 
-  // MULTIPART
-  return {
-    mode: "multipart",
-    intentId: s3Key,
-    draftID,
-  };
-}
-    static async getPresignedUrl(
-        fileName: string,
-        size: number,
-        type: string,
-        key?: string,         // optional custom key
-        folder?: string       // optional folder structure
-    ) {
-        // ------------------- Build Key -------------------
-        const baseFolder = folder ?? "uploads";  // default folder
-        const uniqueSuffix = key ?? generateIntentId(fileName);
-
-        // Example: videos/course-1/lesson-1-<uuid>.mp4
-        const s3Key = `${baseFolder}/${uniqueSuffix}`;
-        console.log("🚀 Generated S3 Key:", s3Key);
-        // ------------------- SIMPLE UPLOAD (<5MB) -------------------
-        if (size < 5 * 1024 * 1024) {
-            const command = new PutObjectCommand({
-                Bucket: env.AWS_S3_BUCKET_NAME,
-                Key: s3Key,
-                ContentType: type,
-            });
-
-            const uploadUrl = await getSignedUrl(s3, command, {
-                expiresIn: 300,
-            });
-
-            return {
-                mode: "simple",
-                uploadUrl,
-                intentId: s3Key,  // store this key in DB
-            };
-        }
-
-        console.log("🚀 Using multipart upload for file:", fileName);
-        console.log("🚀 S3 Key:", s3Key);
-
-        // ------------------- MULTIPART -------------------
-        return {
-            mode: "multipart",
-            intentId: s3Key,  // store this key in DB
-        };
+  // ------------------- LESSON VIDEO UPLOAD (Tested and if multipart return than blow functions runs ) -------------------
+  static async getLessonVideoPresignedUrl(
+    fileName: string,
+    size: number,
+    mimeType: string,
+    courseId: string,
+    lessonId: string,
+    lessonContentId: string,
+  ) {
+    if (!mimeType.startsWith("video/")) {
+      throw new Error("Only video files allowed");
     }
 
-    static async initMultipart(intentId: string, size: number) {
-        const res = await s3.send(
-            new CreateMultipartUploadCommand({
-                Bucket: env.AWS_S3_BUCKET_NAME,
-                Key: intentId,
-            })
-        );
+    const MAX_SIZE = 10 * 1024 * 1024 * 1024;
+    if (size > MAX_SIZE) throw new Error("Video too large");
 
-        const partSize = getPartSize(size);
+    // 1️⃣ Fetch current version from DB
+    const lessonContent = await LessonContent.findById(lessonContentId);
+    const version = (lessonContent?.video?.version ?? 0) + 1;
 
-        return {
-            uploadId: res.UploadId!,
-            partSize,
-            totalParts: Math.ceil(size / partSize),
-        };
+    // 2️⃣ Build RAW KEY (single source of truth)
+    const ext = fileName.split(".").pop() ?? "mp4";
+
+    const rawKey = [
+      "upload",
+      "courses",
+      courseId,
+      "lessons",
+      lessonId,
+      "lesson-contents",
+      lessonContentId,
+      "video",
+      `source-v${version}.${ext}`,
+    ].join("/");
+
+    // 3️⃣ SIMPLE UPLOAD (<100MB)
+    if (size < 100 * 1024 * 1024) {
+      const command = new PutObjectCommand({
+        Bucket: env.AWS_S3_BUCKET_NAME,
+        Key: rawKey,
+        ContentType: mimeType,
+        Metadata: {
+          entity: "lesson-video",
+          courseid: courseId,
+          lessonid: lessonId,
+          lessoncontentid: lessonContentId,
+          version: String(version),
+        },
+      });
+
+      const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+
+      return {
+        mode: "simple",
+        uploadUrl,
+        rawKey,
+        intentId: rawKey,
+        version,
+      };
     }
 
-    static async signPart(
-        intentId: string,
-        uploadId: string,
-        partNumber: number
-    ) {
-        const command = new UploadPartCommand({
-            Bucket: env.AWS_S3_BUCKET_NAME,
-            Key: intentId,
-            UploadId: uploadId,
-            PartNumber: partNumber,
-        });
+    // 4️⃣ MULTIPART MODE
+    return {
+      mode: "multipart",
+      rawKey,
+      intentId: rawKey,
+      version,
+    };
+  }
 
-        return getSignedUrl(s3, command, { expiresIn: 300 });
-    }
+  static async initMultipart(intentId: string, size: number) {
+    const res = await s3.send(
+      new CreateMultipartUploadCommand({
+        Bucket: env.AWS_S3_BUCKET_NAME,
+        Key: intentId,
+      }),
+    );
 
-    static async completeMultipart(
-        intentId: string,
-        uploadId: string,
-        parts: { ETag: string; PartNumber: number }[]
-    ) {
-        await s3.send(
-            new CompleteMultipartUploadCommand({
-                Bucket: env.AWS_S3_BUCKET_NAME,
-                Key: intentId,
-                UploadId: uploadId,
-                MultipartUpload: { Parts: parts },
-            })
-        );
+    const partSize = getPartSize(size);
 
-        return {
-            key: intentId,
-        };
-    }
+    return {
+      uploadId: res.UploadId!,
+      partSize,
+      totalParts: Math.ceil(size / partSize),
+    };
+  }
+
+  static async signPart(
+    intentId: string,
+    uploadId: string,
+    partNumber: number,
+  ) {
+    const command = new UploadPartCommand({
+      Bucket: env.AWS_S3_BUCKET_NAME,
+      Key: intentId,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+    });
+
+    return getSignedUrl(s3, command, { expiresIn: 300 });
+  }
+
+  static async completeMultipart(
+    intentId: string,
+    uploadId: string,
+    parts: { ETag: string; PartNumber: number }[],
+  ) {
+    await s3.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: env.AWS_S3_BUCKET_NAME,
+        Key: intentId,
+        UploadId: uploadId,
+        MultipartUpload: { Parts: parts },
+      }),
+    );
+
+    return {
+      key: intentId,
+    };
+  }
 }

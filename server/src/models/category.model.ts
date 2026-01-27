@@ -93,7 +93,6 @@ const CategorySchema = new Schema<ICategory>(
 );
 
 // ==================== INDEXES ====================
-CategorySchema.index({ slug: 1 });
 CategorySchema.index({ parent: 1 });
 CategorySchema.index({ level: 1, order: 1 });
 CategorySchema.index({ isActive: 1 });

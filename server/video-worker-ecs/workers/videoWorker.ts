@@ -9,6 +9,7 @@ import {
 } from "../db/mongo";
 import { generateHLS } from "../ffmpeg/generateHLS";
 import { startHeartbeat, stopHeartbeat } from "../utils/heartBeat";
+import { AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
 
 // ---------------- utils ----------------
 function requireEnv(name: string): string {
@@ -27,27 +28,37 @@ function extractDraftIdFromKey(key: string): string {
 }
 
 // ---------------- ENV ----------------
-const AWS_REGION = requireEnv("AWS_REGION");
+export const AWS_REGION = requireEnv("AWS_REGION");
 const TEMP_BUCKET = requireEnv("VIDEO_BUCKET_TEMP");
 const PROD_BUCKET = requireEnv("VIDEO_BUCKET_PROD");
 const VIDEO_KEY = requireEnv("VIDEO_KEY");
+const ACCESS_KEY_ID = requireEnv("AWS_ACCESS_KEY_ID");
+const SECRET_ACCESS_KEY = requireEnv("AWS_SECRET_ACCESS_KEY");
 
 // const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
 const SQS_RECEIPT_HANDLE = requireEnv("SQS_RECEIPT_HANDLE");
+const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
 
 const MONGODB_URI = requireEnv("MONGODB_URI");
 const MONGODB_DB_NAME = requireEnv("MONGODB_DB_NAME");
 const DYNAMO_TABLE = requireEnv("DYNAMO_TABLE");
 
+
+
+export const credentialsLocal: AwsCredentialIdentity = {
+  accessKeyId: ACCESS_KEY_ID,
+  secretAccessKey: SECRET_ACCESS_KEY,
+};
+
 // ---------------- clients ----------------
-const sqs = new SQSClient({ region: AWS_REGION });
-const ddb = new DynamoDBClient({ region: AWS_REGION });
+const sqs = new SQSClient({ region: AWS_REGION, credentials: credentialsLocal });
+const ddb = new DynamoDBClient({ region: AWS_REGION, credentials: credentialsLocal });
 
 // ---------------- helpers ----------------
 async function deleteSqsMessage() {
   await sqs.send(
     new DeleteMessageCommand({
-      QueueUrl: "https://sqs.us-east-1.amazonaws.com/121635831580/video-processing-queue",
+      QueueUrl: SQS_QUEUE_URL,
       ReceiptHandle: SQS_RECEIPT_HANDLE,
     })
   );
@@ -105,7 +116,7 @@ export async function main() {
     await downloadFromS3(TEMP_BUCKET, VIDEO_KEY, inputPath);
     await generateHLS(inputPath, outputDir);
 
-    const outputPrefix = `upload/${lesson._id.toString()}/hls`;
+    const outputPrefix = `prod/${lesson._id.toString()}/hls`;
 
     await uploadDirectory(outputDir, PROD_BUCKET, "", outputPrefix);
 

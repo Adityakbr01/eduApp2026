@@ -147,6 +147,11 @@ export interface ICourseStats {
     totalContents: number;
 }
 
+
+export interface IThumbnail {
+    key: string;
+    version: number;
+}
 export interface ICourse {
     _id: string;
     title: string;
@@ -159,7 +164,7 @@ export interface ICourse {
     level: CourseLevel | string;
     language: string;
     deliveryMode: DeliveryMode | string;
-    coverImage?: string;
+    thumbnail?: IThumbnail;
     previewVideoUrl?: string;
     thumbnailUrl?: string;
     pricing?: ICoursePricing;
@@ -225,7 +230,6 @@ export interface ContentDetailData {
 
 export interface CreateCourseDTO {
     _id?: string;
-    draftId?: string;
     title: string;
     description: string;
     shortDescription: string;
@@ -234,7 +238,7 @@ export interface CreateCourseDTO {
     level?: CourseLevel;
     language?: Language;
     deliveryMode?: DeliveryMode;
-    coverImage?: string;
+    thumbnail?: IThumbnail;
     previewVideoUrl?: string;
     thumbnailUrl?: string;
     pricing?: {
@@ -283,7 +287,6 @@ export interface CreateContentDTO {
     marks: number;
     isVisible?: boolean;
     isPreview?: boolean;
-    draftID: string;
     video?: {
         rawKey?: string;
         duration?: number;

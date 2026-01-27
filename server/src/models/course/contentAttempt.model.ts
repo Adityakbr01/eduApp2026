@@ -47,7 +47,7 @@ const contentAttemptSchema = new mongoose.Schema({
 
 // Unique constraint: one attempt per user per content
 contentAttemptSchema.index(
-    { userId: 1, contentId: 1 },
+    { userId: 1 },
     { unique: true }
 );
 
