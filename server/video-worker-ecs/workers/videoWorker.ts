@@ -4,22 +4,20 @@ import { deleteS3Object, downloadFromS3, uploadDirectory } from "../aws/s3";
 import {
   connectDB,
   disconnectDB,
-  findLessonContentByDraftId,
+  findLessonContentById,
   updateVideoStatus,
 } from "../db/mongo";
 import { generateHLS } from "../ffmpeg/generateHLS";
 import { startHeartbeat, stopHeartbeat } from "../utils/heartBeat";
-import { AwsCredentialIdentity } from "@smithy/types/dist-types/identity/awsCredentialIdentity";
+import { AwsCredentialIdentity } from "@smithy/types";
+import { parseVideoKey } from "../utils/parseVideoKey";
+import { buildHlsOutputPrefix } from "../utils/buildHlsOutputPrefix";
 
-// ---------------- utils ----------------
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`❌ Missing env: ${name}`);
-  return v;
-}
+/* -------------------------------------------------- */
+/* ENV VALIDATION                                     */
+/* -------------------------------------------------- */
 
-
-const requiredEnvs = [
+const REQUIRED_ENVS = [
   "AWS_REGION",
   "VIDEO_BUCKET_TEMP",
   "VIDEO_BUCKET_PROD",
@@ -33,69 +31,42 @@ const requiredEnvs = [
   "AWS_SECRET_ACCESS_KEY",
 ];
 
-const missing = requiredEnvs.filter((name) => !process.env[name]);
+const missing = REQUIRED_ENVS.filter((k) => !process.env[k]);
 if (missing.length > 0) {
   console.error("❌ Missing required env variables:", missing);
-  process.exit(1); // fail ECS container
+  process.exit(1);
 }
 
+export const AWS_REGION = process.env.AWS_REGION!;
+const TEMP_BUCKET = process.env.VIDEO_BUCKET_TEMP!;
+const PROD_BUCKET = process.env.VIDEO_BUCKET_PROD!;
+const VIDEO_KEY = process.env.VIDEO_KEY!;
+const SQS_RECEIPT_HANDLE = process.env.SQS_RECEIPT_HANDLE!;
+const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL!;
+const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME!;
+const DYNAMO_TABLE = process.env.DYNAMO_TABLE!;
+const ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID!;
+const SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY!;
 
+console.log("🚀 Video Worker ENV loaded successfully");
 
-function extractDraftIdFromKey(key: string): string {
-  const parts = key.split("/");
-  const idx = parts.indexOf("lessoncontents");
-  if (idx === -1 || !parts[idx + 1]) {
-    throw new Error(`Invalid VIDEO_KEY, draftId not found: ${key}`);
-  }
-  return parts[idx + 1];
-}
+/* -------------------------------------------------- */
+/* AWS CLIENTS                                        */
+/* -------------------------------------------------- */
 
-// ---------------- ENV ----------------
-export const AWS_REGION = requireEnv("AWS_REGION");
-const TEMP_BUCKET = requireEnv("VIDEO_BUCKET_TEMP");
-const PROD_BUCKET = requireEnv("VIDEO_BUCKET_PROD");
-const VIDEO_KEY = requireEnv("VIDEO_KEY");
-const ACCESS_KEY_ID = requireEnv("AWS_ACCESS_KEY_ID");
-const SECRET_ACCESS_KEY = requireEnv("AWS_SECRET_ACCESS_KEY");
-
-// const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
-const SQS_RECEIPT_HANDLE = requireEnv("SQS_RECEIPT_HANDLE");
-const SQS_QUEUE_URL = requireEnv("SQS_QUEUE_URL");
-
-const MONGODB_URI = requireEnv("MONGODB_URI");
-const MONGODB_DB_NAME = requireEnv("MONGODB_DB_NAME");
-const DYNAMO_TABLE = requireEnv("DYNAMO_TABLE");
-
-
-// ---------------- DEBUG ----------------
-// Log all envs at startup
-console.log("🚀 Video Worker ENV values:");
-[
-  "AWS_REGION",
-  "VIDEO_BUCKET_TEMP",
-  "VIDEO_BUCKET_PROD",
-  "VIDEO_KEY",
-  "SQS_RECEIPT_HANDLE",
-  "SQS_QUEUE_URL",
-  "MONGODB_URI",
-  "MONGODB_DB_NAME",
-  "DYNAMO_TABLE",
-  "AWS_ACCESS_KEY_ID",
-  "AWS_SECRET_ACCESS_KEY",
-].forEach((name) => {
-  console.log(`  ${name}:`, process.env[name] ?? "⚠️ MISSING");
-});
-
-export const credentialsLocal: AwsCredentialIdentity = {
+export const credentials: AwsCredentialIdentity = {
   accessKeyId: ACCESS_KEY_ID,
   secretAccessKey: SECRET_ACCESS_KEY,
 };
 
-// ---------------- clients ----------------
-const sqs = new SQSClient({ region: AWS_REGION, credentials: credentialsLocal });
-const ddb = new DynamoDBClient({ region: AWS_REGION, credentials: credentialsLocal });
+const sqs = new SQSClient({ region: AWS_REGION, credentials });
+const ddb = new DynamoDBClient({ region: AWS_REGION, credentials });
 
-// ---------------- helpers ----------------
+/* -------------------------------------------------- */
+/* HELPERS                                            */
+/* -------------------------------------------------- */
+
 async function deleteSqsMessage() {
   await sqs.send(
     new DeleteMessageCommand({
@@ -106,7 +77,7 @@ async function deleteSqsMessage() {
 }
 
 async function markJobStatus(
-  draftId: string,
+  lessonContentId: string,
   status: "DONE" | "FAILED"
 ) {
   const now = Math.floor(Date.now() / 1000);
@@ -114,7 +85,7 @@ async function markJobStatus(
   await ddb.send(
     new UpdateItemCommand({
       TableName: DYNAMO_TABLE,
-      Key: { videoId: { S: draftId } },
+      Key: { videoId: { S: lessonContentId } },
       UpdateExpression:
         "SET #s = :s, updatedAt = :now REMOVE lockTTL, lockedBy",
       ExpressionAttributeNames: {
@@ -128,64 +99,82 @@ async function markJobStatus(
   );
 }
 
-// ---------------- MAIN ----------------
+/* -------------------------------------------------- */
+/* MAIN                                               */
+/* -------------------------------------------------- */
+
 export async function main() {
-  const draftId = extractDraftIdFromKey(VIDEO_KEY);
+  const { courseId, lessonId, lessonContentId, version } =
+    parseVideoKey(VIDEO_KEY);
 
-  console.log("🎬 ECS Video Worker started", { draftId });
+  console.log("🎬 Video Worker started", {
+    courseId,
+    lessonId,
+    lessonContentId,
+    version,
+  });
 
-  const inputPath = `/tmp/${draftId}.mp4`;
-  const outputDir = `/tmp/${draftId}`;
+  const inputPath = `/tmp/${lessonContentId}.mp4`;
+  const outputDir = `/tmp/${lessonContentId}`;
 
   try {
-    // 1️⃣ DB connect
+    /* 1️⃣ Mongo Connect */
     await connectDB({
       MONGODB_URI,
       DB_NAME: MONGODB_DB_NAME,
     });
 
-    // 2️⃣ Resolve lesson
-    const lesson = await findLessonContentByDraftId(draftId);
+    /* 2️⃣ Validate lesson content */
+    const lessonContent = await findLessonContentById(lessonContentId);
+    if (!lessonContent) {
+      throw new Error(`LessonContent not found: ${lessonContentId}`);
+    }
 
-    // 3️⃣ Mark PROCESSING
-    await updateVideoStatus(lesson._id.toString(), "PROCESSING");
+    /* 3️⃣ Mark PROCESSING */
+    await updateVideoStatus(lessonContentId, "PROCESSING");
 
-    // 4️⃣ Start heartbeat ONLY now
-    startHeartbeat(draftId, DYNAMO_TABLE);
+    /* 4️⃣ Start heartbeat */
+    startHeartbeat(lessonContentId, DYNAMO_TABLE);
 
-    // 5️⃣ Download + process
+    /* 5️⃣ Download → Transcode */
     await downloadFromS3(TEMP_BUCKET, VIDEO_KEY, inputPath);
     await generateHLS(inputPath, outputDir);
 
-    const outputPrefix = `prod/${lesson._id.toString()}/hls`;
+    /* 6️⃣ Upload HLS */
+    const outputPrefix = buildHlsOutputPrefix({
+      courseId,
+      lessonId,
+      lessonContentId,
+      version,
+    });
 
     await uploadDirectory(outputDir, PROD_BUCKET, "", outputPrefix);
 
-    await updateVideoStatus(
-      lesson._id.toString(),
-      "READY",
-      `${outputPrefix}/master.m3u8`
-    );
+    /* 7️⃣ Mark READY */
+    const masterUrl = `${outputPrefix}/master.m3u8`;
+    await updateVideoStatus(lessonContentId, "READY", masterUrl);
 
-    // 6️⃣ Cleanup
+    /* 8️⃣ Cleanup */
     await deleteS3Object(TEMP_BUCKET, VIDEO_KEY).catch(() => {});
-    await markJobStatus(draftId, "DONE");
+    await markJobStatus(lessonContentId, "DONE");
     await deleteSqsMessage();
 
     stopHeartbeat();
     await disconnectDB();
 
-    console.log("✅ Video processing DONE", { draftId });
-    process.exit(0);
+    console.log("✅ Video processing DONE", {
+      lessonContentId,
+      masterUrl,
+    });
 
+    process.exit(0);
   } catch (err) {
     console.error("❌ Video processing FAILED", err);
 
     stopHeartbeat();
-    await markJobStatus(draftId, "FAILED").catch(() => {});
+    await markJobStatus(lessonContentId, "FAILED").catch(() => {});
     await disconnectDB();
 
-    // ❗ SQS message NOT deleted → retry
     process.exit(1);
   }
 }

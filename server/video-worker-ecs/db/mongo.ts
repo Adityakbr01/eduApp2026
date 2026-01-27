@@ -44,7 +44,7 @@ export async function updateVideoStatus(
   );
 }
 
-export async function findLessonContentByDraftId(lessonContentId: string) {
+export async function findLessonContentById(lessonContentId: string) {
   const db = mongoose.connection.db;
   if (!db) throw new Error("DB not connected");
 

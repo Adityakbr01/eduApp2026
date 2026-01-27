@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import { pipeline } from "stream/promises";
 import { log } from "../utils/logger";
-import { credentialsLocal } from "../workers/videoWorker";
+import { credentials as credentialsLocal } from "../workers/videoWorker";
 
 
 const s3 = new S3Client({

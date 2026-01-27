@@ -1,5 +1,5 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } from "@aws-sdk/client-sqs";
-import { AWS_REGION, credentialsLocal } from "../workers/videoWorker";
+import { AWS_REGION, credentials as credentialsLocal } from "../workers/videoWorker";
 
 
 export const sqsClient = new SQSClient({
