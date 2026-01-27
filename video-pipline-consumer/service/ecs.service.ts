@@ -9,8 +9,6 @@ const ECS_SUBNETS = process.env.ECS_SUBNETS!.split(",");
 const ECS_SECURITY_GROUPS = process.env.ECS_SECURITY_GROUPS!.split(",");
 
 
-
-
 export async function runVideoTask({
   key,
   receiptHandle,

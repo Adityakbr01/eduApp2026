@@ -18,6 +18,29 @@ function requireEnv(name: string): string {
   return v;
 }
 
+
+const requiredEnvs = [
+  "AWS_REGION",
+  "VIDEO_BUCKET_TEMP",
+  "VIDEO_BUCKET_PROD",
+  "VIDEO_KEY",
+  "SQS_RECEIPT_HANDLE",
+  "SQS_QUEUE_URL",
+  "MONGODB_URI",
+  "MONGODB_DB_NAME",
+  "DYNAMO_TABLE",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+];
+
+const missing = requiredEnvs.filter((name) => !process.env[name]);
+if (missing.length > 0) {
+  console.error("❌ Missing required env variables:", missing);
+  process.exit(1); // fail ECS container
+}
+
+
+
 function extractDraftIdFromKey(key: string): string {
   const parts = key.split("/");
   const idx = parts.indexOf("lessoncontents");
@@ -44,6 +67,24 @@ const MONGODB_DB_NAME = requireEnv("MONGODB_DB_NAME");
 const DYNAMO_TABLE = requireEnv("DYNAMO_TABLE");
 
 
+// ---------------- DEBUG ----------------
+// Log all envs at startup
+console.log("🚀 Video Worker ENV values:");
+[
+  "AWS_REGION",
+  "VIDEO_BUCKET_TEMP",
+  "VIDEO_BUCKET_PROD",
+  "VIDEO_KEY",
+  "SQS_RECEIPT_HANDLE",
+  "SQS_QUEUE_URL",
+  "MONGODB_URI",
+  "MONGODB_DB_NAME",
+  "DYNAMO_TABLE",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+].forEach((name) => {
+  console.log(`  ${name}:`, process.env[name] ?? "⚠️ MISSING");
+});
 
 export const credentialsLocal: AwsCredentialIdentity = {
   accessKeyId: ACCESS_KEY_ID,
