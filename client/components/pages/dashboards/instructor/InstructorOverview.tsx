@@ -66,110 +66,105 @@ export function InstructorOverview({
             </section>
 
             {/* Recent Courses & Quick Actions */}
-            <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-                {/* Recent Courses */}
-                <Card>
-                    <CardHeader className="flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Recent Courses</CardTitle>
-                            <CardDescription>
-                                Your latest course updates
-                            </CardDescription>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onViewAllCourses}
-                            className="gap-1"
-                        >
-                            View all
-                            <ArrowRight className="h-3 w-3" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {isLoading ? (
-                            Array.from({ length: 3 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="flex items-center justify-between gap-3"
-                                >
-                                    <div className="flex items-center gap-3 flex-1">
-                                        <Skeleton className="h-10 w-10 rounded" />
-                                        <div className="flex-1">
-                                            <Skeleton className="h-4 w-3/4" />
-                                            <Skeleton className="h-3 w-1/2 mt-1" />
-                                        </div>
-                                    </div>
-                                    <Skeleton className="h-5 w-16" />
-                                </div>
-                            ))
-                        ) : recentCourses.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                                <p>No courses yet</p>
-                                <p className="text-sm">
-                                    Create your first course to get started
-                                </p>
-                            </div>
-                        ) : (
-                            recentCourses.map((course) => {
-                                const status = statusConfig[course.status];
-                                return (
-                                    <Link
-                                        key={course.id}
-                                        href={`/dashboard/Instructor/courses/${course.id}/edit`}
-                                        className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center">
-                                                <BookOpen className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-sm line-clamp-1">
-                                                    {course.title}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {course.level} • {course.updatedAt}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Badge
-                                            variant={status.variant}
-                                            className={cn("text-xs", status.className)}
-                                        >
-                                            {status.label}
-                                        </Badge>
-                                    </Link>
-                                );
-                            })
-                        )}
-                    </CardContent>
-                </Card>
+            <section className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+  {/* Recent Courses */}
+  <Card className="lg:col-span-2">
+    <CardHeader className="flex-row items-center justify-between">
+      <div>
+        <CardTitle>Recent Courses</CardTitle>
+        <CardDescription>Your latest course updates</CardDescription>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onViewAllCourses}
+        className="gap-1"
+      >
+        View all
+        <ArrowRight className="h-3 w-3" />
+      </Button>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {/* Loading / Empty / Content */}
+      {isLoading
+        ? Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <Skeleton className="h-10 w-10 rounded" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2 mt-1" />
+                </div>
+              </div>
+              <Skeleton className="h-5 w-16" />
+            </div>
+          ))
+        : recentCourses.length === 0
+        ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <p>No courses yet</p>
+            <p className="text-sm">Create your first course to get started</p>
+          </div>
+        )
+        : recentCourses.map((course) => {
+            const status = statusConfig[course.status];
+            return (
+              <Link
+                key={course.id}
+                href={`/dashboard/Instructor/courses/${course.id}/edit`}
+                className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm line-clamp-1">
+                      {course.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {course.level} • {course.updatedAt}
+                    </p>
+                  </div>
+                </div>
+                <Badge
+                  variant={status.variant}
+                  className={cn("text-xs", status.className)}
+                >
+                  {status.label}
+                </Badge>
+              </Link>
+            );
+          })}
+    </CardContent>
+  </Card>
 
-                {/* Quick Actions */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                        <CardDescription>Common tasks and shortcuts</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <Button asChild className="w-full justify-start gap-2">
-                            <Link href="/dashboard/Instructor/courses/create">
-                                <Plus className="h-4 w-4" />
-                                Create New Course
-                            </Link>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start gap-2"
-                            onClick={onViewAllCourses}
-                        >
-                            <BookOpen className="h-4 w-4" />
-                            Manage Courses
-                        </Button>
-                    </CardContent>
-                </Card>
-            </section>
+  {/* Quick Actions */}
+  <Card className="lg:col-span-1">
+    <CardHeader>
+      <CardTitle>Quick Actions</CardTitle>
+      <CardDescription>Common tasks and shortcuts</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-3">
+      <Button asChild className="w-full justify-start gap-2">
+        <Link href="/dashboard/Instructor/courses/create">
+          <Plus className="h-4 w-4" />
+          Create New Course
+        </Link>
+      </Button>
+      <Button
+        variant="outline"
+        className="w-full justify-start gap-2"
+        onClick={onViewAllCourses}
+      >
+        <BookOpen className="h-4 w-4" />
+        Manage Courses
+      </Button>
+    </CardContent>
+  </Card>
+</section>
+
         </div>
     );
 }

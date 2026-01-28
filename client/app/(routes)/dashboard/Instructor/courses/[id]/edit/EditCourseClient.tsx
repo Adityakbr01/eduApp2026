@@ -60,7 +60,7 @@ export default function EditCourseClient() {
     }
 
     return (
-        <div className="container py-6 mx-auto max-w-6xl">
+        <div className="container py-6 px-4 md:px-0 mx-auto max-w-6xl">
             <CourseForm initialData={course} isEditing />
         </div>
     );
