@@ -6,6 +6,14 @@ export enum CourseLevel {
     ADVANCED = "Advanced",
 }
 
+
+export enum VideoStatusEnum {
+    UPLOADED = "UPLOADED",
+    PROCESSING = "PROCESSING",
+    READY = "READY",
+    FAILED = "FAILED",
+}
+
 export enum DeliveryMode {
     LIVE = "Live",
     OFFLINE = "Offline",
@@ -78,6 +86,11 @@ export interface IVideoContent {
     url?: string;
     duration?: number; // seconds
     minWatchPercent?: number;
+    rawKey?: string;
+    hlsKey?: string;
+    status?: VideoStatusEnum;
+    isEmailSent?: boolean;
+    _id?: string;
 }
 
 export interface IAudioContent {
@@ -291,6 +304,7 @@ export interface CreateContentDTO {
         rawKey?: string;
         duration?: number;
         minWatchPercent?: number;
+        hlsKey?: string;
     };
     audio?: {
         rawKey?: string;

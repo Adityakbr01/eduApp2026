@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 
 import { ILessonContent } from "@/services/courses";
-import { ContentItem } from "./ContentItem";
+import { ContentItem } from "./ContentEditItem";
 
 interface SortableContentItemProps {
     content: ILessonContent;

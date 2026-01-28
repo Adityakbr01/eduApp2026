@@ -14,7 +14,7 @@ const videoSchema = new mongoose.Schema({
     default: "UPLOADED",
   },
 failureReason: { type: String, required: false },
-version: { type: Number, required: false },
+version: { type: Number, required: false,default:0 },
   isEmailSent: { type: Boolean, default: false },
 });
 

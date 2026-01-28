@@ -28,22 +28,28 @@ export function InstructorDashboard() {
   const submitCourseRequest = useSubmitCourseRequest();
   const deleteCourse = useDeleteCourse();
 
-  // State
+  // 🔹 NEW: Mobile sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [activeSection, setActiveSection] =
     useState<InstructorSidebarValue>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
-  // Derived data
   const courses = useMemo(
     () => data?.data?.courses || [],
     [data?.data?.courses]
   );
+
   const stats = useMemo(
     () => (courses.length > 0 ? calculateStats(courses) : getDefaultStats()),
     [courses]
   );
-  const recentCourses = useMemo(() => getRecentCourses(courses, 5), [courses]);
+
+  const recentCourses = useMemo(
+    () => getRecentCourses(courses, 5),
+    [courses]
+  );
 
   const activeSectionItem = useMemo(
     () =>
@@ -52,7 +58,6 @@ export function InstructorDashboard() {
     [activeSection]
   );
 
-  // Handlers
   const submitCourseRequestHandler = (
     id: string,
     status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED
@@ -66,11 +71,8 @@ export function InstructorDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    logout.mutate();
-  };
+  const handleLogout = () => logout.mutate();
 
-  // Error state
   if (error) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -91,6 +93,8 @@ export function InstructorDashboard() {
         activeSection={activeSection}
         setActiveSection={setActiveSection}
         onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       {/* Main Content */}
@@ -100,10 +104,10 @@ export function InstructorDashboard() {
           activeSection={activeSection}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
 
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
-          {/* Overview Section */}
           {activeSection === "overview" && (
             <InstructorOverview
               stats={stats}
@@ -113,7 +117,6 @@ export function InstructorDashboard() {
             />
           )}
 
-          {/* Courses Section */}
           {activeSection === "courses" && (
             <CoursesSection
               courses={courses}
@@ -124,22 +127,6 @@ export function InstructorDashboard() {
               submitCourseRequest={submitCourseRequestHandler}
               onDelete={handleDelete}
             />
-          )}
-
-          {/* Content Library Section */}
-          {activeSection === "content" && (
-            <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
-              <p className="text-muted-foreground">
-                Content Library coming soon...
-              </p>
-            </div>
-          )}
-
-          {/* Settings Section */}
-          {activeSection === "settings" && (
-            <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
-              <p className="text-muted-foreground">Settings coming soon...</p>
-            </div>
           )}
         </div>
       </main>

@@ -69,7 +69,7 @@ import {
 } from "@/services/courses";
 import { LessonDialog } from "./LessonDialog";
 import { SortableContentItem } from "./SortableContentItem";
-import { ContentDialog } from "./ContentDialog";
+import { ContentDialog } from "./ContentAddDialog";
 
 
 interface SortableLessonProps {

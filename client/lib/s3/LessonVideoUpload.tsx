@@ -7,36 +7,43 @@ import { multipartUpload } from "./multipartUpload";
 interface Props {
   courseId: string;
   lessonId: string;
-  lessonContentId?: string;
-  onUploaded: (s3Key: string) => void; // 🔥 important
+  lessonContentId: string;
+    disabled?: boolean;
+  onUploaded: (s3Key: string) => void;
+  onUploadStateChange: (uploading: boolean) => void;
 }
 
 export default function LessonVideoUpload({
   courseId,
   lessonId,
-  onUploaded,
   lessonContentId,
+  disabled,
+  onUploaded,
+  onUploadStateChange,
 }: Props) {
   const [progress, setProgress] = useState(0);
-  const [uploading, setUploading] = useState(false);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  if (disabled) {
+    console.warn("🚫 Upload blocked: video not READY");
+    return;
+  }
+
+  const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      setUploading(true);
+      onUploadStateChange(true);
       setProgress(0);
 
-      // 1️⃣ Ask backend
       const presign = await uploadApi.getLessonVideoPresignedUrl(
         file,
         courseId,
         lessonId,
-        lessonContentId!
+        lessonContentId
       );
 
-      // ---------------- SIMPLE ----------------
+      // -------- SIMPLE --------
       if (presign.mode === "simple") {
         await fetch(presign.uploadUrl, {
           method: "PUT",
@@ -44,13 +51,11 @@ export default function LessonVideoUpload({
           headers: { "Content-Type": file.type },
         });
 
-        console.log("🚀 Simple upload complete",presign);
-        setProgress(100);
-        onUploaded(presign.rawKey); // ✅ RETURN KEY
+        onUploaded(presign.rawKey);
         return;
       }
 
-      // ---------------- MULTIPART ----------------
+      // -------- MULTIPART --------
       const init = await uploadApi.initMultipart(presign.intentId, file.size);
 
       const parts = await multipartUpload(
@@ -64,28 +69,32 @@ export default function LessonVideoUpload({
         setProgress
       );
 
-      // ⚠️ REQUIRED – warna file exist hi nahi karegi
-      await uploadApi.completeMultipart(presign.intentId, init.uploadId, parts);
+      await uploadApi.completeMultipart(
+        presign.intentId,
+        init.uploadId,
+        parts
+      );
 
-      onUploaded(presign.intentId); // ✅ FINAL KEY
+      onUploaded(presign.intentId);
     } catch (err) {
       console.error(err);
       alert("❌ Upload failed");
     } finally {
-      setUploading(false);
+      onUploadStateChange(false);
     }
   }
 
   return (
     <div className="space-y-3">
       <input
+      className="cursor-pointer"
         type="file"
         accept="video/*"
+         disabled={disabled}
         onChange={handleFileChange}
-        disabled={uploading}
       />
 
-      {uploading && (
+      {progress > 0 && (
         <div className="w-full bg-gray-200 rounded">
           <div
             className="bg-blue-600 text-xs text-white text-center rounded"
@@ -98,3 +107,4 @@ export default function LessonVideoUpload({
     </div>
   );
 }
+

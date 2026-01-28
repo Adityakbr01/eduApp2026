@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
 import {
   useAssignmentByContentId,
   useQuizByContentId,
@@ -42,8 +43,8 @@ import {
   UpdateContentDTO,
   useDeleteContent,
   useUpdateContent,
+  VideoStatusEnum,
 } from "@/services/courses";
-import { FileType, FileTypeEnum } from "@/services/uploads";
 import {
   ClipboardList,
   Clock,
@@ -58,7 +59,6 @@ import {
 } from "lucide-react";
 import { AssignmentDialog } from "./AssignmentDialog";
 import { QuizDialog } from "./QuizDialog";
-import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
 
 interface ContentItemProps {
   content: ILessonContent;
@@ -89,6 +89,21 @@ export function ContentItem({
   courseId,
   icon,
 }: ContentItemProps) {
+
+const video = content.video;
+
+const [videoStatus, setVideoStatus] = useState<VideoStatusEnum | null>(
+  video?.status ?? null
+);
+const [isUploading, setIsUploading] = useState(false);
+const [newFileKey, setNewFileKey] = useState<string | null>(null);
+    const isVideoUploadDisabled =
+  videoStatus?.toUpperCase() === VideoStatusEnum.UPLOADED.toUpperCase() ||
+  videoStatus?.toUpperCase() === VideoStatusEnum.PROCESSING.toUpperCase();
+
+  console.log("Video upload disabled:", isVideoUploadDisabled, videoStatus);
+
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [quizDialogOpen, setQuizDialogOpen] = useState(false);
@@ -105,11 +120,6 @@ export function ContentItem({
     content.video?.minWatchPercent || 90
   );
 
-  // Upload states
-  const [newFileKey, setNewFileKey] = useState<string>(""); // Raw S3 key
-  const [fileName, setFileName] = useState<string>("");
-  const [isDurationAutoCalculated, setIsDurationAutoCalculated] =
-    useState(false);
 
   const updateContent = useUpdateContent();
   const deleteContent = useDeleteContent();
@@ -132,8 +142,6 @@ export function ContentItem({
     setEditDuration(content.video?.duration || content.audio?.duration || 0);
     setEditMinWatchPercent(content.video?.minWatchPercent || 90);
     setNewFileKey("");
-    setFileName("");
-    setIsDurationAutoCalculated(false);
     setEditDialogOpen(true);
   };
 
@@ -147,9 +155,10 @@ export function ContentItem({
 
       if (content.type === ContentType.VIDEO) {
         updateData.video = {
-          rawKey: newFileKey || content.video?.url || "",
+          rawKey: newFileKey || content.video?.rawKey || "",
           duration: editDuration < 10 ? 10 : editDuration,
           minWatchPercent: editMinWatchPercent,
+          hlsKey: content.video?.hlsKey || "",
         };
       }
 
@@ -174,8 +183,6 @@ export function ContentItem({
 
       // Reset upload state
       setNewFileKey("");
-      setFileName("");
-      setIsDurationAutoCalculated(false);
       setEditDialogOpen(false);
     } catch (error) {
       console.error("Update failed:", error);
@@ -369,20 +376,29 @@ export function ContentItem({
               <div className="space-y-4">
                 <Label>Replace File</Label>
 
-                {/* VIDEO / AUDIO */}
-                {(content.type === ContentType.VIDEO ||
-                  content.type === ContentType.AUDIO) && (
-                  <LessonVideoUpload
-                    courseId={courseId}
-                    lessonId={lessonId}
-                    lessonContentId={content._id}
-                    onUploaded={(key) => {
-                      setNewFileKey(key);
-                    }}
-                  />
-                )}
+                {/* VIDEO  */}
+{content.type === ContentType.VIDEO && (
+  <LessonVideoUpload
+    courseId={courseId}
+    lessonId={lessonId}
+    lessonContentId={content._id}
+    disabled={isVideoUploadDisabled}
+    onUploadStateChange={(uploading) => {
+      setIsUploading(uploading);
+      if (uploading) {
+        setVideoStatus(VideoStatusEnum.UPLOADED);
+      }
+    }}
+    onUploaded={(key) => {
+      setNewFileKey(key);
+    
+    }}
+  />
+)}
 
-                {/* PDF (future: separate simple uploader if you want) */}
+
+
+                {/* PDF (future: separate simple uploader if you want)
                 {content.type === ContentType.PDF && (
                   <LessonVideoUpload
                     courseId={courseId}
@@ -391,7 +407,7 @@ export function ContentItem({
                       setNewFileKey(key);
                     }}
                   />
-                )}
+                )} */}
 
                 {/* New file preview */}
                 {newFileKey && (
@@ -408,16 +424,6 @@ export function ContentItem({
             {(content.type === ContentType.VIDEO ||
               content.type === ContentType.AUDIO) && (
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Duration (seconds)</Label>
-                  <Input
-                    type="number"
-                    min={10}
-                    value={editDuration}
-                    onChange={(e) => setEditDuration(+e.target.value || 10)}
-                    disabled={isDurationAutoCalculated && editDuration > 0}
-                  />
-                </div>
                 {content.type === ContentType.VIDEO && (
                   <div className="space-y-2">
                     <Label>Min Watch %</Label>
@@ -444,19 +450,20 @@ export function ContentItem({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleEditSave}
-              disabled={isLoading || !editTitle.trim()}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
+           <Button
+  onClick={handleEditSave}
+  disabled={isUploading || isLoading || !editTitle.trim()}
+>
+  {isLoading || isUploading ? (
+    <>
+      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      Saving...
+    </>
+  ) : (
+    "Save Changes"
+  )}
+</Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>

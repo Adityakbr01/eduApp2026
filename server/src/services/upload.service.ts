@@ -65,6 +65,7 @@ export class UploadService {
     courseId: string,
     lessonId: string,
     lessonContentId: string,
+    uploaderId: string,
   ) {
     if (!mimeType.startsWith("video/")) {
       throw new Error("Only video files allowed");
@@ -104,6 +105,7 @@ export class UploadService {
           lessonid: lessonId,
           lessoncontentid: lessonContentId,
           version: String(version),
+          lessonContentUploaderId: uploaderId,
         },
       });
 

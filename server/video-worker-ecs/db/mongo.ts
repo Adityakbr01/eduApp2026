@@ -21,7 +21,7 @@ export async function disconnectDB() {
 
 export async function updateVideoStatus(
   contentId: string,
-  status: "PROCESSING" | "READY" | "FAILED",
+  status: "UPLOADED" | "PROCESSING" | "READY" | "FAILED",
   hlsKey?: string,
   durationSeconds?: number
 ) {
