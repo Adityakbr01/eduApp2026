@@ -9,6 +9,7 @@ import { LogOut, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { useLogout } from "@/services/auth/mutations";
 import { mainNavLinks, getFullMenuForRole } from "./nav.config";
+import { Separator } from "@/components/ui/separator";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -156,6 +157,10 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
             onClick={onClose}
           />
 
+
+
+<Separator />
+
           {/* Mobile Menu Panel */}
           <motion.div
             className="fixed top-0 right-0 h-full w-70 bg-linear-to-b from-[#171212] to-[#100B0B] z-50"
@@ -164,8 +169,11 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
             animate="visible"
             exit="exit"
           >
+            <div className="h-16 flex items-center justify-start px-6 border-b border-white/10">
+    <h3 className="text-lg font-semibold text-white/90 tracking-wide font-NeuMachina">Menu</h3>
+  </div>
             {/* Header spacer for hamburger alignment */}
-            <div className="h-20" />
+
 
             {/* User Profile Section (when logged in) */}
             {hydrated && isLoggedIn && user && (

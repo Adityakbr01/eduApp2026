@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/Providers/theme-provider";
 import { TanStackProvider } from "@/Providers/TanStackProvider";
 import MainProvider from "@/Providers/MainProvider";
 import LenisProvider from "@/Providers/LenisProvider";
+import PageTransition from "@/components/PageTransition";
 
 export default function Providers({
     children,
@@ -14,7 +15,7 @@ export default function Providers({
         <ThemeProvider attribute="class" defaultTheme="dark">
             <TanStackProvider>
                 <LenisProvider>
-                    <MainProvider>{children}</MainProvider>
+                    <MainProvider> <PageTransition>{children}</PageTransition></MainProvider>
                 </LenisProvider>
             </TanStackProvider>
         </ThemeProvider>

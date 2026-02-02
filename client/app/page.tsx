@@ -1,6 +1,5 @@
 
 
-import HomePage from "@/components/pages/HomePage";
 import HomePage2 from "@/components/pages/HomePage2";
 import APP_info from "@/constants/app_info";
 

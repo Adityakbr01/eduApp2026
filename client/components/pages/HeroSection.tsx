@@ -4,12 +4,12 @@ import Image from "next/image";
 
 export default function HeroSection() {
   return (
-    <section className="mt-24 md:mt-48 px-6 md:px-10 flex flex-col items-center text-center gap-4 md:gap-6">
-      <h4 className="uppercase text-[#E8602E] tracking-wider">
+    <section className="mt-4 md:mt-48 px-6 md:px-10 flex flex-col items-center text-center gap-4 md:gap-6">
+      <h4 className="uppercase text-[#E8602E] text-[0.70rem] md:text-sm tracking-wider">
         Learn. Build. Get Placed.
       </h4>
 
-      <h1 className="font-machina text-[1.85rem] sm:text-[2.5rem] md:text-[3.5rem] lg:text-[4.5rem] leading-[1.2] sm:leading-tight max-w-xs sm:max-w-2xl md:max-w-4xl lg:max-w-6xl">
+      <h1 className="font-machina text-[1.65rem] sm:text-[2.5rem] md:text-[3.5rem] lg:text-[4.5rem] leading-[1.2] sm:leading-tight max-w-xs sm:max-w-2xl md:max-w-4xl lg:max-w-6xl">
         Transform Into the Developer{" "}
         <span className="relative inline-block px-2 sm:px-3 border border-[#E8602E] bg-[#E8602E21]">
           Recruiters
@@ -21,7 +21,7 @@ export default function HeroSection() {
         Are Searching For!
       </h1>
 
-      <p className="text-lg md:text-2xl text-[#D7D7D7] max-w-3xl font-light">
+      <p className="text-sm md:text-2xl text-[#D7D7D7] max-w-3xl font-light">
         Join a growing community of students preparing for real-world tech careers at Sheryians.
       </p>
 
@@ -66,7 +66,7 @@ export default function HeroSection() {
           </div>
         </div>
         <span className="text-[#F34B0F] font-manrope font-bold">1 Million+</span>
-        Students learning in our mastery programs
+        <p className="text-sm">Students learning in our mastery programs</p>
       </div>
 
       {/* CTA */}
