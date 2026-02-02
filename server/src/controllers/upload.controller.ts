@@ -20,6 +20,7 @@ export const uploadController = {
       {
         uploadUrl: result.uploadUrl,
         key: result.key,
+        rawKey: result.rawKey,
         mode: "simple",
         version: result.version,
       },

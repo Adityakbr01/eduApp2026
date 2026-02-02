@@ -120,9 +120,10 @@ export function InstructorOverview({
                     <BookOpen className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm line-clamp-1">
-                      {course.title}
-                    </p>
+                    <p className="font-medium text-sm truncate max-w-30">
+  {course.title}
+</p>
+
                     <p className="text-xs text-muted-foreground">
                       {course.level} • {course.updatedAt}
                     </p>

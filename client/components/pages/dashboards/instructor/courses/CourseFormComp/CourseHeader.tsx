@@ -55,7 +55,7 @@ export function CourseHeader({
         <Button
           type="submit"
           disabled={isLoading || isUploadingThumbnail}
-          className="w-full sm:w-auto flex items-center justify-center gap-2"
+          className="w-full sm:w-auto cursor-pointer flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

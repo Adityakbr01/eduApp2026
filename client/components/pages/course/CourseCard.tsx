@@ -53,12 +53,23 @@ function CourseCard({ course }: { course: ICourse }) {
             {course.level}
           </Badge>
 
+         <Badge className="absolute top-3 right-3" variant="default">
+  {course.pricing?.isFree
+    ? "Free"
+    : course.pricing?.discountPercentage &&
+      course.pricing?.discountExpiresAt &&
+      new Date(course.pricing.discountExpiresAt).getTime() > Date.now()
+    ? `${course.pricing.discountPercentage}% OFF`
+    : "Best Seller"}
+</Badge>
+
+
           {/* Price */}
           <Badge className="absolute bottom-3 right-3 text-sm font-semibold">
             {course.pricing?.isFree
               ? "Free"
               : `${course.pricing?.currency || "$"}${
-                  course.pricing?.price || 0
+                  course.pricing?.price.toFixed(0) || 0
                 }`}
           </Badge>
         </div>
@@ -104,7 +115,7 @@ function CourseCard({ course }: { course: ICourse }) {
 
             {course.deliveryMode && (
               <div className="flex items-center gap-1">
-                <Video className="size-3 group-hover:scale-125 transition-transform" />
+                <Video className="size-3 group-hover:scale-125 transition-transform text-[#2a98f3]" />
                 <span>{course.deliveryMode}</span>
               </div>
             )}

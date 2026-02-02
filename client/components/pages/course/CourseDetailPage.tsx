@@ -16,12 +16,12 @@ import {
 } from "lucide-react";
 
 import calculateCourseStats from "@/lib/utils/calculateCourseStats";
-import formatDuration from "@/lib/utils/formatDuration";
 import { useGetPublishedCourseById } from "@/services/courses";
 import CourseDetailSkeleton from "./CourseDetailSkeleton";
 import CourseMedia from "./CourseMedia";
 import CourseTabs from "./CourseTabs";
 import EnrollmentCard from "./EnrollmentCard";
+import { formatDuration } from "@/lib/utils/formatDuration";
 
 interface CourseDetailPageProps {
     slug: string;

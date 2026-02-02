@@ -10,9 +10,9 @@ import {
     Play,
 } from "lucide-react";
 
-import formatDuration from "@/lib/utils/formatDuration";
 import { ICourse, ISection } from "@/services/courses";
 import ReviewsSection from "./ReviewsSection";
+import { formatDuration } from "@/lib/utils/formatDuration";
 
 // Course Tabs Component
 function CourseTabs({
@@ -58,17 +58,17 @@ function CourseTabs({
                                 <p className="text-sm text-muted-foreground">{displayLessons} Lessons</p>
                             </div>
                             <div className="text-center p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                                <Play className="h-8 w-8 mx-auto mb-2 text-primary" />
+                                <Play className="h-8 w-8 mx-auto mb-2 text-[#04b64e]" />
                                 <p className="font-medium">{displayContents} Contents</p>
                                 <p className="text-sm text-muted-foreground">{formatDuration(totalDuration)}</p>
                             </div>
                             <div className="text-center p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                                <GraduationCap className="h-8 w-8 mx-auto mb-2 text-primary" />
+                                <GraduationCap className="h-8 w-8 mx-auto mb-2 text-[#0678c4]" />
                                 <p className="font-medium">Certificate</p>
                                 <p className="text-sm text-muted-foreground">Of completion</p>
                             </div>
                             <div className="text-center p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                                <Download className="h-8 w-8 mx-auto mb-2 text-primary" />
+                                <Download className="h-8 w-8 mx-auto mb-2 text-[#c40655]" />
                                 <p className="font-medium">Downloadable</p>
                                 <p className="text-sm text-muted-foreground">Resources</p>
                             </div>

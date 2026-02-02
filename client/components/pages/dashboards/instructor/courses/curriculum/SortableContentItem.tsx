@@ -36,22 +36,30 @@ export function SortableContentItem({
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="flex items-center gap-1">
-            <button
-                {...attributes}
-                {...listeners}
-                className="cursor-grab hover:bg-muted p-1 rounded flex-shrink-0"
-            >
-                <GripVertical className="h-3 w-3 text-muted-foreground" />
-            </button>
-            <div className="flex-1">
-                <ContentItem
-                    content={content}
-                    lessonId={lessonId}
-                    courseId={courseId}
-                    icon={icon}
-                />
-            </div>
-        </div>
+       <div
+  ref={setNodeRef}
+  style={style}
+  className="flex items-center gap-1 min-w-0"
+>
+  {/* Drag handle */}
+  <button
+    {...attributes}
+    {...listeners}
+    className="cursor-grab hover:bg-muted p-1 rounded shrink-0"
+  >
+    <GripVertical className="h-3 w-3 text-muted-foreground" />
+  </button>
+
+  {/* Content */}
+  <div className="flex-1 min-w-0 overflow-hidden">
+    <ContentItem
+      content={content}
+      lessonId={lessonId}
+      courseId={courseId}
+      icon={icon}
+    />
+  </div>
+</div>
+
     );
 }

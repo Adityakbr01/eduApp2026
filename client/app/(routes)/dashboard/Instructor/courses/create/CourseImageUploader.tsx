@@ -75,8 +75,8 @@ export default function CourseImageUploader({
 
         // ✅ Send the thumbnail object to parent
         onChange({ key: rawKey, version });
-      } catch (err: any) {
-        setError(err.message || "Upload failed");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Upload failed");
       } finally {
         setLoading(false);
       onUploadStateChange?.(false); // notify parent

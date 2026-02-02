@@ -2,7 +2,7 @@ import { ContentType, ILessonContent } from "@/services/courses";
 import getContentIcon from "./getContentIcon";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Lock } from "lucide-react";
-import formatDuration from "./formatDuration";
+import { formatDuration } from "./formatDuration";
 
 // Content Item Component
 function ContentItem({ content }: { content: ILessonContent }) {

@@ -3,6 +3,7 @@
 import { ThemeProvider } from "@/Providers/theme-provider";
 import { TanStackProvider } from "@/Providers/TanStackProvider";
 import MainProvider from "@/Providers/MainProvider";
+import LenisProvider from "@/Providers/LenisProvider";
 
 export default function Providers({
     children,
@@ -12,7 +13,9 @@ export default function Providers({
     return (
         <ThemeProvider attribute="class" defaultTheme="dark">
             <TanStackProvider>
-                <MainProvider>{children}</MainProvider>
+                <LenisProvider>
+                    <MainProvider>{children}</MainProvider>
+                </LenisProvider>
             </TanStackProvider>
         </ThemeProvider>
     );

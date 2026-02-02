@@ -53,6 +53,7 @@ export class UploadService {
     return {
       uploadUrl,
       key: s3Key,
+      rawKey: s3Key,
       version: nextVersion,
     };
   }

@@ -179,6 +179,7 @@ export function CourseForm({
                           courseId={initialData._id}
                           value={field.value}
                           onChange={(thumbnail) => {
+                            console.log("Thumbnail changed:", thumbnail);
                             field.onChange(thumbnail); // 🔥 saved in form
                           }}
                           

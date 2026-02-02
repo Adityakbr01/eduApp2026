@@ -15,24 +15,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
+import { formatDuration } from "@/lib/utils/formatDuration";
+import getCurrentFileUrl from "@/lib/utils/getCurrentFileUrl";
 import {
   useAssignmentByContentId,
   useQuizByContentId,
@@ -51,13 +41,13 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
-  Loader2,
   MoreVertical,
   Pencil,
   Star,
   Trash2,
 } from "lucide-react";
 import { AssignmentDialog } from "./AssignmentDialog";
+import { EditContentDialog } from "./ContentEditDialog";
 import { QuizDialog } from "./QuizDialog";
 
 interface ContentItemProps {
@@ -76,33 +66,24 @@ const contentTypeLabels: Record<ContentType, string> = {
   [ContentType.AUDIO]: "Audio",
 };
 
-const formatDuration = (seconds: number): string => {
-  if (!seconds) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-};
-
 export function ContentItem({
   content,
   lessonId,
   courseId,
   icon,
 }: ContentItemProps) {
+  const video = content.video;
 
-const video = content.video;
-
-const [videoStatus, setVideoStatus] = useState<VideoStatusEnum | null>(
-  video?.status ?? null
-);
-const [isUploading, setIsUploading] = useState(false);
-const [newFileKey, setNewFileKey] = useState<string | null>(null);
-    const isVideoUploadDisabled =
-  videoStatus?.toUpperCase() === VideoStatusEnum.UPLOADED.toUpperCase() ||
-  videoStatus?.toUpperCase() === VideoStatusEnum.PROCESSING.toUpperCase();
+  const [videoStatus, setVideoStatus] = useState<VideoStatusEnum | null>(
+    video?.status ?? null,
+  );
+  const [isUploading, setIsUploading] = useState(false);
+  const [newFileKey, setNewFileKey] = useState<string | null>(null);
+  const isVideoUploadDisabled =
+    videoStatus?.toUpperCase() === VideoStatusEnum.UPLOADED.toUpperCase() ||
+    videoStatus?.toUpperCase() === VideoStatusEnum.PROCESSING.toUpperCase();
 
   console.log("Video upload disabled:", isVideoUploadDisabled, videoStatus);
-
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -114,26 +95,23 @@ const [newFileKey, setNewFileKey] = useState<string | null>(null);
   const [editMarks, setEditMarks] = useState(content.marks);
   const [editIsPreview, setEditIsPreview] = useState(content.isPreview);
   const [editDuration, setEditDuration] = useState(
-    content.video?.duration || content.audio?.duration || 0
+    content.video?.duration || content.audio?.duration || 0,
   );
   const [editMinWatchPercent, setEditMinWatchPercent] = useState(
-    content.video?.minWatchPercent || 90
+    content.video?.minWatchPercent || 90,
   );
-
 
   const updateContent = useUpdateContent();
   const deleteContent = useDeleteContent();
 
   const { data: existingQuiz } = useQuizByContentId(
     content._id,
-    content.type === ContentType.QUIZ
+    content.type === ContentType.QUIZ,
   );
   const { data: existingAssignment } = useAssignmentByContentId(
     content._id,
-    content.type === ContentType.ASSIGNMENT
+    content.type === ContentType.ASSIGNMENT,
   );
-
-  const isLoading = updateContent.isPending;
 
   const handleEditOpen = () => {
     setEditTitle(content.title);
@@ -198,14 +176,6 @@ const [newFileKey, setNewFileKey] = useState<string | null>(null);
     }
   };
 
-  const getCurrentFileUrl = () => {
-    if (content.type === ContentType.VIDEO) return content.video?.url;
-    if (content.type === ContentType.AUDIO) return content.audio?.url;
-    if (content.type === ContentType.PDF) return content.pdf?.url;
-    return undefined;
-  };
-
-
   return (
     <>
       {/* List Item */}
@@ -228,7 +198,7 @@ const [newFileKey, setNewFileKey] = useState<string | null>(null);
           >
             <Clock className="h-3 w-3" />
             {formatDuration(
-              content.video?.duration || content.audio?.duration || 0
+              content.video?.duration || content.audio?.duration || 0,
             )}
           </span>
         )}
@@ -315,158 +285,29 @@ const [newFileKey, setNewFileKey] = useState<string | null>(null);
         </DropdownMenu>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Content</DialogTitle>
-            <DialogDescription>
-              Update details or replace the file.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Marks</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={editMarks}
-                  onChange={(e) => setEditMarks(parseInt(e.target.value) || 0)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Free Preview</Label>
-                <div className="flex items-center gap-2 h-10">
-                  <Switch
-                    checked={editIsPreview}
-                    onCheckedChange={setEditIsPreview}
-                    disabled={isLoading}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {editIsPreview ? "Yes" : "No"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {getCurrentFileUrl() && !newFileKey && (
-              <div className="space-y-2">
-                <Label>Current File</Label>
-                <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground truncate">
-                  {getCurrentFileUrl()}
-                </div>
-              </div>
-            )}
-
-            {(content.type === ContentType.VIDEO ||
-              content.type === ContentType.AUDIO ||
-              content.type === ContentType.PDF) && (
-              <div className="space-y-4">
-                <Label>Replace File</Label>
-
-                {/* VIDEO  */}
-{content.type === ContentType.VIDEO && (
-  <LessonVideoUpload
-    courseId={courseId}
-    lessonId={lessonId}
-    lessonContentId={content._id}
-    disabled={isVideoUploadDisabled}
-    onUploadStateChange={(uploading) => {
-      setIsUploading(uploading);
-      if (uploading) {
-        setVideoStatus(VideoStatusEnum.UPLOADED);
-      }
-    }}
-    onUploaded={(key) => {
-      setNewFileKey(key);
-    
-    }}
-  />
-)}
-
-
-
-                {/* PDF (future: separate simple uploader if you want)
-                {content.type === ContentType.PDF && (
-                  <LessonVideoUpload
-                    courseId={courseId}
-                    lessonId={lessonId}
-                    onUploaded={(key) => {
-                      setNewFileKey(key);
-                    }}
-                  />
-                )} */}
-
-                {/* New file preview */}
-                {newFileKey && (
-                  <div className="rounded-md border p-3 text-xs bg-muted">
-                    <p className="font-medium">New file uploaded</p>
-                    <p className="break-all text-muted-foreground">
-                      {newFileKey}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {(content.type === ContentType.VIDEO ||
-              content.type === ContentType.AUDIO) && (
-              <div className="grid grid-cols-2 gap-4">
-                {content.type === ContentType.VIDEO && (
-                  <div className="space-y-2">
-                    <Label>Min Watch %</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={editMinWatchPercent}
-                      onChange={(e) =>
-                        setEditMinWatchPercent(+e.target.value || 90)
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEditDialogOpen(false)}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-           <Button
-  onClick={handleEditSave}
-  disabled={isUploading || isLoading || !editTitle.trim()}
->
-  {isLoading || isUploading ? (
-    <>
-      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-      Saving...
-    </>
-  ) : (
-    "Save Changes"
-  )}
-</Button>
-
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditContentDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        content={content}
+        courseId={courseId}
+        lessonId={lessonId}
+        editTitle={editTitle}
+        setEditTitle={setEditTitle}
+        editMarks={editMarks}
+        setEditMarks={setEditMarks}
+        editIsPreview={editIsPreview}
+        setEditIsPreview={setEditIsPreview}
+        editMinWatchPercent={editMinWatchPercent}
+        setEditMinWatchPercent={setEditMinWatchPercent}
+        isLoading={updateContent?.isPending}
+        isUploading={isUploading}
+        isVideoUploadDisabled={isVideoUploadDisabled}
+        newFileKey={newFileKey}
+        setNewFileKey={setNewFileKey}
+        getCurrentFileUrl={() => getCurrentFileUrl({ content })}
+        handleSave={handleEditSave}
+        setIsUploading={setIsUploading}
+      />
 
       {/* Delete & Other Dialogs */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import formatDuration from "@/lib/utils/formatDuration";
 import { ICourse, ISection } from "@/services/courses";
 import {
   useEnrollInFreeCourse,
@@ -23,6 +22,7 @@ import {
   LogIn,
   Play,
 } from "lucide-react";
+import { formatDuration } from "@/lib/utils/formatDuration";
 
 interface EnrollmentCardProps {
   course: ICourse;
@@ -44,11 +44,13 @@ function EnrollmentCard({
   const router = useRouter();
   const { user, isLoggedIn, hydrated } = useAuthStore();
 
+  console.log("Course Stats:", course);
+
   const displayLessons = course.stats?.totalLessons ?? totalLessons;
   const displaySections = course.stats?.totalSections ?? visibleSections.length;
   const displayContents = course.stats?.totalContents ?? 0;
 
-  console.log("Enrollment Data:", user);
+  console.log("My Enrollment Data:", user);
   const isEnrolled =
     user?.enrolledCourses?.some(
       (enrollment) => enrollment.courseId === course._id

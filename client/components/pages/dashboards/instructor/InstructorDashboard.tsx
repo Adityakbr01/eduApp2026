@@ -87,7 +87,7 @@ export function InstructorDashboard() {
   }
 
   return (
-    <div className="bg-muted/30 flex h-screen overflow-hidden">
+    <div className="bg-muted/30 flex  h-screen overflow-hidden">
       {/* Sidebar */}
       <InstructorSidebar
         activeSection={activeSection}

@@ -198,12 +198,16 @@ export function SortableSection({ section, index, courseId }: SortableSectionPro
                                 ) : (
                                     <ChevronRight className="h-4 w-4" />
                                 )}
-                                <span className="font-medium">
-                                    Section {index + 1}: {section.title}
-                                </span>
-                                <span className="text-sm text-muted-foreground ml-2">
-                                    ({lessons.length} lessons)
-                                </span>
+                                <div className="flex min-w-0 flex-col sm:flex-row sm:items-center">
+  <span className="font-medium truncate max-w-full sm:max-w-none">
+    Section {index + 1}: {section.title}
+  </span>
+
+  <span className="text-sm text-muted-foreground sm:ml-2 shrink-0">
+    ({lessons.length} lessons)
+  </span>
+</div>
+
                                 {!section.isVisible && (
                                     <EyeOff className="h-4 w-4 text-muted-foreground" />
                                 )}

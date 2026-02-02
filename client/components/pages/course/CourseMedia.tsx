@@ -2,6 +2,7 @@
 
 import { getS3PublicUrl } from "@/app/(routes)/dashboard/Instructor/courses/create/getS3PublicUrl";
 import { Button } from "@/components/ui/button";
+import { ICourse } from "@/services/courses";
 import { Bookmark, BookmarkCheck, BookOpen, Play } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -11,19 +12,14 @@ function CourseMedia({
   bookmarked,
   toggleBookmark,
 }: {
-  course: {
-    title: string;
-    coverImage?: string;
-    previewVideoUrl?: string;
-  };
+  course:ICourse
   bookmarked: boolean;
   toggleBookmark: () => void;
 }) {
   const [showPlayer, setShowPlayer] = useState(false);
 
   // ✅ Convert S3 key → public URL
-  const coverImageUrl = getS3PublicUrl(course.coverImage);
-
+  const coverImageUrl = getS3PublicUrl(course.thumbnail?.key || "");
   return (
     <div className="relative aspect-video rounded-lg overflow-hidden group w-full bg-muted">
       {showPlayer && course.previewVideoUrl ? (

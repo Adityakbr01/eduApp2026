@@ -1,0 +1,119 @@
+"use client";
+
+import { useAuthStore } from "@/store/auth";
+import { Squeeze as Hamburger } from "hamburger-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState, useCallback } from "react";
+import MobileNav from "./MobileNav";
+import NavLinks from "./NavLInks";
+import ProfileDropdown from "./ProfileDropdown";
+import NavCTA from "./NavCTA";
+
+export default function Nav() {
+  const [showNav, setShowNav] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isLoggedIn, hydrated } = useAuthStore();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      setShowNav(currentY < lastScrollY || currentY < 50);
+      setLastScrollY(currentY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      // Store current scroll position
+      const scrollY = window.scrollY;
+      document.body.classList.add("body-scroll-locked");
+      document.body.style.top = `-${scrollY}px`;
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.classList.remove("body-scroll-locked");
+      document.body.style.top = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    return () => {
+      document.body.classList.remove("body-scroll-locked");
+      document.body.style.top = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  return (
+    <>
+      <nav
+        style={{
+          height: "var(--navbar-height-mobile)",
+        }}
+        className={`fixed top-0 left-0 w-full z-50 transition-transform duration-300 md:h-(--navbar-height-desktop) ${
+          showNav ? "translate-y-0" : "-translate-y-full"
+        } bg-black/50 backdrop-blur-sm`}
+      >
+        <div className="mx-auto grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-16 py-3 md:py-4 lg:max-w-8xl h-full">
+          {/* Left: Logo */}
+          <Link href="/" className="max-w-48 md:max-aw-32 justify-self-start">
+            <Image
+              src="https://dfdx9u0psdezh.cloudfront.net/logos/full-logo.webp"
+              alt="Logo"
+              width={200}
+              height={75}
+              className="object-contain cursor-pointer"
+            />
+          </Link>
+
+          {/* Center: Nav Links (Desktop/Laptop only) */}
+          <NavLinks />
+
+          {/* Right: Sign in / Signup or Profile (Desktop/Laptop only) */}
+          <div className="hidden min-[850px]:flex items-center gap-3 justify-self-end">
+            {!hydrated ? (
+              /* Skeleton placeholder while auth state loads */
+              <div className="flex items-center gap-3">
+                <div className="w-20 h-10 bg-white/10 rounded-lg animate-pulse" />
+                <div className="w-20 h-10 bg-white/10 rounded-lg animate-pulse" />
+              </div>
+            ) : isLoggedIn ? (
+              <ProfileDropdown />
+            ) : (
+             <div className="hidden min-[850px]:flex items-center gap-3">
+  <NavCTA href="/signin" label="Sign In" />
+  <NavCTA href="/signup" label="Sign Up" primary />
+</div>
+
+            )}
+          </div>
+
+          {/* Hamburger Menu Button (Mobile only) */}
+          <div className="min-[850px]:hidden absolute right-4">
+            <Hamburger
+              toggled={isMobileMenuOpen}
+              toggle={setIsMobileMenuOpen}
+              size={24}
+              color="#fff"
+              rounded
+              label="Toggle menu"
+            />
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Navigation */}
+      <MobileNav isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+    </>
+  );
+}

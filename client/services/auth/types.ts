@@ -13,6 +13,7 @@ export interface User {
     userId?: string;
     id?: string;
     name?: string;
+    avatar?: string;
     email?: string;
     phone?: string;
     roleId?: roleIdInterface;
