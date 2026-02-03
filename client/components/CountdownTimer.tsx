@@ -1,8 +1,8 @@
 "use client";
 
+import { Clock } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import FlipNumbers from "react-flip-numbers";
-import { Clock } from "lucide-react";
 
 interface CountdownTimerProps {
     targetDate: string | Date;
@@ -32,7 +32,6 @@ function getTimeLeft(target: Date): TimeLeft | null {
 
 export default function CountdownTimer({
     targetDate,
-    variant = "flip",
     showIcon = false,
 }: CountdownTimerProps) {
     const target = useMemo(() => new Date(targetDate), [targetDate]);

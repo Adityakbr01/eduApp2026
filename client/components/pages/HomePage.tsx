@@ -1,109 +1,71 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import links from "@/constants/links";
-import { useLogout } from "@/services/auth/mutations";
-import { useAuthStore } from "@/store/auth";
-import Link from "next/link";
+import { motion } from "motion/react";
+import Image from "next/image";
+import HeroTopSection from "./Sections/HeroSections/HeroTopSection";
+import HeroMarqueeSection from "./Sections/HeroSections/HeroMarqueeSection";
+import HeroFutureReadySection from "./Sections/HeroSections/HeroFutureReadySection";
+import HeroImpactSection from "./Sections/HeroSections/HeroImpactSection";
 
-function HomePage() {
-  const { user, hydrated, isLoggedIn } = useAuthStore();
-  const logout = useLogout();
-  if (!hydrated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Checking session...
-      </div>
-    );
-  }
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-3xl space-y-8">
-        {/* Header Card */}
-        <div className=" rounded-xl shadow p-6 space-y-3">
-          <h1 className="text-2xl font-semibold">
-            {isLoggedIn ? "Welcome 👋" : "Welcome to the App"}
-          </h1>
-
-          {user ? (
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>
-                User ID: <span className="font-medium">{user.id}</span>
-              </p>
-              <p>
-                Role NAME: <span className="font-medium">{user.roleName}</span>
-              </p>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">
-              Please sign in or create an account to continue.
-            </p>
-          )}
-
-          {isLoggedIn && (
-            <Button
-              variant="destructive"
-              onClick={() => logout.mutate()}
-              className="mt-3"
-            >
-              Logout
-            </Button>
-          )}
+    <motion.main
+      className="relative min-h-screen text-white overflow-hidden"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
+      {/* Background (fade only) */}
+      <motion.div
+        className="absolute top-0 left-0 w-full -z-10 overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        {/* Mobile */}
+        <div className="block md:hidden relative w-full h-[85vh]">
+          <Image
+            src="https://dfdx9u0psdezh.cloudfront.net/common/Background_mobile.svg"
+            alt="Background mobile"
+            fill
+            priority
+            sizes="100vw"
+            className="object-center brightness-150 scale-150"
+          />
         </div>
 
-        {/* Navigation Card */}
-        <div className=" rounded-xl shadow p-6 space-y-6">
-          <h2 className="text-lg font-semibold">Navigation</h2>
-
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/profile">Profile</Link>
-            </Button>
-
-            <Button asChild>
-              <Link href="/signin">Sign In</Link>
-            </Button>
-
-            <Button variant="secondary" asChild>
-              <Link href={links.DASHBOARD.ADMIN}>Admin/Manager Dashboard</Link>
-            </Button>
-            <Button variant="secondary" asChild>
-              <Link href={links.DASHBOARD.INSTRUCTOR}>
-                Instructor Dashboard
-              </Link>
-            </Button>
-          </div>
+        {/* Desktop */}
+        <div className="hidden md:block relative w-full h-[165vh]">
+          <Image
+            src="https://dfdx9u0psdezh.cloudfront.net/common/Background.svg"
+            alt="Background desktop"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[60%_60%] brightness-110 scale-110"
+          />
         </div>
+      </motion.div>
 
-        {/* Signup Section */}
-        <div className=" rounded-xl shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Create Account</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/signup/newStudent">Student</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/signup/newInstructor">Instructor</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/signup/newSupport">Support</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/signup/newManager">Manager</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/signup/newAdmin">Admin</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/courses">Courses</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* Content animation */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.5,
+          delay: 0.05,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      >
+        <HeroTopSection />
+        <HeroMarqueeSection />
+        <HeroFutureReadySection />
+        <HeroImpactSection />
+      </motion.div>
+    </motion.main>
   );
 }
-
-export default HomePage;

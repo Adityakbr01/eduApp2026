@@ -1,10 +1,9 @@
 "use client";
 
-import { ThemeProvider } from "@/Providers/theme-provider";
-import { TanStackProvider } from "@/Providers/TanStackProvider";
-import MainProvider from "@/Providers/MainProvider";
 import LenisProvider from "@/Providers/LenisProvider";
-import PageTransition from "@/components/PageTransition";
+import MainProvider from "@/Providers/MainProvider";
+import { TanStackProvider } from "@/Providers/TanStackProvider";
+import { ThemeProvider } from "@/Providers/theme-provider";
 
 export default function Providers({
     children,
@@ -15,7 +14,7 @@ export default function Providers({
         <ThemeProvider attribute="class" defaultTheme="dark">
             <TanStackProvider>
                 <LenisProvider>
-                    <MainProvider> <PageTransition>{children}</PageTransition></MainProvider>
+                    <MainProvider> {children}</MainProvider>
                 </LenisProvider>
             </TanStackProvider>
         </ThemeProvider>

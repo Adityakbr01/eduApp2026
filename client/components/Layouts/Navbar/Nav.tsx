@@ -66,15 +66,22 @@ export default function Nav() {
       >
         <div className="mx-auto grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-16 py-3 md:py-4 lg:max-w-8xl h-full">
           {/* Left: Logo */}
-          <Link href="/" className="max-w-48 md:max-aw-32 justify-self-start">
-            <Image
-              src="https://dfdx9u0psdezh.cloudfront.net/logos/full-logo.webp"
-              alt="Logo"
-              width={200}
-              height={75}
-              className="object-contain cursor-pointer"
-            />
-          </Link>
+         <Link
+  href="/"
+  className="justify-self-start"
+>
+  <div className="relative w-40 h-12 md:w-48 md:h-14">
+    <Image
+      src="https://dfdx9u0psdezh.cloudfront.net/logos/full-logo.webp"
+      alt="Logo"
+      fill
+      priority
+      sizes="(max-width: 768px) 160px, 192px"
+      className="object-contain cursor-pointer"
+    />
+  </div>
+</Link>
+
 
           {/* Center: Nav Links (Desktop/Laptop only) */}
           <NavLinks />

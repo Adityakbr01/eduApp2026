@@ -238,7 +238,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       {link.label}
                       {isActive && (
                         <motion.div
-                          className="w-1.5 h-1.5 rounded-full bg-white"
+                          className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"
                           layoutId="activeDot"
                         />
                       )}
@@ -357,7 +357,10 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 </div>
               )}
             </motion.div>
+                        <div className="absolute -top-56 right-0 w-72 h-72 bg-gradient-to-bl from-[#e8602e]/25 to-transparent pointer-events-none blur-3xl" />
+
           </motion.div>
+          
         </>
       )}
     </AnimatePresence>

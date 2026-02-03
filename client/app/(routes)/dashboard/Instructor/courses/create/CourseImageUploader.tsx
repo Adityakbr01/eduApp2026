@@ -107,6 +107,7 @@ export default function CourseImageUploader({
       </div>
 
       {/* 🖼 Existing OR newly uploaded image */}
+    @eslint-disable-next-line @next/next/no-img-element
       {preview && (
         <img
           src={preview}

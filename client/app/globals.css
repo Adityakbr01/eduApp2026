@@ -277,8 +277,85 @@ body {
   width: 0px;
 }
 
+/* Corner Dots Box - Add this class to any element with position: relative */
+.corner-dots-box {
+  position: relative;
+  border: 1px solid #E8602E;
+  background-color: rgba(232, 96, 46, 0.13);
+}
+
+.corner-dots-box::before,
+.corner-dots-box::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background-color: white;
+  z-index: 10;
+}
+
+.corner-dots-box::before {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  box-shadow: 
+    calc(100% + 3px) 0 0 0 white; /* Top right via box-shadow */
+}
+
+.corner-dots-box::after {
+  bottom: 0;
+  left: 0;
+  transform: translate(-50%, 50%);
+  box-shadow: 
+    calc(100% + 3px) 0 0 0 white; /* Bottom right via box-shadow */
+}
+
+/* Alternative: Just the dots without border/bg - use with .corner-dots */
+.corner-dots {
+  position: relative;
+}
+
+.corner-dots::before,
+.corner-dots::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 3px;
+  background-color: white;
+  z-index: 10;
+}
+
+.corner-dots::before {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  box-shadow: calc(100% + 3px) 0 0 0 white;
+}
+
+.corner-dots::after {
+  bottom: 0;
+  left: 0;
+  transform: translate(-50%, 50%);
+  box-shadow: calc(100% + 3px) 0 0 0 white;
+}
+
 .animate-shake-with-pause {
   animation: shakeWithPause 3s ease-in-out infinite;
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+  will-change: transform;
 }
 
 @keyframes shakeWithPause {
@@ -438,3 +515,5 @@ input {
     --sidebar-ring: oklch(0.439 0 0);
   }
 }
+
+
