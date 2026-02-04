@@ -137,10 +137,11 @@ const HeroCourseSection = () => {
         tl.to(
           card,
           {
-            y: 100,
+            y: 10,
             opacity: 1,
             duration: 1,
             ease: "none",
+            "overflow-y": "visible",
           },
           index - 1
         );
@@ -197,10 +198,11 @@ const HeroCourseSection = () => {
         ref={triggerRef}
         className="relative w-full min-h-[80vh] sm:min-h-screen pt-6 sm:pt-10"
       >
-        <div
-          ref={cardsContainerRef}
-          className="relative w-full h-[60vh] sm:h-[70vh] mt-6 sm:mt-12 md:h-[80vh]"
-        >
+     <div
+  ref={cardsContainerRef}
+  className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] "
+>
+
           {courses.map((course, index) => (
             <HomeCourseCard key={index} {...course} index={index} />
           ))}
