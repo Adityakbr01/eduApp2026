@@ -24,7 +24,7 @@ export default function HeroFutureReadySection() {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 25%",
+            start: "top 15%",
             end: "+=250%",
             scrub: 0.01,
             pin: true,

@@ -1,9 +1,10 @@
 
 import HomePage from "@/components/pages/HomePage";
 
+
 function Page() {
   return (
-    <div className="min-h-screen min-w-screen h-[1000vh]">
+    <div className="min-h-screen min-w-screen">
       <HomePage />
     </div>
   );

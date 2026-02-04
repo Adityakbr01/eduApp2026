@@ -14,8 +14,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduApp",
-  description: "A modern learning platform for students and mentors inspired by Sheryians.",
+  title: {
+    default: "EduApp | Learn Skills That Make You Job Ready",
+    template: "%s | EduApp",
+  },
+
+  description:
+    "EduApp is a modern learning platform offering industry-ready courses, mentorship, and hands-on projects. Learn web development, data science, DSA, and Gen AI with expert guidance.",
+
+  keywords: [
+    "EduApp",
+    "online learning platform",
+    "coding courses",
+    "web development",
+    "data science",
+    "DSA",
+    "Gen AI",
+    "job ready courses",
+    "mentorship platform",
+  ],
+
+  openGraph: {
+    title: "EduApp – Learn Skills That Make You Job Ready",
+    description:
+      "Upskill with EduApp through practical courses, expert mentorship, and real-world projects designed for students and professionals.",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "EduApp",
+    description:
+      "Learn coding, data science, DSA, and Gen AI with mentorship on EduApp.",
+  },
 };
 
 export default function RootLayout({

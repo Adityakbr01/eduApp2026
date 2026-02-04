@@ -6,6 +6,7 @@ import HeroTopSection from "./Sections/HeroSections/HeroTopSection";
 import HeroMarqueeSection from "./Sections/HeroSections/HeroMarqueeSection";
 import HeroFutureReadySection from "./Sections/HeroSections/HeroFutureReadySection";
 import HeroImpactSection from "./Sections/HeroSections/HeroImpactSection";
+import HeroCourseSection from "./Sections/HeroSections/HeroCourseSection";
 
 export default function HomePage() {
   return (
@@ -65,6 +66,8 @@ export default function HomePage() {
         <HeroMarqueeSection />
         <HeroFutureReadySection />
         <HeroImpactSection />
+        <HeroCourseSection />
+        <div className="h-screen w-full"></div>
       </motion.div>
     </motion.main>
   );

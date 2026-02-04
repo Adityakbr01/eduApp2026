@@ -217,6 +217,18 @@ body {
   }
 }
 
+
+
+/* Disabled selecting any text */
+
+/* Disable text selection everywhere */
+* {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ */
+  user-select: none;         /* Standard */
+}
+
+
 /* ========== LAYOUT UTILITIES ========== */
 
 /**
