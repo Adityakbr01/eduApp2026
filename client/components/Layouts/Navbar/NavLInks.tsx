@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { mainNavLinks } from "./nav.config";
 
-export default function NavLinks() {
+interface NavLinksProps {
+  onRequestCallback?: () => void;
+}
+
+export default function NavLinks({ onRequestCallback }: NavLinksProps) {
   const pathname = usePathname();
 
   // Check if link is active
@@ -52,6 +56,11 @@ export default function NavLinks() {
                   type="button"
                   className="text-left"
                   aria-label={link.label}
+                  onClick={() => {
+                    if (link.label === "Request Callback") {
+                      onRequestCallback?.();
+                    }
+                  }}
                 >
                   {content}
                 </button>

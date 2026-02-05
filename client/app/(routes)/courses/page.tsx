@@ -1,5 +1,5 @@
 import APP_info from '@/constants/app_info';
-import { CoursesPage } from '@/components/pages/course/CoursesPage';
+import { CoursesPage } from '@/components/pages/CoursesPage';
 
 export const metadata = {
     title: `Explore Courses | ${APP_info.NAME}`,

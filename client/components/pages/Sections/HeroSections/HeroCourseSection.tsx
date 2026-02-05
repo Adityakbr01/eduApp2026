@@ -104,13 +104,21 @@ const HeroCourseSection = () => {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top -52%",
-          end: () => `+=${totalCards * 110}%`,
+          start: "top -50%",
+         end: () => `+=${window.innerHeight * (totalCards + 0.5)}`
+,
           pin: true,
-          scrub: 0.1,
-        //   invalidateOnRefresh: true,
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+          pinSpacing: true
+
         },
       });
+
+      ScrollTrigger.config({
+  autoRefreshEvents: "visibilitychange,DOMContentLoaded,load",
+});
+
 
       // Animate each card (starting from the second card)
       cards.forEach((card, index) => {
@@ -154,7 +162,7 @@ const HeroCourseSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="max-md:px-8 overflow-hidden flex flex-col pb-10 md:pb-16 md:mt-44 relative text-black pt-24 items-center rounded-3xl bg-[#FFF3EF] px-0"
+      className="max-md:px-8 overflow-hidden flex flex-col pb-0 md:pb-16 md:mt-44 relative text-black pt-24 items-center rounded-3xl bg-[#FFF3EF] px-0"
     >
       {/* Section Title */}
       <CornerDotsBox dotColor="bg-black/60" bgColor="bg-[#e8602e21]" textColor="text-black/90" className="mt-6 px-4 py-1.5  text-black/90 border-accent border-[0.5px] md:text-2xl text-xl font-machina font-light leading-none pt-1.5 inline-block">
@@ -196,7 +204,7 @@ const HeroCourseSection = () => {
       {/* Course Cards Stack - Scroll Trigger Container */}
       <div
         ref={triggerRef}
-        className="relative w-full min-h-[80vh] sm:min-h-screen pt-6 sm:pt-10"
+        className="relative w-full min-h-[70vh] md:min-h-[90vh] sm:min-h-screen pt-6 sm:pt-10"
       >
      <div
   ref={cardsContainerRef}

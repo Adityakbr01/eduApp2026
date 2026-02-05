@@ -69,8 +69,10 @@
 /* Tailwind v4 Theme extension */
 @theme {
   --font-NeuMachina: "NeuMachina", sans-serif;
+  --font-machina: "NeuMachina", sans-serif;
   --font-HelveticaNow: "HelveticaNow", sans-serif;
   --font-juana: "juana", sans-serif;
+  --font-manrope: var(--font-manrope), sans-serif;
 }
 
 @import "tailwindcss";
@@ -137,6 +139,7 @@ body {
   --custom-primary: #1bd1a6;
   --custom-textColor: #E9E9E9;
   --custom-inputColor: #1e1e1e;
+  --custom-accentColor: #E8602E;
 
   /*  */
   --radius: 0.625rem;
@@ -355,6 +358,16 @@ body {
   animation: shakeWithPause 3s ease-in-out infinite;
 }
 
+
+/* globals.css */
+.compareBG {
+  background: linear-gradient(
+    rgba(58, 28, 17, 0.731),
+    rgb(25, 1, 1) 167.2%
+  );
+}
+
+
 /* Marquee animation */
 @keyframes marquee {
   0% {
@@ -526,6 +539,30 @@ input {
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.439 0 0);
   }
+}
+
+/* Datetime input styling for dark theme */
+.datetime-input {
+  color-scheme: dark;
+  appearance: none;
+}
+
+.datetime-input::-webkit-calendar-picker-indicator {
+  filter: invert(53%) sepia(63%) saturate(747%) hue-rotate(349deg) brightness(96%) contrast(91%);
+  cursor: pointer;
+}
+
+.datetime-input::-webkit-datetime-edit,
+.datetime-input::-webkit-datetime-edit-text,
+.datetime-input::-webkit-datetime-edit-month-field,
+.datetime-input::-webkit-datetime-edit-day-field,
+.datetime-input::-webkit-datetime-edit-year-field,
+.datetime-input::-webkit-datetime-edit-hour-field,
+.datetime-input::-webkit-datetime-edit-minute-field,
+.datetime-input::-webkit-datetime-edit-second-field,
+.datetime-input::-webkit-datetime-edit-ampm-field {
+  background-color: transparent !important;
+  color: white;
 }
 
 

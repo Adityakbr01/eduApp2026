@@ -11,7 +11,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "eduapp-bucket-temp.s3.us-east-1.amazonaws.com" },
       { protocol: "https", hostname: "dfdx9u0psdezh.cloudfront.net" },
       { protocol: "https", hostname: "ik.imagekit.io" },
-       { protocol: "https", hostname: "www.sheryians.com" },
+      { protocol: "https", hostname: "www.sheryians.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "i.ytimg.com" },
+       { protocol: "https", hostname: "flagsapi.com" },
     ],
   },
 };

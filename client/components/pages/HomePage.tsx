@@ -7,6 +7,13 @@ import HeroMarqueeSection from "./Sections/HeroSections/HeroMarqueeSection";
 import HeroFutureReadySection from "./Sections/HeroSections/HeroFutureReadySection";
 import HeroImpactSection from "./Sections/HeroSections/HeroImpactSection";
 import HeroCourseSection from "./Sections/HeroSections/HeroCourseSection";
+import HeroTestimonialsSection from "./Sections/HeroSections/HeroTestimonialsSection";
+import HeroYoutubeSection from "./Sections/HeroSections/HeroYoutubeSection";
+import HeroCommunitySection from "./Sections/HeroSections/HeroCommunitySection";
+import HeroComparisonSection from "./Sections/HeroSections/HeroComparisonSection";
+import HeroFaqSection from "./Sections/HeroSections/HeroFaqSection";
+import HeroCtaSection from "./Sections/HeroSections/HeroCtaSection";
+import Footer from "@/components/Layouts/Footer/Footer";
 
 export default function HomePage() {
   return (
@@ -67,7 +74,13 @@ export default function HomePage() {
         <HeroFutureReadySection />
         <HeroImpactSection />
         <HeroCourseSection />
-        <div className="h-screen w-full"></div>
+        <HeroTestimonialsSection />
+        <HeroYoutubeSection />
+        <HeroCommunitySection />
+        <HeroComparisonSection />
+        <HeroFaqSection />
+        <HeroCtaSection />
+        <Footer />
       </motion.div>
     </motion.main>
   );

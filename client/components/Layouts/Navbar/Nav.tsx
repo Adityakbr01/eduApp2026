@@ -9,11 +9,13 @@ import MobileNav from "./MobileNav";
 import NavLinks from "./NavLInks";
 import ProfileDropdown from "./ProfileDropdown";
 import NavCTA from "./NavCTA";
+import RequestCallbackModal from "@/components/modals/RequestCallback";
 
 export default function Nav() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCallbackModalOpen, setIsCallbackModalOpen] = useState(false);
   const { isLoggedIn, hydrated } = useAuthStore();
 
   useEffect(() => {
@@ -27,26 +29,24 @@ export default function Nav() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Lock body scroll when mobile menu is open
+  // Simple and performant scroll lock - no position changes, no scroll restoration needed
   useEffect(() => {
     if (isMobileMenuOpen) {
-      // Store current scroll position
-      const scrollY = window.scrollY;
-      document.body.classList.add("body-scroll-locked");
-      document.body.style.top = `-${scrollY}px`;
+      // Get scrollbar width to prevent layout shift
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      // Lock scroll on html element (more reliable than body)
+      document.documentElement.style.overflow = "hidden";
+      document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
     } else {
-      // Restore scroll position
-      const scrollY = document.body.style.top;
-      document.body.classList.remove("body-scroll-locked");
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
+      // Unlock scroll
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.paddingRight = "";
     }
 
     return () => {
-      document.body.classList.remove("body-scroll-locked");
-      document.body.style.top = "";
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.paddingRight = "";
     };
   }, [isMobileMenuOpen]);
 
@@ -84,7 +84,7 @@ export default function Nav() {
 
 
           {/* Center: Nav Links (Desktop/Laptop only) */}
-          <NavLinks />
+          <NavLinks onRequestCallback={() => setIsCallbackModalOpen(true)} />
 
           {/* Right: Sign in / Signup or Profile (Desktop/Laptop only) */}
           <div className="hidden min-[850px]:flex items-center gap-3 justify-self-end">
@@ -120,7 +120,20 @@ export default function Nav() {
       </nav>
 
       {/* Mobile Navigation */}
-      <MobileNav isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+      <MobileNav 
+        isOpen={isMobileMenuOpen} 
+        onClose={closeMobileMenu} 
+        onRequestCallback={() => {
+          closeMobileMenu();
+          setIsCallbackModalOpen(true);
+        }}
+      />
+
+      {/* Request Callback Modal */}
+      <RequestCallbackModal
+        open={isCallbackModalOpen}
+        onOpenChange={setIsCallbackModalOpen}
+      />
     </>
   );
 }
