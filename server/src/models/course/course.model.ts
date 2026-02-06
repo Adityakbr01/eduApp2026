@@ -27,6 +27,8 @@ const courseSchema = new mongoose.Schema({
         },
     },
 
+    //
+
     // Course Details
     level: {
         type: String,
@@ -54,6 +56,7 @@ const courseSchema = new mongoose.Schema({
     isPublished: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },
     publishedAt: { type: Date },
+    
 
     // Enrollment
     totalEnrollments: { type: Number, default: 0, min: 0 },

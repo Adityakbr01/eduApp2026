@@ -458,6 +458,7 @@ export interface AdminCourse {
 
   status: "draft" | "published" | "pending_review"; // course status
   isPublished: boolean;
+  isFeatured?: boolean; // Featured course status
   createdAt: string;
 
   category: {

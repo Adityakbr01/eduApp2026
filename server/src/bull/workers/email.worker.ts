@@ -8,6 +8,8 @@ import accountApproveProcessor from "../jobs/email/accountApprove.job.js";
 import accountBanProcessor from "../jobs/email/accountBan.job.js";
 import registerOtpProcessor from "../jobs/email/registerOtp.job.js";
 import resetPasswordOtpProcessor from "../jobs/email/resetPasswordOtp.job.js";
+import marketingEmailProcessor from "../processors/email/marketingEmailProcessor.js";
+import processCampaignProcessor from "../processors/email/processCampaignProcessor.js";
 import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 import { EMAIL_JOB_NAMES, type EmailJobName } from "src/constants/email-jobs.constants.js";
 
@@ -17,7 +19,6 @@ const EMAIL_RATE_LIMITS: Partial<Record<EmailJobName, any>> = {
     [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: EMAIL_LIMITS?.["account-approval"] ?? null,
     [EMAIL_JOB_NAMES.ACCOUNT_BAN]: EMAIL_LIMITS?.["account-ban"] ?? null,
 };
-
 
 export async function addEmailJob(
     queue: any,
@@ -34,16 +35,17 @@ export async function addEmailJob(
     });
 }
 
-
 // ✅ WORKER (same)
 export const emailWorker = new Worker(
     EMAIL_QUEUE_NAME,
     async job => {
-        const processors = {
+        const processors: Record<string, any> = {
             [EMAIL_JOB_NAMES.REGISTER_OTP]: registerOtpProcessor,
             [EMAIL_JOB_NAMES.RESET_PASS_OTP]: resetPasswordOtpProcessor,
             [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: accountApproveProcessor,
-            [EMAIL_JOB_NAMES.ACCOUNT_BAN]: accountBanProcessor, // To be implemented
+            [EMAIL_JOB_NAMES.ACCOUNT_BAN]: accountBanProcessor,
+            "send-marketing-email": marketingEmailProcessor,
+            "process-campaign": processCampaignProcessor,
         };
 
         const processor = processors[job.name];

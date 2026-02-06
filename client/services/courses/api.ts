@@ -282,4 +282,8 @@ export const adminCourseApi = {
     const response = await apiClient.put(`${ADMIN_BASE}/course-status-requests/${requestId}/review`, { action, reason });
     return response.data;
     },
+    toggleFeaturedCourse: async (courseId: string): Promise<ApiResponse<CourseDetailData>> => {
+        const response = await apiClient.put(`${ADMIN_BASE}/${courseId}/toggleFeatured`);
+        return response.data;
+    }
 };

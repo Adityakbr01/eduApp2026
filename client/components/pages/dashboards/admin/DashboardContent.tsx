@@ -1,23 +1,12 @@
 import PermissionDeniedOverlay from "@/components/PermissionDenidOverlay";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import { Dispatch, SetStateAction } from "react";
 import UsersPage from "../../UsersPage";
 import { UserRow } from "../common/types";
 import {
   ActivityFeedItem,
   adminUtils,
-  CourseInsight,
   PermissionKey,
   RecentUserItem,
   RolePermission
@@ -25,6 +14,11 @@ import {
 import AdminCoursesPage from "./AdminCoursesPage";
 import DashBoardHeader from "./DashBoardHeader";
 import OverviewWidgets from "./OverviewWidgets";
+
+const EmailMarketingPage = dynamic(
+  () => import("./AdminEmailMarketingPage").then((mod) => mod.default),
+  { ssr: false }
+);
 
 interface DashboardContentProps {
   activeSection: string;
@@ -87,11 +81,9 @@ function DashboardContent({
   isLoadingUsers,
   isUsersError,
   usersError,
-  rolePermissions,
-  handleTogglePermission,
 }: DashboardContentProps) {
   return (
-    <main className="flex-1 flex flex-col h-screen overflow-hidden">
+    <main className="flex-1 flex flex-col h-screen overflow-scroll">
       <DashBoardHeader
         sectionTitle={activeSectionItem.label}
         activeSection={activeSectionItem}
@@ -143,68 +135,15 @@ function DashboardContent({
         )}
 
         {activeSection === adminUtils.sidebarItems[2].value && (
-          <div>
+          <div className="min-h-screen overflow-y-auto">
             <AdminCoursesPage />
           </div>
         )}
 
         {activeSection === adminUtils.sidebarItems[3].value && (
-          <section>
-            <Card>
-              <CardHeader>
-                <CardTitle>🔑 Role permissions</CardTitle>
-                <CardDescription>
-                  Define granular access control for all roles
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-[1.5fr_repeat(4,minmax(90px,1fr))] items-center gap-4 text-xs font-medium uppercase text-muted-foreground">
-                  <span>Role</span>
-                  {adminUtils.permissionScopes.map((scope) => (
-                    <span key={scope.key}>{scope.label}</span>
-                  ))}
-                </div>
-                <Separator />
-                <div className="space-y-4">
-                  {rolePermissions.map((entry) => (
-                    <div
-                      key={entry.role}
-                      className="grid grid-cols-[1.5fr_repeat(4,minmax(90px,1fr))] items-center gap-4 rounded-xl border p-4"
-                    >
-                      <div>
-                        <p className="font-medium">{entry.role}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {entry.description}
-                        </p>
-                      </div>
-                      {adminUtils.permissionScopes.map((scope) => (
-                        <div
-                          key={`${entry.role}-${scope.key}`}
-                          className="flex items-center justify-center"
-                        >
-                          <Switch
-                            checked={entry.permissions[scope.key]}
-                            onCheckedChange={(checked) =>
-                              handleTogglePermission(
-                                entry.role,
-                                scope.key,
-                                checked
-                              )
-                            }
-                            aria-label={`${scope.label} permission for ${entry.role}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-              <CardFooter className="justify-end gap-3">
-                <Button variant="outline">Discard</Button>
-                <Button>Save changes</Button>
-              </CardFooter>
-            </Card>
-          </section>
+          <div className="min-h-screen h-screen overflow-y-auto">
+            <EmailMarketingPage />
+          </div>
         )}
       </div>
     </main>

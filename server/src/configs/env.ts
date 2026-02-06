@@ -64,6 +64,9 @@ const envSchema = z.object({
     UPSTASH_REDIS_URL: z.string().url().optional(),
     REDIS_URL: z.string().url().optional(),
 
+    // AI - Gemini
+    GEMINI_API_KEY: z.string().min(10).optional(),
+
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

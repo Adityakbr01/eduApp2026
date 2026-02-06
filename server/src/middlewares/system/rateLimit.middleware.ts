@@ -42,18 +42,16 @@ export const authRateLimiter = rateLimit({
  * 10 uploads per 5 minutes per user
  */
 export const uploadRateLimiter = rateLimit({
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 10, // 10 upload requests per 5 minutes
+    windowMs: 10 * 60 * 1000,
+    max: 10,
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
         sendCommand: (command: string, ...args: string[]) =>
             redis.call(command, args) as never,
     }),
-    // Use user ID as key instead of IP (for authenticated routes)
-    keyGenerator: (req) => {
-        return `upload:${(req as any).user?.id || req.ip}`;
-    },
+    keyGenerator: (req) => `upload:${req.user.id}`,
+    skipFailedRequests: true, // important for uploads
     message: {
         success: false,
         error: {
@@ -63,3 +61,4 @@ export const uploadRateLimiter = rateLimit({
         },
     },
 });
+

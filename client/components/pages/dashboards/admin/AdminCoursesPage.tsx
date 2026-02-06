@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Leaf, MoreHorizontal } from "lucide-react";
+import { Leaf, MoreHorizontal, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 import { useGetCoursesForAdmin } from "@/services/courses/queries";
-import { useAdminReviewCourseRequest } from "@/services/courses/mutations";
+import { useAdminReviewCourseRequest, useToggleFeaturedCourse } from "@/services/courses/mutations";
 import { AdminCourse, CourseStatus } from "@/services/courses";
 
 export default function AdminCoursesPage() {
@@ -46,6 +47,8 @@ export default function AdminCoursesPage() {
     null
   );
 
+
+
   /* ----------------------------- view course dialog ----------------------------- */
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(
@@ -56,6 +59,7 @@ export default function AdminCoursesPage() {
   const { data, isLoading, isError } = useGetCoursesForAdmin({ page, limit });
 
   const { mutate: reviewRequest, isPending } = useAdminReviewCourseRequest();
+  const { mutate: toggleFeatured, isPending: isTogglingFeatured } = useToggleFeaturedCourse();
 
   if (isLoading) {
     return (
@@ -101,6 +105,10 @@ export default function AdminCoursesPage() {
     setViewOpen(true);
   };
 
+  const handleToggleFeatured = (courseId: string) => {
+    toggleFeatured(courseId);
+  };
+
   return (
     <div className="space-y-6">
       {/* ----------------------------- Table ----------------------------- */}
@@ -112,6 +120,7 @@ export default function AdminCoursesPage() {
               <TableHead>Category</TableHead>
               <TableHead>Instructor</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Featured</TableHead>
               <TableHead>Request Type</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-center">
@@ -137,6 +146,16 @@ export default function AdminCoursesPage() {
                 <TableCell>
                   <Badge variant={course.isPublished ? "default" : "secondary"}>
                     {course.status}
+                  </Badge>
+                </TableCell>
+
+                <TableCell>
+                  <Badge
+                    variant={course.isFeatured ? "default" : "secondary"}
+                    className={course.isFeatured ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-none" : ""}
+                  >
+                    <Star className={`w-3 h-3 mr-1 ${course.isFeatured ? "fill-white" : ""}`} />
+                    {course.isFeatured ? "Featured" : "Not Featured"}
                   </Badge>
                 </TableCell>
 
@@ -179,8 +198,17 @@ export default function AdminCoursesPage() {
                           >
                             Reject
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                         </>
                       )}
+                      <DropdownMenuItem
+                        onClick={() => handleToggleFeatured(course._id)}
+                        disabled={isTogglingFeatured}
+                      >
+                        <Star className={`w-4 h-4 mr-2 ${course.isFeatured ? "fill-amber-500 text-amber-500" : ""}`} />
+                        {course.isFeatured ? "Unmark as Featured" : "Mark as Featured"}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleViewCourse(course)}
                       >
@@ -194,7 +222,7 @@ export default function AdminCoursesPage() {
 
             {!courses.length && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={8} className="text-center py-6">
                   No courses found
                 </TableCell>
               </TableRow>
@@ -291,6 +319,16 @@ export default function AdminCoursesPage() {
               </p>
               <p>
                 <strong>Status:</strong> {selectedCourse.status}
+              </p>
+              <p className="flex items-center gap-2">
+                <strong>Featured:</strong>
+                <Badge
+                  variant={selectedCourse.isFeatured ? "default" : "secondary"}
+                  className={selectedCourse.isFeatured ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-none" : ""}
+                >
+                  <Star className={`w-3 h-3 mr-1 ${selectedCourse.isFeatured ? "fill-white" : ""}`} />
+                  {selectedCourse.isFeatured ? "Yes" : "No"}
+                </Badge>
               </p>
               {selectedCourse.requestType && (
                 <p>

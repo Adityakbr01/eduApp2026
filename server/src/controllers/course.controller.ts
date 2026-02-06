@@ -92,6 +92,11 @@ const courseController = {
         const result = await courseService.toggleCourseStatusAdmin(req.params.requestId, req.body.action, adminId, req.body.reason);
         sendResponse(res, 200, "Course status updated successfully by Admin", result);
     }),
+    toggleFeaturedCourse: catchAsync<{ id: string }>(async (req, res) => {
+        const adminId = req.user!.id;
+        const result = await courseService.toggleFeaturedCourse(req.params.id, adminId);
+        sendResponse(res, 200, "Course featured status toggled successfully by Admin", result);
+    }),
 };
 
 export default courseController;

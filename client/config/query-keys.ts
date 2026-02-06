@@ -81,4 +81,5 @@ export const QUERY_KEYS = {
         BY_COURSE_PAGINATED: (courseId: string, page: number) => ["reviews", "course", courseId, page],
         MY_REVIEW: (courseId: string) => ["reviews", "my-review", courseId],
     },
+    PREFERENCES: ["preferences"],
 };

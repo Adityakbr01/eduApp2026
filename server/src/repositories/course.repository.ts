@@ -502,6 +502,7 @@ export const courseRepository = {
         description: 1,
         status: 1,
         isPublished: 1,
+        isFeatured: 1,
         createdAt: 1,
 
         // 🔑 review info

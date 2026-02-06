@@ -94,6 +94,9 @@ adminRouter.use(checkRole(ROLES.ADMIN.code));
 adminRouter.get("/", courseController.GetCourseForAdmin);
 adminRouter.put("/course-status-requests/:requestId/review", courseController.toggleCourseStatusAdmin);
 
+//toggle course IsFeatured
+adminRouter.put("/:id/toggleFeatured", courseController.toggleFeaturedCourse);
+
 router.use("/admin", adminRouter);
 
 // ============================================

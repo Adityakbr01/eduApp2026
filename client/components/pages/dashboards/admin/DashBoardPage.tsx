@@ -183,7 +183,7 @@ function DashBoardPage() {
 
   /* -------------------------------- render -------------------------------- */
   return (
-    <div className="bg-muted/30 flex h-screen overflow-hidden">
+    <div className="bg-muted/30 flex  h-screen overflow-hidden">
       <DashBoardSideBar
         activeSection={activeSection}
         setActiveSection={setActiveSection}

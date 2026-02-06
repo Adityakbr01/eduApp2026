@@ -91,7 +91,7 @@ const sidebarItems = [
   { label: "Overview", icon: Activity, value: "overview" },
   { label: "Users", icon: Users, value: "users" },
   { label: "Courses", icon: Shield, value: "courses" },
-  { label: "Settings", icon: Settings, value: "settings" },
+  {label:"Email Marketing", icon: Settings, value: "email"},
 ];
 const ManagerSidebarItems = [
   { label: "Overview", icon: Activity, value: "overview" },
@@ -329,58 +329,6 @@ const mockActivityFeed: ActivityFeedItem[] = [
     tone: "warning",
   },
 ];
-
-const mockCourseInsights: CourseInsight[] = [
-  {
-    id: "courses-live",
-    title: "Live cohorts",
-    value: "18",
-    subtext: "Across STEM & Design",
-    progress: 72,
-    accent: "text-primary",
-    trend: "+3 this week",
-  },
-  {
-    id: "courses-building",
-    title: "In production",
-    value: "9",
-    subtext: "Assets ready for QA",
-    progress: 54,
-    accent: "text-amber-600",
-    trend: "launching soon",
-  },
-  {
-    id: "courses-complete",
-    title: "Graduated cohorts",
-    value: "1.4k",
-    subtext: "Alumni in the last 12 mo",
-    progress: 88,
-    accent: "text-emerald-600",
-    trend: "up 12%",
-  },
-];
-
-const mockBanSummary: BanSummary = {
-  totalBanned: 4,
-  totalRestored: 2,
-  deltaLabel: "2 actions in the last 24h",
-  events: [
-    {
-      id: "ban-1",
-      name: "Aayush Gupta",
-      action: "ban",
-      note: "Chargeback detected",
-      timeAgo: "2h ago",
-    },
-    {
-      id: "ban-2",
-      name: "Neha Rao",
-      action: "restore",
-      note: "Manual review",
-      timeAgo: "4h ago",
-    },
-  ],
-};
 
 const buildRecentUsers = (rows: UserRow[], limit = 5): RecentUserItem[] => {
   if (!rows?.length) return mockRecentUsers;

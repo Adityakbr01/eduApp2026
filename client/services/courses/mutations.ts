@@ -420,3 +420,22 @@ export const useReorderContents = () => {
         onError: (error) => mutationHandlers.error(error),
     });
 };
+
+
+// ==================== ADMIN COURSE MUTATIONS ====================
+/**
+ * Toggle course featured status
+ */
+export const useToggleFeaturedCourse = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => adminCourseApi.toggleFeaturedCourse(id),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Course featured status toggled successfully");
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.ADMIN_ALL],
+            });
+        }
+        ,        onError: (error) => mutationHandlers.error(error),
+    });
+};

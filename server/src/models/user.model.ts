@@ -8,39 +8,10 @@ import { env } from "src/configs/env.js";
 import { approvalStatusEnum, ProfessionEnum, type IUser } from "src/types/user.model.type.js";
 import { PermissionModel } from "./permission.model.js";
 import type { PermissionDTO } from "src/types/auth.type.js";
+import userProfileSchema from "./userProfileSchema.js";
 
-// Reusable schema for versioned assets (avatar, resume, etc.)
-const versionedAssetSchema = new Schema({
-    key: { type: String, required: true },
-    version: { type: Number, required: true, default: 1 },
-    updatedAt: { type: Date, default: Date.now },
-}, { _id: false });
 
-// User profile schema
-const userProfileSchema = new Schema({
-    // Personal Info
-    firstName: { type: String, maxlength: 50 },
-    lastName: { type: String, maxlength: 50 },
-    dateOfBirth: { type: Date },
-    bio: { type: String, maxlength: 500 },
-    avatar: { type: versionedAssetSchema, default: undefined },
-    
-    // Location
-    city: { type: String, maxlength: 100 },
-    state: { type: String, maxlength: 100 },
-    country: { type: String, maxlength: 100 },
-    
-    // Professional
-    profession: { 
-        type: String, 
-        enum: Object.values(ProfessionEnum),
-        default: ProfessionEnum.STUDENT 
-    },
-    organization: { type: String, maxlength: 200 },
-    resume: { type: versionedAssetSchema, default: undefined },
-    linkedinUrl: { type: String, maxlength: 200 },
-    githubUrl: { type: String, maxlength: 200 },
-}, { _id: false });
+
 
 const userSchema = new Schema<IUser>(
     {

@@ -9,6 +9,9 @@ import enrollmentRouter from "./enrollment.route.js";
 import uploadRouter from "./upload.route.js";
 import assessmentRouter from "./assessment.route.js";
 import reviewRouter from "./review.route.js";
+import userPreferenceRouter from "./userPreference.route.js";
+import emailCampaignRouter from "./emailCampaign.route.js";
+import aiRouter from "./ai.route.js";
 
 const router = express.Router();
 router.use(`${API_PREFIX}/health`, healthRouter);
@@ -20,5 +23,8 @@ router.use(`${API_PREFIX}/courses`, courseRouter);
 router.use(`${API_PREFIX}/assessments`, assessmentRouter); // Quiz & Assignment routes
 router.use(`${API_PREFIX}/reviews`, reviewRouter); // Course review routes
 router.use(`${API_PREFIX}`, enrollmentRouter); // Enrollment & Payment routes
+router.use(`${API_PREFIX}/preferences`, userPreferenceRouter); // User preferences routes
+router.use(`${API_PREFIX}/campaigns`, emailCampaignRouter); // Email marketing campaigns
+router.use(`${API_PREFIX}/ai`, aiRouter); // AI generation routes
 
 export default router;

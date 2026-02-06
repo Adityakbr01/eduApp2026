@@ -50,7 +50,7 @@ router.delete(
 // Course Image Upload //Tested
 router.post(
   "/course/presigned-url/image",
-    uploadController.getCourseImagePresignedUrl
+  uploadController.getCourseImagePresignedUrl
 );
 
 

@@ -87,7 +87,7 @@ export function InstructorDashboard() {
   }
 
   return (
-    <div className="bg-muted/30 flex  h-screen overflow-hidden">
+      <div className="bg-muted/30 flex h-screen overflow-hidden">
       {/* Sidebar */}
       <InstructorSidebar
         activeSection={activeSection}
@@ -98,7 +98,7 @@ export function InstructorDashboard() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <InstructorHeader
           sectionTitle={activeSectionItem.label}
           activeSection={activeSection}
