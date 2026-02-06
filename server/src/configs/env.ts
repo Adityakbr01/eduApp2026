@@ -9,7 +9,7 @@ logger.info("Environment:", process.env.NODE_ENV), isProd;
 
 
 const envSchema = z.object({
-    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    NODE_ENV: z.enum(["development", "production", "test","staging",""]).default("development"),
     PORT: z.coerce.number().default(3001),
 
     // Mongo
@@ -57,6 +57,7 @@ const envSchema = z.object({
     AWS_REGION: z.string().min(2),
     AWS_S3_BUCKET_NAME: z.string().min(3),
     AWS_S3_BUCKET_NAME_PROD: z.string().min(3),
+    CDN_BASE_URL: z.string().url().optional(),
 
 
     //Redis

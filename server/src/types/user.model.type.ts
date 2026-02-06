@@ -7,6 +7,41 @@ export enum approvalStatusEnum {
     REJECTED = "REJECTED",
 }
 
+export enum ProfessionEnum {
+    STUDENT = "student",
+    PROFESSIONAL = "professional",
+    FREELANCER = "freelancer",
+    ENTREPRENEUR = "entrepreneur",
+    JOB_SEEKER = "job_seeker",
+}
+
+export interface VersionedAsset {
+    key: string;
+    version: number;
+    updatedAt?: Date;
+}
+
+export interface UserProfile {
+    // Personal Info
+    firstName?: string;
+    lastName?: string;
+    dateOfBirth?: Date;
+    bio?: string;
+    avatar?: VersionedAsset;
+    
+    // Location
+    city?: string;
+    state?: string;
+    country?: string;
+    
+    // Professional
+    profession?: ProfessionEnum;
+    organization?: string;
+    resume?: VersionedAsset;
+    linkedinUrl?: string;
+    githubUrl?: string;
+}
+
 export interface InstructorProfile {
     bio?: string;
     expertise?: string[];
@@ -38,6 +73,9 @@ export interface IUser {
     isEmailVerified: boolean;
     phone?: string;
     address?: string;
+
+    // User Profile (personal, professional info)
+    profile?: UserProfile;
 
     approvalStatus?: approvalStatusEnum;
     approvedBy?: Types.ObjectId;

@@ -20,6 +20,8 @@ import { authRepository } from "../repositories/auth.repository.js";
 import sessionService from "../cache/userCache.js";
 import userCache from "../cache/userCache.js";
 import { enrollmentService } from "./enrollment.service.js";
+import { env } from "src/configs/env.js";
+import { getCdnUrl } from "src/utils/s3KeyGenerator.js";
 
 
 export const authService = {
@@ -515,6 +517,12 @@ export const authService = {
                 enrolledCourses = await enrollmentService.getEnrolmentCoursesIds(userId);
             }
 
+        // Build avatar URL from profile.avatar if exists
+        const profile = (user as any).profile || {};
+        const avatarUrl = profile.avatar?.key 
+            ? `${getCdnUrl(profile.avatar.key)}`
+            : (user as any).avatar || undefined;
+
         const responseUser = {
             id: user._id,
             name: user.name,
@@ -528,7 +536,31 @@ export const authService = {
             rolePermissions,
             EffectivePermissions,
             phone: user.phone,
+            address: (user as any).address,
+            avatar: avatarUrl,
             enrolledCourses: enrolledCourses,
+            // Profile data
+            profile: {
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                dateOfBirth: profile.dateOfBirth?.toISOString?.()?.split('T')[0] || profile.dateOfBirth,
+                bio: profile.bio,
+                city: profile.city,
+                state: profile.state,
+                country: profile.country,
+                profession: profile.profession,
+                organization: profile.organization,
+                linkedinUrl: profile.linkedinUrl,
+                githubUrl: profile.githubUrl,
+                avatarVersion: profile.avatar?.version,
+                // Resume info
+                hasResume: !!profile.resume?.key,
+                resumeFilename: profile.resume?.key ? profile.resume.key.split('/').pop() : undefined,
+                resumeVersion: profile.resume?.version,
+                resumeUrl: getCdnUrl(profile.resume?.key || "") || undefined,
+                resumeName: profile.resume?.originalFilename || undefined,
+            },
+            professionalProfile: (user as any).instructorProfile || (user as any).managerProfile || (user as any).supportTeamProfile || undefined,
         };
 
         await sessionService.createUserProfile(userId, responseUser);

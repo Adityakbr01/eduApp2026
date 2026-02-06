@@ -9,6 +9,28 @@ interface roleIdInterface {
     _id: string
 }
 
+export interface UserProfile {
+    firstName?: string;
+    lastName?: string;
+    dateOfBirth?: string;
+    bio?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    profession?: string;
+    organization?: string;
+    linkedinUrl?: string;
+    githubUrl?: string;
+    avatarVersion?: number;
+    // Resume info
+    hasResume?: boolean;
+    resumeFilename?: string;
+    resumeVersion?: number;
+    resumeUrl?: string;
+    resumeName?: string; // For frontend display purposes (can be same as resumeFilename or derived from it)
+    
+}
+
 export interface User {
     userId?: string;
     id?: string;
@@ -32,6 +54,7 @@ export interface User {
     sessionId?: string;
     actualRoleId?: string;
     enrolledCourses?: EnrolledCourse[];
+    profile?: UserProfile;
 }
 
 

@@ -42,7 +42,7 @@ export const mainNavLinks: NavLink[] = [
 
 // ============ Profile Menu Items (Common for all logged-in users) ============
 export const commonProfileMenuItems: ProfileMenuItem[] = [
-  { label: "My Profile", href: "/dashboard/profile", icon: User },
+  { label: "My Profile", href: "/profile", icon: User },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

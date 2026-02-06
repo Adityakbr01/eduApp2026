@@ -4,6 +4,7 @@ import { authRateLimiter } from "src/middlewares/system/rateLimit.middleware.js"
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import { validateRequest } from "src/middlewares/custom/validateRequest.js";
 import authController from "src/controllers/auth.controller.js";
+import profileController from "src/controllers/profile.controller.js";
 const router = Router();
 
 router.post("/register", authRateLimiter, validateRequest(registerSchema), authController.registerUser);
@@ -16,6 +17,11 @@ router.post("/change-password", authRateLimiter, validateRequest(changePasswordS
 router.post("/logout", authRateLimiter, authMiddleware, authController.logoutUser);
 router.get("/me", authMiddleware, authController.getCurrentUser);
 router.get("/session", authMiddleware, authController.getSession);
+
+// ==================== PROFILE ROUTES ====================
+router.get("/me/profile", authMiddleware, profileController.getProfile);
+router.patch("/me/profile", authMiddleware, profileController.updateProfile);
+router.delete("/me/resume", authMiddleware, profileController.deleteResume);
 
 
 export default router;

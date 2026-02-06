@@ -63,19 +63,19 @@ export default function ProfileDropdown() {
         disabled={isLoggingOut}
       >
         <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#e8602e] to-[#ff733e] flex items-center justify-center">
-          {user?.avatar ? (
-            <Image
-              src={user.avatar}
-              alt={user.name || "Profile"}
-              width={32}
-              height={32}
-              className="object-cover w-full h-full"
-            />
-          ) : (
-            <span className="text-white text-sm font-semibold">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </span>
-          )}
+         {user?.avatar ? (
+  <img
+    src={user.avatar}
+    alt={user.name || "Profile"}
+    loading="lazy"
+    className="w-full h-full object-cover"
+  />
+) : (
+  <span className="text-white text-sm font-semibold">
+    {user?.name?.charAt(0).toUpperCase() || "U"}
+  </span>
+)}
+
         </div>
         <ChevronDown
           className={`w-4 h-4 text-white/70 transition-transform duration-200 ${

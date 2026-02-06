@@ -36,3 +36,30 @@ export const authRateLimiter = rateLimit({
         },
     },
 });
+
+/**
+ * Rate limiter for upload routes - stricter to prevent spam
+ * 10 uploads per 5 minutes per user
+ */
+export const uploadRateLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 10, // 10 upload requests per 5 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new RedisStore({
+        sendCommand: (command: string, ...args: string[]) =>
+            redis.call(command, args) as never,
+    }),
+    // Use user ID as key instead of IP (for authenticated routes)
+    keyGenerator: (req) => {
+        return `upload:${(req as any).user?.id || req.ip}`;
+    },
+    message: {
+        success: false,
+        error: {
+            code: ERROR_CODE.RATE_LIMIT_EXCEEDED,
+            message: "Too many upload requests. Please try again in a few minutes.",
+            details: [],
+        },
+    },
+});
