@@ -1,6 +1,6 @@
 import type { Job } from "bullmq";
-import type { SendMarketingEmailJobData } from "./marketingEmail.job.js";
 import { Resend } from "resend";
+import type { SendMarketingEmailJobData } from "src/bull/jobs/email/marketingEmail.job.js";
 import { env } from "src/configs/env.js";
 import EmailLogModel, { EmailLogStatus } from "src/models/emailLog.model.js";
 import logger from "src/utils/logger.js";

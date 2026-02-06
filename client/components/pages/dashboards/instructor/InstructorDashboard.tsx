@@ -98,7 +98,7 @@ export function InstructorDashboard() {
       />
 
       {/* Main Content */}
-       <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden">
         <InstructorHeader
           sectionTitle={activeSectionItem.label}
           activeSection={activeSection}

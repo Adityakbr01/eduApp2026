@@ -53,6 +53,7 @@ function DashBoardPage() {
   const [activeSection, setActiveSection] = useState(
     adminUtils.sidebarItems[0].value
   );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const activeSectionItem = useMemo(
     () =>
@@ -188,6 +189,8 @@ function DashBoardPage() {
         activeSection={activeSection}
         setActiveSection={setActiveSection}
         logout={logout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <DashboardContent
@@ -212,6 +215,7 @@ function DashBoardPage() {
         usersError={usersError}
         rolePermissions={rolePermissions}
         handleTogglePermission={handleTogglePermission}
+        onMenuClick={() => setIsSidebarOpen(true)}
       />
     </div>
   );

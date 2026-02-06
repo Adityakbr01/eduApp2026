@@ -59,6 +59,7 @@ interface DashboardContentProps {
     permissionKey: PermissionKey,
     checked: boolean
   ) => void;
+  onMenuClick?: () => void;
 }
 
 function DashboardContent({
@@ -81,14 +82,16 @@ function DashboardContent({
   isLoadingUsers,
   isUsersError,
   usersError,
+  onMenuClick,
 }: DashboardContentProps) {
   return (
-    <main className="flex-1 flex flex-col h-screen overflow-scroll">
+    <main className="flex-1 flex flex-col overflow-hidden">
       <DashBoardHeader
         sectionTitle={activeSectionItem.label}
         activeSection={activeSectionItem}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        onMenuClick={onMenuClick}
       />
       <div className="flex-1 overflow-y-auto space-y-6 px-4 py-6 md:px-8">
         {activeSection === adminUtils.sidebarItems[0].value && (

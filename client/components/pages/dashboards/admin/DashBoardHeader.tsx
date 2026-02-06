@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Menu } from 'lucide-react';
 import { adminUtils } from "../common/utils";
 import { user_roles } from '@/constants/roles';
 
@@ -9,6 +9,7 @@ interface Props {
     activeSection: (typeof adminUtils.sidebarItems)[number];
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    onMenuClick?: () => void;
 };
 
 function DashBoardHeader({
@@ -16,13 +17,25 @@ function DashBoardHeader({
     activeSection,
     searchQuery,
     setSearchQuery,
+    onMenuClick,
 }: Props) {
     return (
         <header className="border-b bg-linear-to-r from-primary/5 via-background/80 to-background/80 px-4 py-4 backdrop-blur md:px-8">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <p className="text-sm text-primary font-semibold">🛡️ {user_roles.ADMIN.toUpperCase()} || {user_roles.MANAGER.toUpperCase()} Dashboard</p>
-                    <h2 className="text-2xl font-bold tracking-tight text-primary">{sectionTitle}</h2>
+                <div className="flex items-center gap-3">
+                    {/* Mobile menu button */}
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="lg:hidden"
+                        onClick={onMenuClick}
+                    >
+                        <Menu className="h-5 w-5" />
+                    </Button>
+                    <div>
+                        <p className="text-sm text-primary font-semibold">🛡️ {user_roles.ADMIN.toUpperCase()} || {user_roles.MANAGER.toUpperCase()} Dashboard</p>
+                        <h2 className="text-2xl font-bold tracking-tight text-primary">{sectionTitle}</h2>
+                    </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     {activeSection.value === "users" && (
