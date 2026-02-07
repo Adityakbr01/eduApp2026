@@ -1,20 +1,20 @@
-import { useMutation, UseMutationOptions, useQueryClient } from "@tanstack/react-query";
-import { authApi } from "./api";
-import { mutationHandlers } from "../common/mutation-utils";
 import { QUERY_KEYS } from "@/config/query-keys";
+import { STORAGE_KEYS } from "@/lib/constants/storage";
+import { secureLocalStorage } from "@/lib/utils/encryption";
 import { useAuthStore } from "@/store/auth";
+import { useMutation, UseMutationOptions, useQueryClient } from "@tanstack/react-query";
+import { mutationHandlers } from "../common/mutation-utils";
+import { authApi } from "./api";
 import type {
-    RegisterRequest,
+    AuthResponse,
+    ChangePasswordRequest,
     LoginRequest,
+    OtpResponse,
+    RegisterRequest,
     SendOtpRequest,
     VerifyRegisterOtpRequest,
     VerifyResetPasswordOtpRequest,
-    ChangePasswordRequest,
-    AuthResponse,
-    OtpResponse,
 } from "./types";
-import { secureLocalStorage } from "@/lib/utils/encryption";
-import { INSTRUCTOR_LAST_ACTIVE_SECTION_KEY, LAST_ACTIVE_SECTION_KEY } from "@/config/LocalStorage-Keys";
 
 /* ---------------- REGISTER ---------------- */
 
@@ -151,8 +151,10 @@ export const useLogout = () => {
             clearAuth();
             qc.clear();
             mutationHandlers.success("Logged out");
-            secureLocalStorage.removeItem(LAST_ACTIVE_SECTION_KEY);
-            secureLocalStorage.removeItem(INSTRUCTOR_LAST_ACTIVE_SECTION_KEY);
+            secureLocalStorage.removeItem(STORAGE_KEYS.LAST_ACTIVE_SECTION_KEY);
+            secureLocalStorage.removeItem(STORAGE_KEYS.INSTRUCTOR_LAST_ACTIVE_SECTION_KEY);
+            secureLocalStorage.removeItem(STORAGE_KEYS.BATCH_ACTIVE_VIEW);
+            secureLocalStorage.removeItem(STORAGE_KEYS.BATCH_MOBILE_TAB);
         },
         onError: () => {
             clearAuth();

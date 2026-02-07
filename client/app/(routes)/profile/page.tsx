@@ -14,7 +14,6 @@ import ProfileSkeleton from "@/components/ProfileSkeleton";
 
 // Skeleton component for loading state
 
-
 type TabType = "basic" | "professional" | "batches" | "projects";
 
 const navTabs = [
@@ -176,10 +175,7 @@ export default function ProfilePage() {
                           : "bg-[#0A0A0A] text-white/30 group-hover:text-white/60 group-hover:bg-[#111]"
                       }`}
                     >
-                      <Icon
-                        size={18}
-                        strokeWidth={isActive ? 2 : 1.5}
-                      />
+                      <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
                     </div>
                     <div className="relative z-10 text-left flex-1 min-w-0">
                       <div
@@ -206,7 +202,9 @@ export default function ProfilePage() {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3 mt-6 w-full">
             <div className="bg-[#161616] border border-white/5 rounded-xl p-4 flex flex-col justify-between h-[90px] hover:border-white/10 transition-all">
-              <div className="text-3xl font-manrope font-medium text-white">1</div>
+              <div className="text-3xl font-manrope font-medium text-white">
+                1
+              </div>
               <div className="text-[11px] text-white/40 font-manrope font-light leading-tight">
                 Purchased Batches
               </div>
@@ -229,4 +227,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

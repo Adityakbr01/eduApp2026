@@ -1,28 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { STORAGE_KEYS } from "@/lib/constants/storage";
+import { secureLocalStorage } from "@/lib/utils/encryption";
+import { useLogout } from "@/services/auth/mutations";
 import {
+  CourseStatus,
+  useDeleteCourse,
   useGetInstructorCourses,
   useSubmitCourseRequest,
-  useDeleteCourse,
-  CourseStatus,
 } from "@/services/courses";
-import { useLogout } from "@/services/auth/mutations";
-import { Button } from "@/components/ui/button";
-import { InstructorSidebar } from "./InstructorSidebar";
+import { useEffect, useMemo, useState } from "react";
+import { CoursesSection } from "./CoursesSection";
 import { InstructorHeader } from "./InstructorHeader";
 import { InstructorOverview } from "./InstructorOverview";
-import { CoursesSection } from "./CoursesSection";
+import { InstructorSidebar } from "./InstructorSidebar";
 import {
-  instructorSidebarItems,
-  InstructorSidebarValue,
   calculateStats,
   getDefaultStats,
   getRecentCourses,
+  instructorSidebarItems,
+  InstructorSidebarValue,
 } from "./utils";
-import { useEffect } from "react";
-import { secureLocalStorage } from "@/lib/utils/encryption";
-import { INSTRUCTOR_LAST_ACTIVE_SECTION_KEY } from "@/config/LocalStorage-Keys";
 
 export function InstructorDashboard() {
   const logout = useLogout();
@@ -41,7 +40,7 @@ export function InstructorDashboard() {
       }
 
       const savedSection = secureLocalStorage.getItem<InstructorSidebarValue>(
-        INSTRUCTOR_LAST_ACTIVE_SECTION_KEY,
+        STORAGE_KEYS.INSTRUCTOR_LAST_ACTIVE_SECTION_KEY,
       );
 
       const foundItem = instructorSidebarItems.find(
@@ -92,7 +91,7 @@ export function InstructorDashboard() {
   // 🔹 Save active section to secure storage whenever it changes
   useEffect(() => {
     secureLocalStorage.setItem(
-      INSTRUCTOR_LAST_ACTIVE_SECTION_KEY,
+      STORAGE_KEYS.INSTRUCTOR_LAST_ACTIVE_SECTION_KEY,
       activeSection,
     );
   }, [activeSection]);

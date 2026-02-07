@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useShouldLenisRun } from "@/lib/utils/shouldLenisRun";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,6 +14,7 @@ export default function LenisProvider({
   children: React.ReactNode;
 }) {
   const lenisRef = useRef<Lenis | null>(null);
+  const shouldRun = useShouldLenisRun();
 
   useEffect(() => {
     // 🔥 FORCE UNLOCK SCROLL (IMPORTANT)
@@ -20,10 +22,8 @@ export default function LenisProvider({
     document.body.style.position = "static";
     document.body.style.overflowY = "auto";
 
-    const isDashboard = window.location.pathname.startsWith("/dashboard");
-
-    // ❌ Dashboard = NO LENIS
-    if (isDashboard) return;
+    // ❌ Dashboard/Auth pages = NO LENIS
+    if (!shouldRun) return;
 
     const lenis = new Lenis({
       duration: 1.2,
@@ -49,7 +49,7 @@ export default function LenisProvider({
       gsap.ticker.remove(raf);
       lenis.destroy();
     };
-  }, []);
+  }, [shouldRun]);
 
   return <>{children}</>;
 }

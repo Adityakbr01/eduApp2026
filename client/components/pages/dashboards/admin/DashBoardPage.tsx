@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import app_permissions from "@/constants/permissions";
 import { useSyncPermissionsToStore } from "@/hooks/useSyncPermissionsToStore";
+import { STORAGE_KEYS } from "@/lib/constants/storage";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { CheckPermission } from "@/lib/utils/permissions";
 import { approvalStatusEnum, User } from "@/services/auth";
@@ -15,7 +16,6 @@ import { UserRow } from "../common/types";
 import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
 import DashBoardSideBar from "./DashBoardSideBar";
 import DashboardContent from "./DashboardContent";
-import { LAST_ACTIVE_SECTION_KEY } from "@/config/LocalStorage-Keys";
 
 function DashBoardPage() {
   const logout = useLogout();
@@ -58,7 +58,7 @@ function DashBoardPage() {
     }
 
     const savedSection = secureLocalStorage.getItem<string>(
-      LAST_ACTIVE_SECTION_KEY,
+      STORAGE_KEYS.LAST_ACTIVE_SECTION_KEY,
     );
 
     const isValidSection = adminUtils.sidebarItems.some(
@@ -201,7 +201,10 @@ function DashBoardPage() {
   useEffect(() => {
     if (!activeSection) return;
 
-    secureLocalStorage.setItem(LAST_ACTIVE_SECTION_KEY, activeSection);
+    secureLocalStorage.setItem(
+      STORAGE_KEYS.LAST_ACTIVE_SECTION_KEY,
+      activeSection,
+    );
   }, [activeSection]);
 
   /* -------------------------------- render -------------------------------- */

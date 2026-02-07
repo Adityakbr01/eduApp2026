@@ -74,10 +74,10 @@ export const roleDashboardLinks: RoleDashboardLink[] = [
     roles: [user_roles.SUPPORT],
   },
   {
-    label: "My Learning",
-    href: "/dashboard/learning",
+    label: "ClassRoom",
+    href: "/classroom",
     icon: BookOpen,
-    roles: [user_roles.STUDENT],
+    roles: [user_roles.STUDENT, user_roles.INSTRUCTOR, user_roles.MANAGER, user_roles.SUPPORT],
   },
 ];
 
@@ -107,7 +107,7 @@ export const getFullMenuForRole = (
   userRole: string | undefined
 ): ProfileMenuItem[] => {
   const dashboardLinks = getDashboardLinksByRole(userRole);
-  
+
   // Convert role dashboard links to profile menu items
   const roleMenuItems: ProfileMenuItem[] = dashboardLinks.map((link) => ({
     label: link.label,
