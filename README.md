@@ -257,15 +257,15 @@ The email system is built on a **producer-consumer** pattern to decouple the API
 
 ```mermaid
 flowchart LR
-    A[👨‍💼 Admin/Instructor] -->|Create & Send| B(📝 API /campaigns/send)
-    B -->|Queue Job| C[📨 Email Queue (BullMQ)]
-    C --> D{⚙️ Campaign Processor}
-    D -->|Fetch Users| E[(👤 User DB)]
-    D -->|Filter Opt-ins| F[(✅ User Preferences)]
+    A["👨‍💼 Admin/Instructor"] -->|Create & Send| B("📝 API /campaigns/send")
+    B -->|Queue Job| C["📨 Email Queue (BullMQ)"]
+    C --> D{"⚙️ Campaign Processor"}
+    D -->|Fetch Users| E[("👤 User DB")]
+    D -->|Filter Opt-ins| F[("✅ User Preferences")]
     F -->|Dispatch Individual Jobs| C
-    C --> G{🚀 Email Worker}
-    G -->|Send via Resend| H[☁️ Resend API]
-    G -->|Update Status| I[(📊 Campaign Stats)]
+    C --> G{"🚀 Email Worker"}
+    G -->|Send via Resend| H["☁️ Resend API"]
+    G -->|Update Status| I[("📊 Campaign Stats")]
 ```
 
 #### 1️⃣ **Campaign Creation & Targeting**
