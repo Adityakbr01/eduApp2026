@@ -2,7 +2,7 @@
 
 # 🎓 EduApp 2026
 
-### A Modern Full-Stack Educational Platform Inspired by ```link https://www.sheryians.com ```
+### A Modern Full-Stack Educational Platform Inspired by `link https://www.sheryians.com `
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Adityakbr01%2FeduApp2026-blue?style=for-the-badge&logo=github)](https://github.com/Adityakbr01/eduApp2026)
 [![License: ISC](https://img.shields.io/badge/License-ISC-green.svg?style=for-the-badge)](https://opensource.org/licenses/ISC)
@@ -21,6 +21,7 @@
 ## �️ Tech Stack
 
 ### 🎨 Frontend
+
 - ![Next.js](https://img.shields.io/badge/-Next.js_16-000000?style=flat&logo=next.js&logoColor=white) **Next.js 16** with React 19
 - ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat&logo=typescript&logoColor=white) **TypeScript** for type safety
 - ![TailwindCSS](https://img.shields.io/badge/-Tailwind_CSS_4-38B2AC?style=flat&logo=tailwind-css&logoColor=white) **Tailwind CSS 4** for styling
@@ -32,6 +33,7 @@
 - **Other Libraries:** React Dropzone, React Markdown, Swiper
 
 ### ⚙️ Backend
+
 - ![Node.js](https://img.shields.io/badge/-Node.js-339933?style=flat&logo=node.js&logoColor=white) **Node.js** with Express 5
 - ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat&logo=typescript&logoColor=white) **TypeScript** for business logic
 - ![MongoDB](https://img.shields.io/badge/-MongoDB-47A248?style=flat&logo=mongodb&logoColor=white) **MongoDB** with Mongoose ODM
@@ -44,6 +46,7 @@
 - **Security:** Helmet, CORS, HPP, XSS protection, Rate Limiting
 
 ### 🚀 DevOps & Infrastructure
+
 - ![Docker](https://img.shields.io/badge/-Docker-2496ED?style=flat&logo=docker&logoColor=white) **Docker** & Docker Compose
 - ![AWS](https://img.shields.io/badge/-AWS-232F3E?style=flat&logo=amazon-aws&logoColor=white) **AWS ECS** for video processing workers
 - **Logging:** Winston with daily log rotation
@@ -94,7 +97,7 @@ flowchart TB
     Q --> R[🔓 Release DynamoDB Lock]
     R --> S[✅ Container Exits]
     G --> E
-    
+
     style A fill:#4CAF50,color:#fff
     style L fill:#FF5722,color:#fff
     style M fill:#FF9800,color:#fff
@@ -105,35 +108,41 @@ flowchart TB
 ### 📋 Processing Workflow
 
 #### 1️⃣ **Video Upload & Event Triggering**
+
 - Instructor uploads `.mp4` video to **temporary S3 bucket**
 - S3 event triggers **AWS EventBridge** rule
 - Message sent to **SQS queue** for reliable processing
 
 #### 2️⃣ **Pipeline Consumer (Scheduler)**
+
 Located in: `video-pipline-consumer/`
 
 **Responsibilities:**
+
 - Polls SQS queue for new video jobs
 - Checks if ECS task is already running (prevents concurrent tasks)
 - Triggers **AWS ECS Fargate task** when worker is idle
 - Implements retry logic and error handling
 
 **Key Features:**
+
 - ⏸️ Single-task concurrency control
 - 🔄 Continuous polling with configurable intervals
 - 🛡️ Message validation and filtering
 - 📊 DynamoDB-based job status tracking
 
 #### 3️⃣ **ECS Video Worker (FFmpeg Processor)**
+
 Located in: `server/video-worker-ecs/`
 
 **Processing Steps:**
+
 1. **Download** source video from S3 TEMP bucket
 2. **Validate** video metadata (duration, codec, size)
 3. **Convert** to HLS format using FFmpeg with multiple profiles:
    - **360p** (640px width) — 800kbps bitrate
    - **720p** (1280px width) — 2800kbps bitrate
-   - *(1080p optional)* — Configurable
+   - _(1080p optional)_ — Configurable
 4. **Generate** adaptive bitrate streaming files:
    - `master.m3u8` — Master playlist
    - `360/index.m3u8`, `720/index.m3u8` — Quality-specific playlists
@@ -146,15 +155,16 @@ Located in: `server/video-worker-ecs/`
 
 ### 🎯 Video Quality Profiles
 
-| Profile | Resolution | Bitrate | Max Rate | Buffer Size | Use Case |
-|---------|-----------|---------|----------|-------------|----------|
-| **360p** | 640×360 | 800k | 900k | 1200k | Mobile / Low bandwidth |
-| **720p** | 1280×720 | 2800k | 3000k | 4200k | Desktop / HD streaming |
-| **1080p** | 1920×1080 | 5000k | 5500k | 8000k | Premium / Full HD *(optional)* |
+| Profile   | Resolution | Bitrate | Max Rate | Buffer Size | Use Case                       |
+| --------- | ---------- | ------- | -------- | ----------- | ------------------------------ |
+| **360p**  | 640×360    | 800k    | 900k     | 1200k       | Mobile / Low bandwidth         |
+| **720p**  | 1280×720   | 2800k   | 3000k    | 4200k       | Desktop / HD streaming         |
+| **1080p** | 1920×1080  | 5000k   | 5500k    | 8000k       | Premium / Full HD _(optional)_ |
 
 ### 🔧 Technical Components
 
 #### FFmpeg Configuration
+
 ```typescript
 // Multi-resolution HLS conversion
 - Codec: H.264 (libx264)
@@ -166,8 +176,9 @@ Located in: `server/video-worker-ecs/`
 ```
 
 #### AWS Infrastructure
+
 - **ECS Fargate**: Serverless container execution
-- **S3 Buckets**: 
+- **S3 Buckets**:
   - `TEMP` — Temporary raw video storage
   - `PROD` — Final HLS output with CDN integration
 - **SQS**: Message queue for job management
@@ -175,6 +186,7 @@ Located in: `server/video-worker-ecs/`
 - **EventBridge**: Event-driven architecture
 
 #### Worker Features
+
 - 💓 **Heartbeat mechanism** — Keeps DynamoDB lock alive during processing
 - 🔄 **Graceful shutdown** — Proper cleanup on success/failure
 - 📊 **Duration extraction** — Automatically calculates video length
@@ -211,6 +223,7 @@ VIDEO_KEY=<runtime_s3_key>
 ### 🚀 Deployment
 
 **Build Docker Image:**
+
 ```bash
 cd server/video-worker-ecs
 docker build -t eduapp-video-worker .
@@ -218,6 +231,7 @@ docker push your-registry/eduapp-video-worker:latest
 ```
 
 **Start Pipeline Consumer:**
+
 ```bash
 cd video-pipline-consumer
 npm run build
@@ -230,6 +244,76 @@ npm start
 - **DynamoDB Table**: Real-time job status tracking
 - **SQS Metrics**: Queue depth and message age
 - **S3 Events**: Monitor upload/processing rates
+
+---
+
+## 📧 Email Campaign System
+
+The platform features a robust, scalable email campaign system designed to handle high-volume marketing and notification emails efficiently using **BullMQ** and **Redis**.
+
+### 🏗️ Architecture & Strategy
+
+The email system is built on a **producer-consumer** pattern to decouple the API from the heavy lifting of email dispatching.
+
+```mermaid
+flowchart LR
+    A[👨‍💼 Admin/Instructor] -->|Create & Send| B(📝 API /campaigns/send)
+    B -->|Queue Job| C[📨 Email Queue (BullMQ)]
+    C --> D{⚙️ Campaign Processor}
+    D -->|Fetch Users| E[(👤 User DB)]
+    D -->|Filter Opt-ins| F[(✅ User Preferences)]
+    F -->|Dispatch Individual Jobs| C
+    C --> G{🚀 Email Worker}
+    G -->|Send via Resend| H[☁️ Resend API]
+    G -->|Update Status| I[(📊 Campaign Stats)]
+```
+
+#### 1️⃣ **Campaign Creation & Targeting**
+
+- **Drafting**: Campaigns are created with rich text content (HTML) and subject lines.
+- **Targeting**: Supports granular targeting:
+  - **Roles**: All Users, Students, Instructors, Managers.
+  - **Specific Users**: List of user IDs.
+- **AI Integration**:
+  - **Content Generation**: AI generates email body based on tone and key points.
+  - **Subject Suggestions**: AI suggests catchy subject lines to improve open rates.
+
+#### 2️⃣ **Job Processing Strategy**
+
+The system uses a **two-step job dispatch strategy** to ensure scalability:
+
+1.  **Macro Job (`process-campaign`)**:
+    - The API pushes a single job to the queue with the `campaignId`.
+    - The **Campaign Processor** fetches the campaign, queries the database for all matching recipients, and filters them based on **User Preferences** (marketing opt-in).
+    - It then **fans out** by creating individual `send-marketing-email` jobs for each eligible recipient back into the queue.
+
+2.  **Micro Job (`send-marketing-email`)**:
+    - These small, lightweight jobs are picked up by workers in parallel.
+    - Each job handles sending a single email and updating the individual sent/failed status.
+    - This prevents a single massive campaign from blocking the queue and allows for granular retries.
+
+### ♻️ BullMQ & Scalability
+
+The system is configured for high throughput and reliability:
+
+- **Queue Name**: `email-queue`
+- **Concurrency**: Configurable via `BULLMQ_WORKER_CONCURRENCY` (default: 5-10 parallel jobs per worker).
+- **Rate Limiting**: Enforced per job type to respect email provider quotas (e.g., specific limits for OTPs vs. Marketing emails).
+- **Retries & Backoff**:
+  - Failed email jobs are retried up to **5 times** with **exponential backoff**.
+  - Ensures temporary network issues or provider downtime don't cause campaign failures.
+- **Priority Management**:
+  - **High Priority**: OTPs, Password Resets (processed immediately).
+  - **Normal Priority**: Marketing Campaigns (processed in background).
+
+### 🛠️ Key Components
+
+| Component              | Path                                                           | Description                                          |
+| ---------------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| **Queue**              | `server/src/bull/queues/email.queue.ts`                        | BullMQ queue configuration.                          |
+| **Worker**             | `server/src/bull/workers/email.worker.ts`                      | Worker instance processing jobs.                     |
+| **Campaign Processor** | `server/src/bull/processors/email/processCampaignProcessor.ts` | Logic to logical target users and dispatch sub-jobs. |
+| **Email Service**      | `server/src/services/emailCampaign.service.ts`                 | Business logic for creating/managing campaigns.      |
 
 ---
 
@@ -437,23 +521,23 @@ npm run start
 
 ### Client
 
-| Command         | Description                        |
-|-----------------|------------------------------------|
-| `npm run dev`   | Start development server           |
-| `npm run build` | Build for production               |
-| `npm run start` | Start production server            |
-| `npm run lint`  | Run ESLint                         |
+| Command         | Description              |
+| --------------- | ------------------------ |
+| `npm run dev`   | Start development server |
+| `npm run build` | Build for production     |
+| `npm run start` | Start production server  |
+| `npm run lint`  | Run ESLint               |
 
 ### Server
 
-| Command               | Description                              |
-|-----------------------|------------------------------------------|
-| `npm run dev`         | Start development server with hot reload |
-| `npm run build`       | Compile TypeScript                       |
-| `npm run start`       | Start production server                  |
-| `npm run seed:rbac`   | Seed roles and permissions               |
-| `npm run seed:categories` | Seed course categories              |
-| `npm run seed:all`    | Run all seed scripts                     |
+| Command                   | Description                              |
+| ------------------------- | ---------------------------------------- |
+| `npm run dev`             | Start development server with hot reload |
+| `npm run build`           | Compile TypeScript                       |
+| `npm run start`           | Start production server                  |
+| `npm run seed:rbac`       | Seed roles and permissions               |
+| `npm run seed:categories` | Seed course categories                   |
+| `npm run seed:all`        | Run all seed scripts                     |
 
 ---
 
@@ -468,6 +552,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 **Services Started:**
+
 - `eduapp_frontend` — Next.js frontend (port 3000)
 - `eduapp_backend` — Express API (port 5000)
 - `eduapp_redis` — Redis cache
