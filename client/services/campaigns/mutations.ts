@@ -15,13 +15,21 @@ export const useCreateCampaign = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: CreateCampaignDTO) => campaignApi.createCampaign(data),
+        mutationFn: (data: CreateCampaignDTO) =>
+            campaignApi.createCampaign(data),
+
+        retry: false,          // 🔥 IMPORTANT
+        networkMode: "always", // 🔥 IMPORTANT
+
         onSuccess: (response) => {
-            mutationHandlers.success(response.message || "Campaign created successfully");
+            mutationHandlers.success(
+                response.message || "Campaign created successfully"
+            );
             queryClient.invalidateQueries({
                 queryKey: [CAMPAIGN_QUERY_KEYS.CAMPAIGNS],
             });
         },
+
         onError: (error) => mutationHandlers.error(error),
     });
 };

@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { TrafficLightDots } from './pages/course/CourseCard'
+import { TrafficLightDots } from './TrafficLightDots'
 
 function HeroVideoCard() {
   return (

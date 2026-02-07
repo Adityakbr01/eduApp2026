@@ -9,7 +9,7 @@ logger.info("Environment:", process.env.NODE_ENV), isProd;
 
 
 const envSchema = z.object({
-    NODE_ENV: z.enum(["development", "production", "test","staging",""]).default("development"),
+    NODE_ENV: z.enum(["development", "production", "test", "staging", ""]).default("development"),
     PORT: z.coerce.number().default(3001),
 
     // Mongo
@@ -32,7 +32,7 @@ const envSchema = z.object({
     // Email
     SMTP_PASS: z.string().min(6),
     SMTP_USER: z.string().email(),
-    
+
     // BullMQ
     BULL_BOARD_PASSWORD: z.string().min(6),
     BULLMQ_WORKER_CONCURRENCY: z.coerce.number().default(5),
@@ -66,6 +66,7 @@ const envSchema = z.object({
 
     // AI - Gemini
     GEMINI_API_KEY: z.string().min(10).optional(),
+    GEMINI_MODEL: z.string().default("models/gemini-2.5-flash"),
 
 });
 

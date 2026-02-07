@@ -1,50 +1,14 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import AppError from "src/utils/AppError.js";
-import { STATUSCODE } from "src/constants/statusCodes.js";
+import { env } from "src/configs/env.js";
+import genAI, { AImodel } from "src/configs/GEMINI_CONF.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
+import { AUDIENCE_CONTEXT, EMAIL_TEMPLATES, TONE_GUIDELINES } from "src/constants/GEMINI_CONST.js";
+import { STATUSCODE } from "src/constants/statusCodes.js";
+import type { GeneratedEmailContent, GenerateEmailContentParams } from "src/types/ai.type.js";
+import AppError from "src/utils/AppError.js";
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-export interface GenerateEmailContentParams {
-    campaignType: "welcome" | "promotion" | "courseUpdate" | "newsletter" | "announcement" | "reminder" | "custom";
-    targetAudience: "students" | "instructors" | "all" | "managers";
-    tone: "professional" | "friendly" | "urgent" | "casual";
-    subject?: string;
-    keyPoints?: string[];
-    additionalContext?: string;
-    brandName?: string;
-}
 
-export interface GeneratedEmailContent {
-    subject: string;
-    content: string;
-    previewText: string;
-}
 
-const EMAIL_TEMPLATES = {
-    welcome: "a warm welcome email for new users joining our platform",
-    promotion: "a promotional email highlighting special offers or discounts",
-    courseUpdate: "an informative email about course updates or new content",
-    newsletter: "an engaging newsletter with platform updates and highlights",
-    announcement: "an important announcement email",
-    reminder: "a friendly reminder email",
-    custom: "a custom email based on the provided context",
-};
-
-const TONE_GUIDELINES = {
-    professional: "Use formal language, clear structure, and maintain a business-appropriate tone.",
-    friendly: "Use warm, approachable language while remaining respectful and helpful.",
-    urgent: "Emphasize time-sensitivity and importance while maintaining professionalism.",
-    casual: "Use conversational language that feels personal and relatable.",
-};
-
-const AUDIENCE_CONTEXT = {
-    students: "learners who are taking courses on our platform",
-    instructors: "course creators and teachers on our platform",
-    all: "all users including students, instructors, and staff",
-    managers: "platform managers and administrators",
-};
 
 export const aiService = {
     /**
@@ -68,8 +32,6 @@ export const aiService = {
                 ERROR_CODE.SERVICE_UNAVAILABLE
             );
         }
-
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `You are an expert email marketing copywriter. Generate a compelling email for an education platform called "${brandName}".
 
@@ -101,7 +63,7 @@ HTML GUIDELINES:
 - Include appropriate spacing between sections`;
 
         try {
-            const result = await model.generateContent(prompt);
+            const result = await AImodel.generateContent(prompt);
             const response = result.response;
             const text = response.text();
 
@@ -146,7 +108,6 @@ HTML GUIDELINES:
             );
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `You are an expert email copywriter. Improve the following email content based on this instruction: "${instruction}"
 
@@ -162,7 +123,7 @@ INSTRUCTIONS:
 Respond with ONLY the improved HTML content.`;
 
         try {
-            const result = await model.generateContent(prompt);
+            const result = await AImodel.generateContent(prompt);
             const response = result.response;
             const improvedContent = response.text().replace(/```html\n?|\n?```/g, "").trim();
 
@@ -191,7 +152,6 @@ Respond with ONLY the improved HTML content.`;
             );
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `Based on the following email content, generate ${count} compelling subject line suggestions. Each should be unique in approach (e.g., question, urgency, benefit-focused, curiosity).
 
@@ -202,7 +162,7 @@ Respond with ONLY a JSON array of strings, no other text:
 ["Subject 1", "Subject 2", ...]`;
 
         try {
-            const result = await model.generateContent(prompt);
+            const result = await AImodel.generateContent(prompt);
             const response = result.response;
             const text = response.text().replace(/```json\n?|\n?```/g, "").trim();
             const suggestions = JSON.parse(text) as string[];
@@ -219,3 +179,7 @@ Respond with ONLY a JSON array of strings, no other text:
 };
 
 export default aiService;
+
+
+
+

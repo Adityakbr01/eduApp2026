@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import app_permissions from "@/constants/permissions";
 import { useSyncPermissionsToStore } from "@/hooks/useSyncPermissionsToStore";
+import { secureLocalStorage } from "@/lib/utils/encryption";
 import { CheckPermission } from "@/lib/utils/permissions";
 import { approvalStatusEnum, User } from "@/services/auth";
 import { useLogout } from "@/services/auth/mutations";
@@ -14,6 +15,7 @@ import { UserRow } from "../common/types";
 import { adminUtils, PermissionKey, RolePermission } from "../common/utils";
 import DashBoardSideBar from "./DashBoardSideBar";
 import DashboardContent from "./DashboardContent";
+import { LAST_ACTIVE_SECTION_KEY } from "@/config/LocalStorage-Keys";
 
 function DashBoardPage() {
   const logout = useLogout();
@@ -33,7 +35,7 @@ function DashBoardPage() {
 
   const userQueryParams: UsersQueryParams = useMemo(
     () => ({ page, limit }),
-    [page, limit]
+    [page, limit],
   );
 
   /* -------------------------------- queries -------------------------------- */
@@ -50,16 +52,29 @@ function DashBoardPage() {
   useGetCoursesForAdmin({ page, limit });
 
   /* -------------------------------- sidebar -------------------------------- */
-  const [activeSection, setActiveSection] = useState(
-    adminUtils.sidebarItems[0].value
-  );
+  const [activeSection, setActiveSection] = useState(() => {
+    if (typeof window === "undefined") {
+      return adminUtils.sidebarItems[0].value;
+    }
+
+    const savedSection = secureLocalStorage.getItem<string>(
+      LAST_ACTIVE_SECTION_KEY,
+    );
+
+    const isValidSection = adminUtils.sidebarItems.some(
+      (item) => item.value === savedSection,
+    );
+
+    return isValidSection ? savedSection : adminUtils.sidebarItems[0].value;
+  });
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const activeSectionItem = useMemo(
     () =>
       adminUtils.sidebarItems.find((item) => item.value === activeSection) ??
       adminUtils.sidebarItems[0],
-    [activeSection]
+    [activeSection],
   );
 
   /* -------------------------------- filters -------------------------------- */
@@ -68,13 +83,13 @@ function DashBoardPage() {
 
   /* -------------------------------- roles -------------------------------- */
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(
-    adminUtils.initialRolePermissions
+    adminUtils.initialRolePermissions,
   );
 
   /* -------------------------------- users -------------------------------- */
   const users: User[] = useMemo(
     () => usersResponse?.users ?? [],
-    [usersResponse?.users]
+    [usersResponse?.users],
   );
 
   const pagination = useMemo(
@@ -87,7 +102,7 @@ function DashBoardPage() {
         hasPrev: page > 1,
         hasNext: false,
       },
-    [usersResponse?.pagination, page, limit]
+    [usersResponse?.pagination, page, limit],
   );
 
   /* -------------------------------- stats -------------------------------- */
@@ -96,7 +111,7 @@ function DashBoardPage() {
 
     const verified = users.filter((u) => u.isEmailVerified).length;
     const pending = users.filter(
-      (u) => u.approvalStatus === approvalStatusEnum.PENDING
+      (u) => u.approvalStatus === approvalStatusEnum.PENDING,
     ).length;
     const banned = users.filter((u) => u.isBanned).length;
 
@@ -128,7 +143,7 @@ function DashBoardPage() {
   /* -------------------------------- rows -------------------------------- */
   const userRows: UserRow[] = useMemo(
     () => users.map(adminUtils.mapApiUserToRow),
-    [users]
+    [users],
   );
 
   const filteredRows: UserRow[] = useMemo(() => {
@@ -140,7 +155,7 @@ function DashBoardPage() {
       const q = searchQuery.toLowerCase();
       rows = rows.filter(
         (u) =>
-          u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+          u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
       );
     }
 
@@ -154,18 +169,18 @@ function DashBoardPage() {
   /* -------------------------------- widgets -------------------------------- */
   const recentUsers = useMemo(
     () => adminUtils.buildRecentUsers(userRows),
-    [userRows]
+    [userRows],
   );
   const activityFeed = useMemo(
     () => adminUtils.buildActivityFeed(userRows),
-    [userRows]
+    [userRows],
   );
 
   /* -------------------------------- handlers -------------------------------- */
   const handleTogglePermission = (
     role: string,
     permissionKey: PermissionKey,
-    checked: boolean
+    checked: boolean,
   ) => {
     setRolePermissions((prev) =>
       prev.map((entry) =>
@@ -177,16 +192,23 @@ function DashBoardPage() {
                 [permissionKey]: checked,
               },
             }
-          : entry
-      )
+          : entry,
+      ),
     );
   };
 
+  // save active section in local storage
+  useEffect(() => {
+    if (!activeSection) return;
+
+    secureLocalStorage.setItem(LAST_ACTIVE_SECTION_KEY, activeSection);
+  }, [activeSection]);
+
   /* -------------------------------- render -------------------------------- */
   return (
-    <div className="bg-muted/30 flex  h-screen overflow-hidden">
+    <div className="bg-muted/30 flex h-screen overflow-hidden">
       <DashBoardSideBar
-        activeSection={activeSection}
+        activeSection={activeSection!}
         setActiveSection={setActiveSection}
         logout={logout}
         isOpen={isSidebarOpen}
@@ -194,7 +216,7 @@ function DashBoardPage() {
       />
 
       <DashboardContent
-        activeSection={activeSection}
+        activeSection={activeSection!}
         activeSectionItem={activeSectionItem}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

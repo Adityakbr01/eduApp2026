@@ -9,7 +9,6 @@ export const instructorSidebarItems = [
     { label: "Overview", icon: LayoutDashboard, value: "overview" },
     { label: "My Courses", icon: BookOpen, value: "courses" },
     { label: "Content Library", icon: Video, value: "content" },
-    { label: "Settings", icon: Settings, value: "settings" },
 ] as const;
 
 export type InstructorSidebarValue = (typeof instructorSidebarItems)[number]["value"];

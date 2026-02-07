@@ -5,15 +5,8 @@ import Link from "next/link";
 
 import { ICourse } from "@/services/courses";
 import { getS3PublicUrl } from "@/app/(routes)/dashboard/Instructor/courses/create/getS3PublicUrl";
+import { TrafficLightDots } from "@/components/TrafficLightDots";
 
-// Traffic light dots SVG component
-export const TrafficLightDots = () => (
-    <svg width="31" height="8" viewBox="0 0 31 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0.0859375 3.91468C0.0859375 2.00507 1.63398 0.457031 3.54359 0.457031C5.45319 0.457031 7.00124 2.00507 7.00124 3.91468C7.00124 5.82429 5.45319 7.37233 3.54359 7.37233C1.63398 7.37233 0.0859375 5.82429 0.0859375 3.91468Z" fill="#F87171" />
-        <path d="M11.6113 3.91468C11.6113 2.00507 13.1594 0.457031 15.069 0.457031C16.9786 0.457031 18.5266 2.00507 18.5266 3.91468C18.5266 5.82429 16.9786 7.37233 15.069 7.37233C13.1594 7.37233 11.6113 5.82429 11.6113 3.91468Z" fill="#FACC15" />
-        <path d="M23.1367 3.91468C23.1367 2.00507 24.6848 0.457031 26.5944 0.457031C28.504 0.457031 30.052 2.00507 30.052 3.91468C30.052 5.82429 28.504 7.37233 26.5944 7.37233C24.6848 7.37233 23.1367 5.82429 23.1367 3.91468Z" fill="#4ADE80" />
-    </svg>
-);
 
 function CourseCard({ course }: { course: ICourse }) {
     // Get category name

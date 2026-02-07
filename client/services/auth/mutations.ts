@@ -13,6 +13,8 @@ import type {
     AuthResponse,
     OtpResponse,
 } from "./types";
+import { secureLocalStorage } from "@/lib/utils/encryption";
+import { INSTRUCTOR_LAST_ACTIVE_SECTION_KEY, LAST_ACTIVE_SECTION_KEY } from "@/config/LocalStorage-Keys";
 
 /* ---------------- REGISTER ---------------- */
 
@@ -149,6 +151,8 @@ export const useLogout = () => {
             clearAuth();
             qc.clear();
             mutationHandlers.success("Logged out");
+            secureLocalStorage.removeItem(LAST_ACTIVE_SECTION_KEY);
+            secureLocalStorage.removeItem(INSTRUCTOR_LAST_ACTIVE_SECTION_KEY);
         },
         onError: () => {
             clearAuth();

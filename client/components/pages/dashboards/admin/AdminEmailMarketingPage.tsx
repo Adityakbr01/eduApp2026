@@ -2,7 +2,7 @@
 
 import { CampaignPreviewDialog } from "@/components/email-campaigns/CampaignPreviewDialog";
 import ConfirmDeleteCampaign from "@/components/email-campaigns/ConfirmDeleteCampaign";
-import { CreateCampaignDialog } from "@/components/email-campaigns/CreateCampaignDialogWithAI";
+import { CreateCampaignDialog } from "@/components/email-campaigns/CreateCampaignDialog/CreateCampaignDialogWithAI";
 import FillterAndSearchAndList from "@/components/email-campaigns/FillterAndSearch";
 import Header from "@/components/email-campaigns/Header";
 import StatsCards from "@/components/email-campaigns/StatsCards ";

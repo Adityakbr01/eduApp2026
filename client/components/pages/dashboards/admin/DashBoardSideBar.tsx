@@ -29,7 +29,7 @@ function DashBoardSideBar({ setActiveSection, activeSection, logout, isOpen, onC
             {/* Mobile overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                    className="fixed inset-0 z-40 bg-black/95 backdrop-blur-sm lg:hidden"
                     onClick={onClose}
                 />
             )}
@@ -37,7 +37,7 @@ function DashBoardSideBar({ setActiveSection, activeSection, logout, isOpen, onC
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 flex-col border-r bg-linear-to-b from-primary/5 to-background/80 p-6 transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:flex lg:translate-x-0",
+                    "fixed inset-y-0 left-0 z-50 w-64 flex-col border-r bg-linear-to-b from-primary/10 to-background/80 p-6 transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:flex lg:translate-x-0",
                     isOpen ? "translate-x-0 flex" : "-translate-x-full"
                 )}
             >

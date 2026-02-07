@@ -7,6 +7,7 @@ import Nav from "@/components/Layouts/Navbar/Nav";
 import { shouldHideNavbar } from "@/constants/layout";
 
 function MainProvider({ children }: { children: React.ReactNode }) {
+    
     useInitUser();
     const pathname = usePathname();
     

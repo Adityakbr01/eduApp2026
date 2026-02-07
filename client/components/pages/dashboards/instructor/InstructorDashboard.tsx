@@ -20,6 +20,9 @@ import {
   getDefaultStats,
   getRecentCourses,
 } from "./utils";
+import { useEffect } from "react";
+import { secureLocalStorage } from "@/lib/utils/encryption";
+import { INSTRUCTOR_LAST_ACTIVE_SECTION_KEY } from "@/config/LocalStorage-Keys";
 
 export function InstructorDashboard() {
   const logout = useLogout();
@@ -31,36 +34,49 @@ export function InstructorDashboard() {
   // 🔹 NEW: Mobile sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [activeSection, setActiveSection] =
-    useState<InstructorSidebarValue>("overview");
+  const [activeSection, setActiveSection] = useState<InstructorSidebarValue>(
+    () => {
+      if (typeof window === "undefined") {
+        return "overview";
+      }
+
+      const savedSection = secureLocalStorage.getItem<InstructorSidebarValue>(
+        INSTRUCTOR_LAST_ACTIVE_SECTION_KEY,
+      );
+
+      const foundItem = instructorSidebarItems.find(
+        (item) => item.value === savedSection,
+      );
+
+      return foundItem ? foundItem.value : "overview";
+    },
+  );
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
   const courses = useMemo(
     () => data?.data?.courses || [],
-    [data?.data?.courses]
+    [data?.data?.courses],
   );
 
   const stats = useMemo(
     () => (courses.length > 0 ? calculateStats(courses) : getDefaultStats()),
-    [courses]
+    [courses],
   );
 
-  const recentCourses = useMemo(
-    () => getRecentCourses(courses, 5),
-    [courses]
-  );
+  const recentCourses = useMemo(() => getRecentCourses(courses, 5), [courses]);
 
   const activeSectionItem = useMemo(
     () =>
       instructorSidebarItems.find((item) => item.value === activeSection) ||
       instructorSidebarItems[0],
-    [activeSection]
+    [activeSection],
   );
 
   const submitCourseRequestHandler = (
     id: string,
-    status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED
+    status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED,
   ) => {
     submitCourseRequest.mutate({ id, status });
   };
@@ -72,6 +88,14 @@ export function InstructorDashboard() {
   };
 
   const handleLogout = () => logout.mutate();
+
+  // 🔹 Save active section to secure storage whenever it changes
+  useEffect(() => {
+    secureLocalStorage.setItem(
+      INSTRUCTOR_LAST_ACTIVE_SECTION_KEY,
+      activeSection,
+    );
+  }, [activeSection]);
 
   if (error) {
     return (
@@ -87,7 +111,7 @@ export function InstructorDashboard() {
   }
 
   return (
-      <div className="bg-muted/30 flex h-screen overflow-hidden">
+    <div className="bg-muted/30 flex h-screen overflow-hidden">
       {/* Sidebar */}
       <InstructorSidebar
         activeSection={activeSection}

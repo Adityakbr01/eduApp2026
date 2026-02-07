@@ -18,7 +18,10 @@ export const campaignApi = {
      * Get all campaigns with filters
      */
     getCampaigns: async (params?: QueryCampaignsDTO): Promise<CampaignsResponse> => {
-        const response = await apiClient.get(BASE_PATH, { params });
+        const response = await apiClient.get(BASE_PATH, {
+            params,
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -26,7 +29,9 @@ export const campaignApi = {
      * Get campaign by ID
      */
     getCampaign: async (id: string): Promise<CampaignResponse> => {
-        const response = await apiClient.get(`${BASE_PATH}/${id}`);
+        const response = await apiClient.get(`${BASE_PATH}/${id}`, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -34,7 +39,9 @@ export const campaignApi = {
      * Create a new campaign
      */
     createCampaign: async (data: CreateCampaignDTO): Promise<CampaignResponse> => {
-        const response = await apiClient.post(BASE_PATH, data);
+        const response = await apiClient.post(BASE_PATH, data, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -42,7 +49,9 @@ export const campaignApi = {
      * Update campaign (draft only)
      */
     updateCampaign: async (id: string, data: UpdateCampaignDTO): Promise<CampaignResponse> => {
-        const response = await apiClient.put(`${BASE_PATH}/${id}`, data);
+        const response = await apiClient.put(`${BASE_PATH}/${id}`, data, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -50,7 +59,9 @@ export const campaignApi = {
      * Send or schedule campaign
      */
     sendCampaign: async (id: string, data?: SendCampaignDTO): Promise<CampaignResponse> => {
-        const response = await apiClient.post(`${BASE_PATH}/${id}/send`, data || {});
+        const response = await apiClient.post(`${BASE_PATH}/${id}/send`, data || {}, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -58,7 +69,9 @@ export const campaignApi = {
      * Cancel scheduled campaign
      */
     cancelCampaign: async (id: string): Promise<CampaignResponse> => {
-        const response = await apiClient.post(`${BASE_PATH}/${id}/cancel`);
+        const response = await apiClient.post(`${BASE_PATH}/${id}/cancel`, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -66,7 +79,9 @@ export const campaignApi = {
      * Delete campaign (draft only)
      */
     deleteCampaign: async (id: string): Promise<{ success: boolean; message: string }> => {
-        const response = await apiClient.delete(`${BASE_PATH}/${id}`);
+        const response = await apiClient.delete(`${BASE_PATH}/${id}`, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 
@@ -74,7 +89,9 @@ export const campaignApi = {
      * Get campaign statistics
      */
     getCampaignStats: async (id: string): Promise<CampaignStatsResponse> => {
-        const response = await apiClient.get(`${BASE_PATH}/${id}/stats`);
+        const response = await apiClient.get(`${BASE_PATH}/${id}/stats`, {
+            timeout: 60000, // 🔥 FIX
+        });
         return response.data;
     },
 };
