@@ -124,8 +124,18 @@ export const useGetPublishedCourseById = (
     });
 };
 
-
-
+/**
+ * Get featured courses (public)
+ */
+export const useGetFeaturedCourses = (
+    options?: Omit<UseQueryOptions<ApiResponse<CourseListData>>, "queryKey" | "queryFn">
+) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.COURSES.FEATURED],
+        queryFn: () => publicCourseApi.getFeaturedCourses(),
+        ...options,
+    });
+};
 
 // ==================== ADMIN COURSE QUERIES ====================
 export const useGetCoursesForAdmin = (

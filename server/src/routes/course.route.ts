@@ -42,6 +42,7 @@ instructorRouter.use(checkRole(ROLES.INSTRUCTOR.code));
 // 1️⃣ COURSE CRUD
 instructorRouter.post("/", validateRequest(createCourseSchema), courseController.createCourse);
 instructorRouter.get("/", courseController.getInstructorCourses);
+
 instructorRouter.get("/:id", courseController.getCourseById);
 instructorRouter.put("/:id", validateRequest(updateCourseSchema), courseController.updateCourse);
 instructorRouter.delete("/:id", courseController.deleteCourse);
@@ -124,6 +125,7 @@ router.use("/student", studentRouter);
 // These must be AFTER subrouters to avoid matching "instructor" or "student" as :id
 // ============================================
 router.get("/", courseController.getAllPublishedCourses);
+router.get("/featured", courseController.getFeaturedCourses);
 router.get("/:id", courseController.getPublishedCourseById);
 
 export default router;

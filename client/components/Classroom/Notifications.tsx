@@ -119,7 +119,7 @@ const Notifications = () => {
         </span>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+          className="text-xs cursor-pointer text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
         >
           {expanded ? "Show Less" : "Show All"}
         </button>
@@ -156,12 +156,12 @@ const Notifications = () => {
                 style={{
                   position: expanded ? "relative" : "absolute",
                   top: expanded ? 0 : 10,
-                  width: "100%",
+                  width: expanded ? "98%" : "92%",
                   transformOrigin: "top center",
                   // Hardware acceleration hints
                   willChange: "transform, opacity",
                 }}
-                className={`flex flex-col gap-2 p-4 rounded-2xl border border-white/5 bg-[#1e1e1e] shadow-lg mb-3 cursor-pointer group hover:bg-[#252525] transition-colors`}
+                className={`flex flex-col gap-2 p-4 rounded-2xl border border-white/5 bg-dark-extra-light shadow-lg mb-3 cursor-pointer group hover:bg-[#252525] transition-colors`}
                 onClick={() => !expanded && setExpanded(true)}
               >
                 <div className="flex items-start justify-between gap-3">

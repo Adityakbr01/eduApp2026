@@ -1,5 +1,16 @@
-import { ContentType, CourseLevel, DeliveryMode, Language } from "src/types/course.type.js";
+import { BatchStatus, ContentType, CourseLevel, DeliveryMode, Language } from "src/types/course.type.js";
 import { z } from "zod";
+
+
+export const batchSchema = z.object({
+    startDate: z.string().default(() => new Date().toISOString()),
+    endDate: z.string().default(() => {
+        const date = new Date();
+        date.setMonth(date.getMonth() + 6);
+        return date.toISOString();
+    }),
+    batchStatus: z.nativeEnum(BatchStatus).default(BatchStatus.UPCOMING),
+});
 
 // ============================================
 // COURSE SCHEMAS
@@ -33,10 +44,12 @@ export const createCourseSchema = z.object({
     maxEnrollments: z.number().min(1).optional(),
     curriculum: z.string().optional(),
     durationWeeks: z.number().min(1).max(520).optional(),
+    batch: batchSchema.required(),
+    mentorSupport: z.boolean().default(true),
 });
 
 export const updateCourseSchema = z.object({
-    courseID : z.string().optional(),
+    courseID: z.string().optional(),
     title: z.string()
         .min(5, "Title must be at least 5 characters")
         .max(150, "Title cannot exceed 150 characters")
@@ -64,6 +77,9 @@ export const updateCourseSchema = z.object({
     maxEnrollments: z.number().min(1).optional(),
     curriculum: z.string().optional(),
     durationWeeks: z.number().min(1).max(520).optional(),
+    isDeleted: z.boolean().optional(),
+    mentorSupport: z.boolean().default(true),
+    batch: batchSchema.optional(),
 });
 
 // ============================================

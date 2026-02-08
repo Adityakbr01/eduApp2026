@@ -77,10 +77,10 @@ export const courseApi = {
      * Publish/unpublish course
      */
     toggleCourseStatus: async (data: { id: string; status: CourseStatus.PUBLISHED | CourseStatus.UNPUBLISHED }) => {
-    const { id, status } = data;
-    const response = await apiClient.put(`${INSTRUCTOR_BASE}/${id}/toggleCourseStatus`, { status });
-    return response.data;
-},
+        const { id, status } = data;
+        const response = await apiClient.put(`${INSTRUCTOR_BASE}/${id}/toggleCourseStatus`, { status });
+        return response.data;
+    },
 
 
     // ============================
@@ -258,16 +258,21 @@ export const publicCourseApi = {
         const response = await apiClient.get(`/courses/${id}`);
         return response.data;
     },
+
+    getFeaturedCourses: async (): Promise<ApiResponse<CourseListData>> => {
+        const response = await apiClient.get("/courses/featured");
+        return response.data;
+    },
 };
 
 
 
 
 
-    interface ToggleCourseStatusAdminPayload {
-  requestId: string;
-  action: CourseStatus.APPROVED | CourseStatus.REJECTED;
-  reason?: string;
+interface ToggleCourseStatusAdminPayload {
+    requestId: string;
+    action: CourseStatus.APPROVED | CourseStatus.REJECTED;
+    reason?: string;
 }
 // ==================== ADMIN COURSE API ====================
 
@@ -277,10 +282,10 @@ export const adminCourseApi = {
         return response.data;
     },
 
- toggleCourseStatusAdmin : async (data: ToggleCourseStatusAdminPayload) => {
-    const { requestId, action, reason } = data;
-    const response = await apiClient.put(`${ADMIN_BASE}/course-status-requests/${requestId}/review`, { action, reason });
-    return response.data;
+    toggleCourseStatusAdmin: async (data: ToggleCourseStatusAdminPayload) => {
+        const { requestId, action, reason } = data;
+        const response = await apiClient.put(`${ADMIN_BASE}/course-status-requests/${requestId}/review`, { action, reason });
+        return response.data;
     },
     toggleFeaturedCourse: async (courseId: string): Promise<ApiResponse<CourseDetailData>> => {
         const response = await apiClient.put(`${ADMIN_BASE}/${courseId}/toggleFeatured`);

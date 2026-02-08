@@ -2,10 +2,10 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import {
     courseRepository,
-    lessonContentRepository,
-    lessonRepository,
-    sectionRepository
 } from "src/repositories/course.repository.js";
+import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import { lessonRepository } from "src/repositories/lesson.repository.js";
+import { sectionRepository } from "src/repositories/section.repository.js";
 import AppError from "src/utils/AppError.js";
 
 

@@ -28,14 +28,23 @@ export default function HeroFutureReadySection() {
             end: "+=250%",
             scrub: 0.01,
             pin: true,
-            anticipatePin: 1,
+            anticipatePin: 1, // keeping this as it helps with pinning jank on start
           },
         });
 
-        // Initial state
-        gsap.set(futureWrapperRef.current, { xPercent: 0 });
-        gsap.set(readyWrapperRef.current, { xPercent: 0 });
-        gsap.set(cardsContainerRef.current, { xPercent: 40 });
+        // Initial state with will-change hint
+        gsap.set(futureWrapperRef.current, {
+          xPercent: 0,
+          willChange: "transform",
+        });
+        gsap.set(readyWrapperRef.current, {
+          xPercent: 0,
+          willChange: "transform",
+        });
+        gsap.set(cardsContainerRef.current, {
+          xPercent: 40,
+          willChange: "transform",
+        });
 
         // Simultaneous animation - text splits AND cards slide in together
         tl.to(
@@ -44,8 +53,9 @@ export default function HeroFutureReadySection() {
             xPercent: -100,
             duration: 0.3,
             ease: "power2.out",
+            force3D: true,
           },
-          0
+          0,
         )
           .to(
             readyWrapperRef.current,
@@ -53,8 +63,9 @@ export default function HeroFutureReadySection() {
               xPercent: 100,
               duration: 0.3,
               ease: "power2.out",
+              force3D: true,
             },
-            0
+            0,
           )
           .to(
             cardsContainerRef.current,
@@ -62,15 +73,16 @@ export default function HeroFutureReadySection() {
               xPercent: 0,
               duration: 0.5,
               ease: "power2.out",
+              force3D: true,
             },
-            0
+            0,
           );
       });
 
-     mm.add("(max-width: 1023px)", () => {
-  // Do nothing for small devices; just show scrollable cards
-  gsap.set(cardsContainerRef.current, { xPercent: 0 }); // ensure it starts in place
-});
+      mm.add("(max-width: 1023px)", () => {
+        // Do nothing for small devices; just show scrollable cards
+        gsap.set(cardsContainerRef.current, { xPercent: 0 }); // ensure it starts in place
+      });
     }, sectionRef);
 
     return () => ctx.revert();
@@ -110,7 +122,7 @@ export default function HeroFutureReadySection() {
         </div>
 
         {/* Cards Container */}
-       <div
+        <div
           ref={cardsContainerRef}
           className="cards flex flex-row gap-3 sm:gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full py-4 md:py-6 px-2 sm:px-4 lg:overflow-visible lg:justify-center"
         >
@@ -121,7 +133,9 @@ export default function HeroFutureReadySection() {
                 <h1 className="text-[2.5rem] sm:text-[3rem] lg:text-[4rem] xl:text-[6rem] mt-4 sm:mt-6 lg:mt-10 leading-[.7] lg:leading-18">
                   20+
                 </h1>
-                <h2 className="text-[1.5rem] sm:text-[1.8rem] lg:text-[2.4rem]">Instructors</h2>
+                <h2 className="text-[1.5rem] sm:text-[1.8rem] lg:text-[2.4rem]">
+                  Instructors
+                </h2>
               </div>
               <Image
                 src="https://www.sheryians.com/images/home/future-ready/bag.png"
@@ -153,8 +167,12 @@ export default function HeroFutureReadySection() {
               }}
             >
               <div className="font-machina font-light">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl">1 Million+</h1>
-                <p className="text-sm sm:text-base lg:text-xl xl:text-2xl ml-1 sm:ml-2">Learners</p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
+                  1 Million+
+                </h1>
+                <p className="text-sm sm:text-base lg:text-xl xl:text-2xl ml-1 sm:ml-2">
+                  Learners
+                </p>
               </div>
               <div
                 className="p-2 sm:p-3 lg:p-4 rounded-full border border-white/30 bg-white/10 flex items-center justify-center"
@@ -163,7 +181,10 @@ export default function HeroFutureReadySection() {
                     "rgba(0, 0, 0, 0.25) 0px 4px 18.8px 0px, rgba(255, 255, 255, 0.12) 0px -1px 6.2px 6px inset",
                 }}
               >
-                <ArrowUpRight className="w-5 h-5 sm:w-7 sm:h-7 lg:w-9 lg:h-9" aria-hidden="true" />
+                <ArrowUpRight
+                  className="w-5 h-5 sm:w-7 sm:h-7 lg:w-9 lg:h-9"
+                  aria-hidden="true"
+                />
               </div>
             </div>
             <p className="z-5 capitalize mb-2 sm:mb-3 relative text-black font-manrope font-light backdrop-blur-xs p-4 sm:p-6 lg:p-8 text-base sm:text-lg lg:text-2xl xl:text-3xl">
@@ -186,7 +207,9 @@ export default function HeroFutureReadySection() {
                 <h1 className="text-[2.5rem] sm:text-[3rem] lg:text-[4rem] xl:text-[6rem] mt-4 sm:mt-6 lg:mt-10 leading-[.7] lg:leading-18">
                   628k
                 </h1>
-                <h2 className="text-[1.5rem] sm:text-[1.8rem] lg:text-[2.4rem] pl-1 sm:pl-2">Subscribers</h2>
+                <h2 className="text-[1.5rem] sm:text-[1.8rem] lg:text-[2.4rem] pl-1 sm:pl-2">
+                  Subscribers
+                </h2>
               </div>
               <Image
                 src="https://www.sheryians.com/images/home/future-ready/yt.png"

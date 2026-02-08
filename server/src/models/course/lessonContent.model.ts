@@ -4,18 +4,18 @@ import mongoose from "mongoose";
 import { ContentType } from "src/types/course.type.js";
 
 const videoSchema = new mongoose.Schema({
-  rawKey: { type: String,required: false },          // temp mp4 key
-  hlsKey: { type: String, required: false },          // prod hls path
-  duration: Number,
-  minWatchPercent: Number,
-  status: {
-    type: String,
-    enum: ["UPLOADED", "PROCESSING", "READY", "FAILED"],
-    default: "UPLOADED",
-  },
-failureReason: { type: String, required: false },
-version: { type: Number, required: false,default:0 },
-  isEmailSent: { type: Boolean, default: false },
+    rawKey: { type: String, required: false },          // temp mp4 key
+    hlsKey: { type: String, required: false },          // prod hls path
+    duration: Number,
+    minWatchPercent: Number,
+    status: {
+        type: String,
+        enum: ["UPLOADED", "PROCESSING", "READY", "FAILED"],
+        default: "UPLOADED",
+    },
+    failureReason: { type: String, required: false },
+    version: { type: Number, required: false, default: 0 },
+    isEmailSent: { type: Boolean, default: false },
 });
 
 
@@ -71,6 +71,9 @@ const lessonContentSchema = new mongoose.Schema({
     // VISIBILITY
     isVisible: { type: Boolean, default: true },
     isPreview: { type: Boolean, default: false }, // Add this too!
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+
 }, { timestamps: true });
 
 lessonContentSchema.index({ lessonId: 1, order: 1 });

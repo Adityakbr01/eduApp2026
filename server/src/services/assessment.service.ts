@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { quizRepository, assignmentRepository } from "src/repositories/assessment.repository.js";
-import { lessonContentRepository } from "src/repositories/course.repository.js";
+import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import AppError from "src/utils/AppError.js";
 import type { IQuizQuestion } from "src/models/course/quiz.model.js";
 import type {

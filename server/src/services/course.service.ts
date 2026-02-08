@@ -2,13 +2,13 @@ import { Types } from "mongoose";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import CourseStatusRequestSchema from "src/models/course/CourseStatusRequestSchema.js";
+import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import {
-  contentAttemptRepository,
-  courseRepository,
-  lessonContentRepository,
-  lessonRepository,
-  sectionRepository,
+  courseRepository
 } from "src/repositories/course.repository.js";
+import { lessonRepository } from "src/repositories/lesson.repository.js";
+import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import { sectionRepository } from "src/repositories/section.repository.js";
 import { CourseStatus } from "src/types/course.type.js";
 import AppError from "src/utils/AppError.js";
 import generateSlug from "src/utils/generateSlug.js";
@@ -125,7 +125,21 @@ export const courseService = {
       );
     }
 
-    // Delete all related data
+    const course = await courseRepository.findById(courseId);
+
+    if (!course) {
+      throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+    }
+
+    if (course.status === CourseStatus.PUBLISHED || course.status === CourseStatus.PENDING_REVIEW) {
+      throw new AppError(
+        "Published courses cannot be deleted Request admin for unpublish",
+        STATUSCODE.BAD_REQUEST,
+        ERROR_CODE.INVALID_ACTION
+      );
+    }
+
+    // Delete all related data (Soft Delete)
     await Promise.all([
       lessonContentRepository.deleteByCourse(courseId),
       lessonRepository.deleteByCourse(courseId),
@@ -133,11 +147,9 @@ export const courseService = {
       contentAttemptRepository.deleteByCourse(courseId),
     ]);
 
-    const course = await courseRepository.deleteById(courseId);
+    await courseRepository.deleteById(courseId, instructorId);
 
-    if (!course) {
-      throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
-    }
+
 
     return { message: "Course deleted successfully" };
   },
@@ -275,6 +287,10 @@ export const courseService = {
     // Use updateById to only update isFeatured field, avoiding issues with malformed nested data
     const updatedCourse = await courseRepository.updateById(courseId, { isFeatured: newFeaturedStatus });
     return updatedCourse;
+  },
+
+  getFeaturedCourses: async () => {
+    return courseRepository.findFeaturedCourses();
   },
 
 };

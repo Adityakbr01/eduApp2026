@@ -1,6 +1,14 @@
 import type { Types, Document } from "mongoose";
 
 // ==================== ENUMS ====================
+
+export enum BatchStatus {
+    UPCOMING = "UPCOMING",
+    ONGOING = "ONGOING",
+    COMPLETED = "COMPLETED",
+}
+
+
 export enum CourseLevel {
     BEGINNER = "Beginner",
     INTERMEDIATE = "Intermediate",

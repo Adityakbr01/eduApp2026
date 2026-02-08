@@ -71,6 +71,7 @@ function HeroImpactSection() {
         gsap.to(wrapper, {
           x: -totalScrollWidth,
           ease: "none",
+          force3D: true, // Force hardware acceleration
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top top",
@@ -166,6 +167,7 @@ function HeroImpactSection() {
         <div
           ref={cardsWrapperRef}
           className="flex gap-8 items-start will-change-transform"
+          style={{ willChange: "transform" }}
         >
           {/* Left Spacer */}
           <div className="w-[25%] shrink-0"></div>

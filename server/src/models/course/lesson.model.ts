@@ -15,7 +15,9 @@ const lessonSchema = new mongoose.Schema({
     title: { type: String, required: true },
     order: Number,
 
-    isVisible: { type: Boolean, default: true }
+    isVisible: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 export default mongoose.model("Lesson", lessonSchema);

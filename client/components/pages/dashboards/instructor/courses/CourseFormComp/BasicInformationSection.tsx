@@ -5,20 +5,20 @@ import { UseFormReturn } from "react-hook-form";
 // UI components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 // Custom components & hooks
 import { CreateCourseInput } from "@/validators/course.schema";
-
-
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 // ────────────────────────────────────────────────
 // Basic Information Section
@@ -89,6 +89,25 @@ export function BasicInformationSection({
             </FormItem>
           )}
         />
+
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="mentorSupport"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mentor Support *</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );

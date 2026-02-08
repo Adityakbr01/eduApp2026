@@ -4,7 +4,7 @@ import { STATUSCODE } from "src/constants/statusCodes.js";
 import Course from "src/models/course/course.model.js";
 import {
     contentAttemptRepository
-} from "src/repositories/course.repository.js";
+} from "src/repositories/contentAttempt.repository.js";
 import AppError from "src/utils/AppError.js";
 
 

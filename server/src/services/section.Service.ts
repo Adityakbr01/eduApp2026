@@ -3,9 +3,9 @@ import { STATUSCODE } from "src/constants/statusCodes.js";
 import LessonContent from "src/models/course/lessonContent.model.js";
 import {
     courseRepository,
-    lessonRepository,
-    sectionRepository
 } from "src/repositories/course.repository.js";
+import { lessonRepository } from "src/repositories/lesson.repository.js";
+import { sectionRepository } from "src/repositories/section.repository.js";
 import AppError from "src/utils/AppError.js";
 
 

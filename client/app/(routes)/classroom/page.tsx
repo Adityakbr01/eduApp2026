@@ -4,7 +4,7 @@ import CourseCard from "@/components/Classroom/CourseCard";
 import Heatmap from "@/components/Classroom/Heatmap";
 import Notifications from "@/components/Classroom/Notifications";
 import Link from "next/link";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const COURSES = [
@@ -64,13 +64,15 @@ const ClassroomPage = () => {
   };
 
   return (
-    <div className="relative flex flex-col w-full bg-[#171717] py-7 px-5 gap-5 min-h-screen lg:h-screen lg:overflow-hidden lg:flex-row text-white">
+    <div className="relative flex flex-col w-full bg-[#171717] p-1 md:py-2 md:px-2 gap-5 min-h-screen lg:h-screen lg:overflow-hidden lg:flex-row text-white">
       {/* Left Column - Courses */}
       <div className="rounded-2xl flex flex-col relative flex-1 border border-white/5 p-0! min-h-[500px] lg:min-h-[50%] font-apfel max-lg:w-full lg:h-full overflow-hidden bg-dark-card! text-white/80 platform">
-        <h1 className="text-2xl text-white bg-dark-extra-light p-4 px-8 flex items-center gap-2 border-b border-white/5">
-          Classroom
-        </h1>
-
+        <Link href={"/"}>
+          <h1 className="text-2xl text-white bg-dark-extra-light p-4 px-8 flex items-center gap-2 border-b border-white/5">
+            <ArrowLeft className="w-4 h-4 animate-out" />
+            Classroom
+          </h1>
+        </Link>
         <div className="flex px-5 md:px-7 sm:flex-row flex-col gap-3 justify-between md:items-center py-4 my-3">
           <h1 className="text-xl text-white whitespace-nowrap">
             Your Enrolled Courses

@@ -1,17 +1,8 @@
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
-import {
-    contentAttemptRepository,
-    lessonContentRepository
-} from "src/repositories/course.repository.js";
+import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
+import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import AppError from "src/utils/AppError.js";
-
-
-
-
-
-
-
 
 
 // ============================================

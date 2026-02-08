@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { CourseLevel, CourseStatus, Currency, DeliveryMode, Language } from "../../types/course.type.js";
+import { BatchStatus, CourseLevel, CourseStatus, Currency, DeliveryMode, Language } from "../../types/course.type.js";
 
 
 
@@ -27,7 +27,6 @@ const courseSchema = new mongoose.Schema({
         },
     },
 
-    //
 
     // Course Details
     level: {
@@ -56,11 +55,11 @@ const courseSchema = new mongoose.Schema({
     isPublished: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },
     publishedAt: { type: Date },
-    
+
 
     // Enrollment
     totalEnrollments: { type: Number, default: 0, min: 0 },
-    maxEnrollments: { type: Number, min: 1 },
+    maxEnrollments: { type: Number, min: 1, max: 1000, default: 100 },
 
     // Course Duration (in weeks)
     durationWeeks: {
@@ -106,13 +105,36 @@ const courseSchema = new mongoose.Schema({
         required: [true, "Short description is required"],
         maxlength: [500, "Short description cannot exceed 500 characters"],
     },
+
+    //New items
     previewVideoUrl: { type: String },
-   thumbnail: {
-  key: { type: String },          // S3 key
-  version: { type: Number, default: 0 },
-},
+    thumbnail: {
+        key: { type: String },          // S3 key
+        version: { type: Number, default: 0 },
+    },
+    //New items
+    batch: {
+        type: {
+            startDate: { type: Date },
+            endDate: { type: Date },
+            batchName: { type: String },
+            batchId: { type: String },
+            batchStatus: { type: String, enum: Object.values(BatchStatus), default: BatchStatus.UPCOMING },
+        },
+        required: true,
+    },
 
+    Deleted: {
+        isDeleted: { type: Boolean, default: false },
+        deletedAt: { type: Date },
+        deletedBy: { type: Schema.Types.ObjectId, ref: "User" },
+        deletedReason: { type: String },
+    },
 
+    mentorSupport: {
+        type: Boolean,
+        default: true,
+    },
 
     location: { type: String },
     accessDuration: {

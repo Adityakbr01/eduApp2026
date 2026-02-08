@@ -37,7 +37,8 @@ export const ROUTES_WITHOUT_NAVBAR = [
   "/reset-password",
   "/signup",
   "/email-not-verified",
-  "/classroom"
+  "/classroom",
+  "/course/"
 ] as const;
 
 
@@ -47,7 +48,7 @@ export const ROUTES_WITHOUT_LENIS = [
   "/reset-password",
   "/signup",
   "/email-not-verified",
-  "/classroom"
+  "/classroom",
 ] as const;
 
 /**

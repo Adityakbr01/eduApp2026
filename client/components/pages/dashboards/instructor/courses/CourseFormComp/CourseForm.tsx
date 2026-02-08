@@ -12,7 +12,7 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 
 import CourseImageUploader from "@/app/(routes)/dashboard/Instructor/courses/create/CourseImageUploader";
@@ -20,6 +20,7 @@ import getCategoryId from "@/lib/utils/getCategoryId";
 import getDefaultPricing from "@/lib/utils/getDefaultPricing";
 import { useGetCategoriesWithSubcategories } from "@/services/categories";
 import {
+  BatchStatus,
   CourseLevel,
   DeliveryMode,
   ICourse,
@@ -37,13 +38,12 @@ import { CourseHeader } from "./CourseHeader";
 import { DurationSection } from "./DurationSection";
 import { PricingSection } from "./PricingSection";
 import { TagsSection } from "./TagsSection";
+import { BatchInformationSection } from "./BatchInformationSection";
 
 interface CourseFormProps {
   initialData?: ICourse;
   isEditing?: boolean;
 }
-
-
 
 export function CourseForm({
   initialData,
@@ -61,8 +61,6 @@ export function CourseForm({
     useState<string>(initialCategoryId);
   const categories = categoriesData?.data?.categories || [];
 
-
-
   const form = useForm({
     resolver: zodResolver(createCourseSchema),
     defaultValues: {
@@ -79,12 +77,20 @@ export function CourseForm({
       tags: initialData?.tags || [],
       pricing: getDefaultPricing(initialData),
       durationWeeks: initialData?.durationWeeks || 1,
+      batch: {
+        startDate: initialData?.batch?.startDate || new Date().toISOString(),
+        endDate: initialData?.batch?.endDate || new Date().toISOString(),
+        batchStatus: initialData?.batch?.batchStatus || BatchStatus.UPCOMING,
+      },
+      mentorSupport: initialData?.mentorSupport || true,
+      maxEnrollments: initialData?.maxEnrollments || 50,
+      isFeatured: initialData?.isFeatured || false,
     },
   });
 
   // Get subcategories for selected category
   const selectedCategoryData = categories.find(
-    (cat: { _id: string }) => cat._id === selectedCategory
+    (cat: { _id: string }) => cat._id === selectedCategory,
   );
   const subcategories = selectedCategoryData?.subcategories || [];
 
@@ -117,7 +123,7 @@ export function CourseForm({
 
         if (result.data?._id) {
           router.push(
-            `/dashboard/Instructor/courses/${result.data._id}/curriculum`
+            `/dashboard/Instructor/courses/${result.data._id}/curriculum`,
           );
         }
       }
@@ -148,9 +154,7 @@ export function CourseForm({
             />
 
             {/* Tags */}
-            <TagsSection
-              form={form as UseFormReturn<CreateCourseInput>}
-            />
+            <TagsSection form={form as UseFormReturn<CreateCourseInput>} />
 
             {/* Category & Level */}
             <CategoryAndLevelSection
@@ -165,37 +169,36 @@ export function CourseForm({
             {/* Cover Image */}
             {isEditing && initialData?._id && (
               <Card>
-              <CardHeader>
-                <CardTitle>Thumbnail</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="thumbnail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <CourseImageUploader
-                          courseId={initialData._id}
-                          value={field.value}
-                          onChange={(thumbnail) => {
-                            console.log("Thumbnail changed:", thumbnail);
-                            field.onChange(thumbnail); // 🔥 saved in form
-                          }}
-                          
-                        />
-                      </FormControl>
+                <CardHeader>
+                  <CardTitle>Thumbnail</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="thumbnail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <CourseImageUploader
+                            courseId={initialData._id}
+                            value={field.value}
+                            onChange={(thumbnail) => {
+                              console.log("Thumbnail changed:", thumbnail);
+                              field.onChange(thumbnail); // 🔥 saved in form
+                            }}
+                          />
+                        </FormControl>
 
-                      <FormDescription>
-                        Recommended: 1280×720 (JPG/PNG/WebP, max 5MB)
-                      </FormDescription>
+                        <FormDescription>
+                          Recommended: 1280×720 (JPG/PNG/WebP, max 5MB)
+                        </FormDescription>
 
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
             )}
 
             {/* Pricing */}
@@ -203,12 +206,14 @@ export function CourseForm({
 
             {/* Course Duration */}
             <DurationSection form={form as UseFormReturn<CreateCourseInput>} />
+
+            {/* Batch Information */}
+            <BatchInformationSection
+              form={form as UseFormReturn<CreateCourseInput>}
+            />
           </div>
         </div>
       </form>
     </Form>
   );
 }
-
-
-

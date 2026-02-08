@@ -1,5 +1,15 @@
 // ==================== ENUMS ====================
 
+import z from "zod";
+
+
+export enum BatchStatus {
+    UPCOMING = "UPCOMING",
+    ONGOING = "ONGOING",
+    COMPLETED = "COMPLETED",
+}
+
+
 export enum CourseLevel {
     BEGINNER = "Beginner",
     INTERMEDIATE = "Intermediate",
@@ -165,6 +175,18 @@ export interface IThumbnail {
     key: string;
     version: number;
 }
+
+
+export interface IBatch {
+    _id: string;
+    course: string;
+    startDate: string;
+    endDate: string;
+    batchStatus: BatchStatus;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface ICourse {
     _id: string;
     title: string;
@@ -198,6 +220,8 @@ export interface ICourse {
     seoKeywords?: string[];
     createdAt: string;
     updatedAt: string;
+    batch: IBatch
+    mentorSupport: boolean;
 }
 
 export interface IInstructorInfo {
@@ -240,6 +264,16 @@ export interface ContentDetailData {
 }
 
 // ==================== DTO INTERFACES ====================
+export const batchSchema = z.object({
+    startDate: z.string().default(() => new Date().toISOString()),
+    endDate: z.string().default(() => {
+        const date = new Date();
+        date.setMonth(date.getMonth() + 6);
+        return date.toISOString();
+    }),
+    maxStudents: z.number().default(100),
+    batchStatus: z.nativeEnum(BatchStatus).default(BatchStatus.UPCOMING),
+});
 
 export interface CreateCourseDTO {
     _id?: string;
@@ -270,6 +304,8 @@ export interface CreateCourseDTO {
     seoTitle?: string;
     seoDescription?: string;
     seoKeywords?: string[];
+    batches?: z.infer<typeof batchSchema>[];
+    mentorSupport: boolean;
 }
 
 export type UpdateCourseDTO = Partial<CreateCourseDTO>;
@@ -446,43 +482,43 @@ export interface ReviewListData {
 
 
 export interface AdminCourse {
-  _id: string;
-  title: string;
-  description: string;
-
-  // Optional request info
-  requestId?: string; // ID of the pending request
-  requestType?: "published" | "unpublished"; // type of request
-  requestStatus?: "pending_review" | "approved" | "rejected"; // status of request
-  requestCreatedAt?: string; // when the request was created
-
-  status: "draft" | "published" | "pending_review"; // course status
-  isPublished: boolean;
-  isFeatured?: boolean; // Featured course status
-  createdAt: string;
-
-  category: {
     _id: string;
-    name: string;
-    slug: string;
-  };
+    title: string;
+    description: string;
 
-  instructor: {
-    _id: string;
-    name: string;
-    email: string;
-    avatar?: string; // optional avatar
-  };
+    // Optional request info
+    requestId?: string; // ID of the pending request
+    requestType?: "published" | "unpublished"; // type of request
+    requestStatus?: "pending_review" | "approved" | "rejected"; // status of request
+    requestCreatedAt?: string; // when the request was created
+
+    status: "draft" | "published" | "pending_review"; // course status
+    isPublished: boolean;
+    isFeatured?: boolean; // Featured course status
+    createdAt: string;
+
+    category: {
+        _id: string;
+        name: string;
+        slug: string;
+    };
+
+    instructor: {
+        _id: string;
+        name: string;
+        email: string;
+        avatar?: string; // optional avatar
+    };
 }
 
 
 export interface AdminCoursesResponse {
-  success: boolean;
+    success: boolean;
     courses: AdminCourse[];
     pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
     };
 }

@@ -1,11 +1,7 @@
-import mongoose, { Types } from "mongoose";
 import type { FilterQuery, PipelineStage, UpdateQuery } from "mongoose";
+import { Types } from "mongoose";
 import Course from "src/models/course/course.model.js";
-import Section from "src/models/course/section.model.js";
-import Lesson from "src/models/course/lesson.model.js";
-import LessonContent from "src/models/course/lessonContent.model.js";
-import ContentAttempt from "src/models/course/contentAttempt.model.js";
-import  { CourseStatus } from "src/types/course.type.js";
+import { CourseStatus } from "src/types/course.type.js";
 
 // ============================================
 // COURSE REPOSITORY
@@ -24,7 +20,7 @@ export const courseRepository = {
     ) => {
         const { page = 1, limit = 10, search, category, subCategory } = query;
         const skip = (page - 1) * limit;
-        const matchFilter: any = { isPublished: true };
+        const matchFilter: any = { isPublished: true, "Deleted.isDeleted": { $ne: true } };
 
         if (search) {
             matchFilter.$or = [
@@ -171,8 +167,8 @@ export const courseRepository = {
             (typeof idOrSlug === 'string' ? idOrSlug.length === 24 : true);
 
         const matchQuery = isObjectId
-            ? { _id: new Types.ObjectId(idOrSlug as string), isPublished: true }
-            : { slug: idOrSlug, isPublished: true };
+            ? { _id: new Types.ObjectId(idOrSlug as string), isPublished: true, "Deleted.isDeleted": { $ne: true } }
+            : { slug: idOrSlug, isPublished: true, "Deleted.isDeleted": { $ne: true } };
 
         const result = await Course.aggregate([
             // Match the course
@@ -313,6 +309,21 @@ export const courseRepository = {
         return Course.findOne({ slug });
     },
 
+    // Find featured courses
+    findFeaturedCourses: async (limit: number = 5) => {
+        return Course.find({
+            isPublished: true,
+            isFeatured: true,
+            "Deleted.isDeleted": { $ne: true }
+        })
+            .sort({ publishedAt: -1 })
+            .limit(limit)
+            .populate("instructor", "name avatar")
+            .populate("category", "name slug")
+            .populate("subCategory", "name slug")
+            .lean();
+    },
+
     // Find all courses by instructor
     findByInstructor: async (
         instructorId: string | Types.ObjectId,
@@ -326,7 +337,7 @@ export const courseRepository = {
         const { page = 1, limit = 10, status, search } = query;
         const skip = (page - 1) * limit;
 
-        const filter: FilterQuery<any> = { instructor: instructorId };
+        const filter: FilterQuery<any> = { instructor: instructorId, "Deleted.isDeleted": { $ne: true } };
 
         if (status) filter.status = status;
         if (search) {
@@ -359,12 +370,21 @@ export const courseRepository = {
 
     // Update by ID
     updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
+        console.log("Updating course with data:", data);
         return Course.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     },
 
-    // Delete by ID
-    deleteById: async (id: string | Types.ObjectId) => {
-        return Course.findByIdAndDelete(id);
+    // Delete by ID (soft delete)
+    deleteById: async (id: string | Types.ObjectId, userId: string | Types.ObjectId) => {
+        return Course.findByIdAndUpdate(
+            id,
+            {
+                "Deleted.isDeleted": true,
+                "Deleted.deletedAt": new Date(),
+                "Deleted.deletedBy": userId
+            },
+            { new: true }
+        );
     },
 
     // Check if slug exists
@@ -375,24 +395,24 @@ export const courseRepository = {
     },
 
     // Publish/Unpublish course
-  updatePublishStatus: async (
-  id: string | Types.ObjectId,
-  status: CourseStatus
-) => {
-  const updateData: any = { status };
+    updatePublishStatus: async (
+        id: string | Types.ObjectId,
+        status: CourseStatus
+    ) => {
+        const updateData: any = { status };
 
-  if (status === CourseStatus.PUBLISHED) {
-    updateData.isPublished = true;
-    updateData.publishedAt = new Date();
-  } else if (status === CourseStatus.DRAFT) {
-    updateData.isPublished = false;
-    updateData.publishedAt = null;
-  } else if (status === CourseStatus.REJECTED) {
-    updateData.isPublished = false;
-  }
+        if (status === CourseStatus.PUBLISHED) {
+            updateData.isPublished = true;
+            updateData.publishedAt = new Date();
+        } else if (status === CourseStatus.DRAFT) {
+            updateData.isPublished = false;
+            updateData.publishedAt = null;
+        } else if (status === CourseStatus.REJECTED) {
+            updateData.isPublished = false;
+        }
 
-  return Course.findByIdAndUpdate(id, updateData, { new: true });
-},
+        return Course.findByIdAndUpdate(id, updateData, { new: true });
+    },
     // Check ownership
     isOwner: async (courseId: string | Types.ObjectId, instructorId: string | Types.ObjectId) => {
         const course = await Course.findOne({
@@ -405,560 +425,146 @@ export const courseRepository = {
         return !!course;
     },
     // -------------------- FIND COURSES FOR ADMIN WITH PAGINATION AND FILTERING WITH REGEX --------------------
-  findForAdmin : async (
-  query: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    search?: string;
-  } = {}
-) => {
-  const { page = 1, limit = 10, status, search } = query;
-  const skip = (page - 1) * limit;
-
-  /* ------------------------------ match ------------------------------ */
-  const match: Record<string, any> = {};
-
-  if (status) match.status = status;
-
-  if (search) {
-    const regex = new RegExp(search, "i");
-    match.$or = [{ title: regex }, { description: regex }];
-  }
-
-  /* ----------------------------- pipeline ---------------------------- */
-  const pipeline: PipelineStage[] = [
-    { $match: match },
-    { $sort: { createdAt: -1 } },
-    { $skip: skip },
-    { $limit: limit },
-
-    /* --------------------------- instructor --------------------------- */
-    {
-      $lookup: {
-        from: "users",
-        localField: "instructor",
-        foreignField: "_id",
-        as: "instructor",
-      },
-    },
-    { $unwind: "$instructor" },
-
-    /* ---------------------------- category ---------------------------- */
-    {
-      $lookup: {
-        from: "categories",
-        localField: "category",
-        foreignField: "_id",
-        as: "category",
-      },
-    },
-    { $unwind: "$category" },
-
-    /* --------------------- course status request ---------------------- */
-    {
-      $lookup: {
-        from: "coursestatusrequests",
-        let: { courseId: "$_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$course", "$$courseId"] },
-                  {
-                    $eq: [
-                      "$status",
-                      CourseStatus.PENDING_REVIEW,
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 1,
-              type: 1,
-              status: 1,
-              createdAt: 1,
-            },
-          },
-        ],
-        as: "statusRequest",
-      },
-    },
-    {
-      $unwind: {
-        path: "$statusRequest",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-
-    /* ----------------------------- project ---------------------------- */
-    {
-      $project: {
-        title: 1,
-        description: 1,
-        status: 1,
-        isPublished: 1,
-        isFeatured: 1,
-        createdAt: 1,
-
-        // 🔑 review info
-        requestId: "$statusRequest._id",
-        requestType: "$statusRequest.type",
-        requestStatus: "$statusRequest.status",
-        requestCreatedAt: "$statusRequest.createdAt",
-
-        instructor: {
-          _id: "$instructor._id",
-          name: "$instructor.name",
-          email: "$instructor.email",
-          avatar: "$instructor.avatar",
-        },
-
-        category: {
-          _id: "$category._id",
-          name: "$category.name",
-          slug: "$category.slug",
-        },
-      },
-    },
-  ];
-
-  /* ------------------------------ run ------------------------------ */
-  const courses = await Course.aggregate(pipeline);
-
-  const total = await Course.countDocuments(match);
-
-  return {
-    courses,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
-},
-};
-
-// ============================================
-// SECTION REPOSITORY
-// ============================================
-export const sectionRepository = {
-    // Create
-    create: async (data: any) => {
-        return Section.create(data);
-    },
-
-    // Find by ID
-    findById: async (id: string | Types.ObjectId) => {
-        return Section.findById(id);
-    },
-
-    // Find all sections by course
-    findByCourse: async (courseId: string | Types.ObjectId) => {
-        return Section.find({ courseId })
-            .sort({ order: 1 })
-            .lean();
-    },
-
-    // Get max order in course
-    getMaxOrder: async (courseId: string | Types.ObjectId) => {
-        const lastSection = await Section.findOne({ courseId })
-            .sort({ order: -1 })
-            .select("order")
-            .lean();
-        return lastSection?.order ?? 0;
-    },
-
-    // Update by ID
-    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
-        return Section.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-    },
-
-    // Delete by ID
-    deleteById: async (id: string | Types.ObjectId) => {
-        return Section.findByIdAndDelete(id);
-    },
-
-    // Bulk reorder sections
-    bulkReorder: async (sections: { id: string; order: number }[]) => {
-        const bulkOps = sections.map(({ id, order }) => ({
-            updateOne: {
-                filter: { _id: new mongoose.Types.ObjectId(id) },
-                update: { $set: { order } },
-            },
-        }));
-        return Section.bulkWrite(bulkOps);
-    },
-
-    // Toggle visibility
-    toggleVisibility: async (id: string | Types.ObjectId) => {
-        const section = await Section.findById(id);
-        if (!section) return null;
-        section.isVisible = !section.isVisible;
-        return section.save();
-    },
-
-    // Delete all sections by course
-    deleteByCourse: async (courseId: string | Types.ObjectId) => {
-        return Section.deleteMany({ courseId });
-    },
-};
-
-// ============================================
-// LESSON REPOSITORY
-// ============================================
-export const lessonRepository = {
-    // Create
-    create: async (data: any) => {
-        return Lesson.create(data);
-    },
-
-    // Find by ID
-    findById: async (id: string | Types.ObjectId) => {
-        return Lesson.findById(id);
-    },
-
-    // Find all lessons by section
-    findBySection: async (sectionId: string | Types.ObjectId) => {
-        return Lesson.find({ sectionId })
-            .sort({ order: 1 })
-            .lean();
-    },
-
-    // Get max order in section
-    getMaxOrder: async (sectionId: string | Types.ObjectId) => {
-        const lastLesson = await Lesson.findOne({ sectionId })
-            .sort({ order: -1 })
-            .select("order")
-            .lean();
-        return lastLesson?.order ?? 0;
-    },
-
-    // Update by ID
-    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
-        return Lesson.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-    },
-
-    // Delete by ID
-    deleteById: async (id: string | Types.ObjectId) => {
-        return Lesson.findByIdAndDelete(id);
-    },
-
-    // Bulk reorder lessons
-    bulkReorder: async (lessons: { id: string; order: number }[]) => {
-        const bulkOps = lessons.map(({ id, order }) => ({
-            updateOne: {
-                filter: { _id: new mongoose.Types.ObjectId(id) },
-                update: { $set: { order } },
-            },
-        }));
-        return Lesson.bulkWrite(bulkOps);
-    },
-
-    // Toggle visibility
-    toggleVisibility: async (id: string | Types.ObjectId) => {
-        const lesson = await Lesson.findById(id);
-        if (!lesson) return null;
-        lesson.isVisible = !lesson.isVisible;
-        return lesson.save();
-    },
-
-    // Delete all lessons by section
-    deleteBySection: async (sectionId: string | Types.ObjectId) => {
-        return Lesson.deleteMany({ sectionId });
-    },
-
-    // Delete all lessons by course
-    deleteByCourse: async (courseId: string | Types.ObjectId) => {
-        return Lesson.deleteMany({ courseId });
-    },
-};
-
-// ============================================
-// LESSON CONTENT REPOSITORY
-// ============================================
-export const lessonContentRepository = {
-    // Create
-    create: async (data: any) => {
-        return LessonContent.create(data);
-    },
-
-    // Find by ID
-    findById: async (id: string | Types.ObjectId) => {
-        return LessonContent.findById(id);
-    },
-
-    // Find all contents by lesson
-    findByLesson: async (lessonId: string | Types.ObjectId) => {
-        return LessonContent.find({ lessonId })
-            .sort({ order: 1 })
-            .lean();
-    },
-
-    // Get max order in lesson
-    getMaxOrder: async (lessonId: string | Types.ObjectId) => {
-        const lastContent = await LessonContent.findOne({ lessonId })
-            .sort({ order: -1 })
-            .select("order")
-            .lean();
-        return lastContent?.order ?? 0;
-    },
-
-    // Update by ID
-    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
-        return LessonContent.findByIdAndUpdate(id, data, { new: true, runValidators: true });
-    },
-
-    // Delete by ID
-    deleteById: async (id: string | Types.ObjectId) => {
-        return LessonContent.findByIdAndDelete(id);
-    },
-
-    // Bulk reorder contents
-    bulkReorder: async (contents: { id: string; order: number }[]) => {
-        const bulkOps = contents.map(({ id, order }) => ({
-            updateOne: {
-                filter: { _id: new mongoose.Types.ObjectId(id) },
-                update: { $set: { order } },
-            },
-        }));
-        return LessonContent.bulkWrite(bulkOps);
-    },
-
-    // Toggle visibility
-    toggleVisibility: async (id: string | Types.ObjectId) => {
-        const content = await LessonContent.findById(id);
-        if (!content) return null;
-        content.isVisible = !content.isVisible;
-        return content.save();
-    },
-
-    // Delete all contents by lesson
-    deleteByLesson: async (lessonId: string | Types.ObjectId) => {
-        return LessonContent.deleteMany({ lessonId });
-    },
-
-    // Delete all contents by course
-    deleteByCourse: async (courseId: string | Types.ObjectId) => {
-        return LessonContent.deleteMany({ courseId });
-    },
-};
-
-// ============================================
-// CONTENT ATTEMPT REPOSITORY (Student Progress)
-// ============================================
-export const contentAttemptRepository = {
-    // Upsert (create or update)
-    upsert: async (
-        userId: string | Types.ObjectId,
-        contentId: string | Types.ObjectId,
-        data: any
+    findForAdmin: async (
+        query: {
+            page?: number;
+            limit?: number;
+            status?: string;
+            search?: string;
+        } = {}
     ) => {
-        return ContentAttempt.findOneAndUpdate(
-            { userId, contentId },
-            {
-                $set: {
-                    ...data,
-                    lastAccessedAt: new Date(),
-                },
-            },
-            { upsert: true, new: true, runValidators: true }
-        );
-    },
+        const { page = 1, limit = 10, status, search } = query;
+        const skip = (page - 1) * limit;
 
-    // Find by user and content
-    findByUserAndContent: async (
-        userId: string | Types.ObjectId,
-        contentId: string | Types.ObjectId
-    ) => {
-        return ContentAttempt.findOne({ userId, contentId });
-    },
+        /* ------------------------------ match ------------------------------ */
+        const match: Record<string, any> = { "Deleted.isDeleted": { $ne: true } };
 
-    // Find all attempts by user and course
-    findByUserAndCourse: async (
-        userId: string | Types.ObjectId,
-        courseId: string | Types.ObjectId
-    ) => {
-        return ContentAttempt.find({ userId, courseId }).lean();
-    },
+        if (status) match.status = status;
 
-    // Mark as completed
-    markCompleted: async (
-        userId: string | Types.ObjectId,
-        contentId: string | Types.ObjectId,
-        obtainedMarks?: number
-    ) => {
-        const updateData: any = { isCompleted: true, lastAccessedAt: new Date() };
-        if (obtainedMarks !== undefined) updateData.obtainedMarks = obtainedMarks;
+        if (search) {
+            const regex = new RegExp(search, "i");
+            match.$or = [{ title: regex }, { description: regex }];
+        }
 
-        return ContentAttempt.findOneAndUpdate(
-            { userId, contentId },
-            { $set: updateData },
-            { new: true }
-        );
-    },
+        /* ----------------------------- pipeline ---------------------------- */
+        const pipeline: PipelineStage[] = [
+            { $match: match },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
 
-    // Update resume position
-    updateResumePosition: async (
-        userId: string | Types.ObjectId,
-        contentId: string | Types.ObjectId,
-        resumeAt: number,
-        totalDuration?: number
-    ) => {
-        const updateData: any = { resumeAt, lastAccessedAt: new Date() };
-        if (totalDuration !== undefined) updateData.totalDuration = totalDuration;
-
-        return ContentAttempt.findOneAndUpdate(
-            { userId, contentId },
-            { $set: updateData },
-            { upsert: true, new: true }
-        );
-    },
-
-    // Delete all attempts by content
-    deleteByContent: async (contentId: string | Types.ObjectId) => {
-        return ContentAttempt.deleteMany({ contentId });
-    },
-
-    // Delete all attempts by course
-    deleteByCourse: async (courseId: string | Types.ObjectId) => {
-        return ContentAttempt.deleteMany({ courseId });
-    },
-
-    // -------------------- GET LATEST ATTEMPT (CONTINUE LEARNING) --------------------
-    // 🚀 ULTRA-OPTIMIZED: Single DB hit using aggregation with $lookup
-    getLatestAttempt: async (
-        userId: string | Types.ObjectId,
-        courseId: string | Types.ObjectId
-    ) => {
-        const result = await ContentAttempt.aggregate([
-            // 1️⃣ Match user's attempts for this course
-            {
-                $match: {
-                    userId: new mongoose.Types.ObjectId(userId as string),
-                    courseId: new mongoose.Types.ObjectId(courseId as string),
-                },
-            },
-
-            // 2️⃣ Sort: incomplete first, then by lastAccessedAt DESC
-            { $sort: { isCompleted: 1, lastAccessedAt: -1 } },
-
-            // 3️⃣ Take only the latest one
-            { $limit: 1 },
-
-            // 4️⃣ Lookup content details (single DB hit)
+            /* --------------------------- instructor --------------------------- */
             {
                 $lookup: {
-                    from: "lessoncontents",
-                    localField: "contentId",
+                    from: "users",
+                    localField: "instructor",
                     foreignField: "_id",
-                    as: "content",
-                    pipeline: [
-                        { $project: { title: 1, type: 1, videoUrl: 1, pdfUrl: 1, order: 1 } },
-                    ],
+                    as: "instructor",
                 },
             },
-            { $unwind: { path: "$content", preserveNullAndEmptyArrays: true } },
+            { $unwind: "$instructor" },
 
-            // 5️⃣ Lookup lesson details
+            /* ---------------------------- category ---------------------------- */
             {
                 $lookup: {
-                    from: "lessons",
-                    localField: "lessonId",
+                    from: "categories",
+                    localField: "category",
                     foreignField: "_id",
-                    as: "lesson",
-                    pipeline: [
-                        { $project: { title: 1, order: 1 } },
-                    ],
+                    as: "category",
                 },
             },
-            { $unwind: { path: "$lesson", preserveNullAndEmptyArrays: true } },
+            { $unwind: "$category" },
 
-            // 6️⃣ Lookup section details (for navigation context)
+            /* --------------------- course status request ---------------------- */
             {
                 $lookup: {
-                    from: "sections",
-                    localField: "lesson.sectionId",
-                    foreignField: "_id",
-                    as: "section",
+                    from: "coursestatusrequests",
+                    let: { courseId: "$_id" },
                     pipeline: [
-                        { $project: { title: 1, order: 1 } },
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$course", "$$courseId"] },
+                                        {
+                                            $eq: [
+                                                "$status",
+                                                CourseStatus.PENDING_REVIEW,
+                                            ],
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                type: 1,
+                                status: 1,
+                                createdAt: 1,
+                            },
+                        },
                     ],
+                    as: "statusRequest",
                 },
             },
-            { $unwind: { path: "$section", preserveNullAndEmptyArrays: true } },
-
-            // 7️⃣ Lookup course details
             {
-                $lookup: {
-                    from: "courses",
-                    localField: "courseId",
-                    foreignField: "_id",
-                    as: "course",
-                    pipeline: [
-                        { $project: { title: 1, slug: 1 } },
-                    ],
+                $unwind: {
+                    path: "$statusRequest",
+                    preserveNullAndEmptyArrays: true,
                 },
             },
-            { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
 
-            // 8️⃣ Project clean response structure
+            /* ----------------------------- project ---------------------------- */
             {
                 $project: {
-                    _id: 1,
-                    lessonId: 1,
-                    contentId: 1,
-                    courseId: 1,
+                    title: 1,
+                    description: 1,
+                    status: 1,
+                    isPublished: 1,
+                    isFeatured: 1,
+                    createdAt: 1,
 
-                    // Resume position
-                    resumeAt: 1,
-                    totalDuration: 1,
+                    // 🔑 review info
+                    requestId: "$statusRequest._id",
+                    requestType: "$statusRequest.type",
+                    requestStatus: "$statusRequest.status",
+                    requestCreatedAt: "$statusRequest.createdAt",
 
-                    // Progress status
-                    isCompleted: 1,
-                    obtainedMarks: 1,
-                    totalMarks: 1,
-                    lastAccessedAt: 1,
-
-                    // Populated data (flattened)
-                    content: 1,
-                    lesson: 1,
-                    section: 1,
-                    course: 1,
-                },
-            },
-        ]);
-
-        return result[0] || null;
-    },
-
-    // Get course progress aggregation
-    getCourseProgressAggregation: async (
-        userId: string | Types.ObjectId,
-        courseId: string | Types.ObjectId
-    ) => {
-        return ContentAttempt.aggregate([
-            {
-                $match: {
-                    userId: userId,
-                    courseId: courseId,
-                },
-            },
-            {
-                $group: {
-                    _id: "$courseId",
-                    totalObtainedMarks: { $sum: "$obtainedMarks" },
-                    completedCount: {
-                        $sum: { $cond: ["$isCompleted", 1, 0] },
+                    instructor: {
+                        _id: "$instructor._id",
+                        name: "$instructor.name",
+                        email: "$instructor.email",
+                        avatar: "$instructor.avatar",
                     },
-                    totalAttempts: { $sum: 1 },
+
+                    category: {
+                        _id: "$category._id",
+                        name: "$category.name",
+                        slug: "$category.slug",
+                    },
                 },
             },
-        ]);
+        ];
+
+        /* ------------------------------ run ------------------------------ */
+        const courses = await Course.aggregate(pipeline);
+
+        const total = await Course.countDocuments(match);
+
+        return {
+            courses,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     },
 };
+
+
+
+
+
