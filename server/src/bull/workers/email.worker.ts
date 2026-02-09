@@ -10,6 +10,8 @@ import registerOtpProcessor from "../jobs/email/registerOtp.job.js";
 import resetPasswordOtpProcessor from "../jobs/email/resetPasswordOtp.job.js";
 import marketingEmailProcessor from "../processors/email/marketingEmailProcessor.js";
 import processCampaignProcessor from "../processors/email/processCampaignProcessor.js";
+import loginOtpProcessor from "../jobs/email/loginOtp.job.js";
+import loginAlertProcessor from "../jobs/email/loginAlert.job.js";
 import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 import { EMAIL_JOB_NAMES, type EmailJobName } from "src/constants/email-jobs.constants.js";
 
@@ -18,6 +20,7 @@ const EMAIL_RATE_LIMITS: Partial<Record<EmailJobName, any>> = {
     [EMAIL_JOB_NAMES.RESET_PASS_OTP]: EMAIL_LIMITS?.["reset-pass-otp"] ?? null,
     [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: EMAIL_LIMITS?.["account-approval"] ?? null,
     [EMAIL_JOB_NAMES.ACCOUNT_BAN]: EMAIL_LIMITS?.["account-ban"] ?? null,
+    [EMAIL_JOB_NAMES.LOGIN_OTP]: EMAIL_LIMITS?.["login-otp"] ?? null,
 };
 
 export async function addEmailJob(
@@ -39,11 +42,14 @@ export async function addEmailJob(
 export const emailWorker = new Worker(
     EMAIL_QUEUE_NAME,
     async job => {
+        logger.info(`[EmailWorker] Processing job: ${job.name}`);
         const processors: Record<string, any> = {
             [EMAIL_JOB_NAMES.REGISTER_OTP]: registerOtpProcessor,
             [EMAIL_JOB_NAMES.RESET_PASS_OTP]: resetPasswordOtpProcessor,
             [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: accountApproveProcessor,
             [EMAIL_JOB_NAMES.ACCOUNT_BAN]: accountBanProcessor,
+            [EMAIL_JOB_NAMES.LOGIN_OTP]: loginOtpProcessor,
+            [EMAIL_JOB_NAMES.LOGIN_ALERT]: loginAlertProcessor,
             "send-marketing-email": marketingEmailProcessor,
             "process-campaign": processCampaignProcessor,
         };
@@ -51,10 +57,18 @@ export const emailWorker = new Worker(
         const processor = processors[job.name];
 
         if (!processor) {
+            logger.error(`[EmailWorker] Unknown job type: ${job.name}`);
             throw new Error("Unknown job type: " + job.name);
         }
 
-        return processor(job);
+        try {
+            const result = await processor(job);
+            logger.info(`[EmailWorker] Successfully processed ${job.name}`);
+            return result;
+        } catch (error) {
+            logger.error(`[EmailWorker] Error processing ${job.name}:`, error);
+            throw error;
+        }
     },
     {
         connection: bullMQConnection,

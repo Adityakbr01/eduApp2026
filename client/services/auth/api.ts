@@ -40,6 +40,14 @@ export const authApi = {
         return res.data.data;
     },
 
+    verifyLoginOtp: async (data: VerifyRegisterOtpRequest): Promise<AuthResponse> => {
+        const res = await api.post<ApiResponse<AuthResponse>>(
+            "/auth/verify-2fa",
+            data
+        );
+        return res.data.data;
+    },
+
     sendResetPasswordOtp: async (data: SendOtpRequest): Promise<OtpResponse> => {
         const res = await api.post<ApiResponse<OtpResponse>>(
             "/auth/reset-password/send-otp",

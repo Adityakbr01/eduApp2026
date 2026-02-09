@@ -81,7 +81,7 @@ flowchart TB
     A[👤 Instructor Uploads Video] --> B[📤 Upload to S3 TEMP Bucket]
     B --> C[📡 S3 Event → EventBridge]
     C --> D[📬 SQS Queue Message]
-    D --> E{🔍 Video Pipeline Consumer}
+    D --> E{🔍 Video Pipeline Consumer Deploy on ec2}
     E -->|Check ECS Status| F{ECS Task Running?}
     F -->|Yes| G[⏳ Wait & Poll]
     F -->|No| H[🚀 Trigger ECS Fargate Task]
@@ -317,7 +317,58 @@ The system is configured for high throughput and reliability:
 
 ---
 
-## 📁 Folder Structure
+## � API Monitoring & System Health
+
+A comprehensive, real-time monitoring solution is built-in to track API performance, server health, and application logs.
+
+### 🌟 Key Features
+
+- **Live Dashboard**: Real-time visualization of traffic, latency, and error rates using **Socket.IO**.
+- **System Health**: Monitor Server CPU, Memory, and Uptime via `systeminformation`.
+- **Request Logging**: Detailed logs for every API request with filtering and pagination.
+- **Traceability**: Unique `traceId` for end-to-end request tracking.
+
+### 🏗️ Scalable Architecture
+
+The monitoring system is designed for high performance and minimal impact on API latency:
+
+```mermaid
+flowchart LR
+    A[🚀 Client Request] --> B(⚡ API Middleware)
+    B -->|Log & Metric| C[📥 Redis List]
+    B -->|Emit Event| D((🔌 Socket.IO))
+    D -->|Real-time Update| E[🖥️ Admin Dashboard]
+    F[🏗️ Background Worker] -->|Batch Fetch| C
+    F -->|Bulk Insert| G[(💾 MongoDB)]
+```
+
+#### 1️⃣ **Redis Buffering**
+
+- Instead of writing every log directly to MongoDB (which is slow), middleware pushes logs to a **Redis List** (`monitoring:logs`, `monitoring:metrics`).
+- This ensures **O(1)** write performance, adding negligible overhead to requests.
+
+#### 2️⃣ **Batch Processing**
+
+- A background **Worker** (running every 5s) consumes data from Redis in batches (e.g., 100 logs at a time).
+- It performs **bulk inserts** into MongoDB, significantly reducing database efficient connection usage.
+
+#### 3️⃣ **Real-Time WebSockets**
+
+- **Socket.IO** is used to stream live events to the dashboard.
+- Configured with **Redis Adapter** to support horizontal scaling (multiple server instances).
+
+### 🖥️ Dashboard Components
+
+| Component          | Description                                                       |
+| :----------------- | :---------------------------------------------------------------- |
+| **System Health**  | Live CPU load, RAM usage, and Server Uptime.                      |
+| **Overview Cards** | Live counters for Total Requests, Error Rate, and Avg Latency.    |
+| **Metrics Chart**  | Responsive chart showing traffic trends over the last hour.       |
+| **Live Logs**      | Scrollable list of recent requests with status codes and latency. |
+
+---
+
+## �📁 Folder Structure
 
 ```
 eduApp/

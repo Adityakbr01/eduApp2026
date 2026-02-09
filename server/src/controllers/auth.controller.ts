@@ -25,8 +25,19 @@ const authController = {
     }),
     loginUser: catchAsync<{}, any, LoginBody>(async (req, res) => {
         const { email, password } = req.body;
-        const result = await authService.loginUserService(email, password);
-        setAuthCookies(res, result.accessToken);
+        const userAgent = req.headers['user-agent'] || "Unknown Device";
+        const ip = req.ip || "Unknown IP";
+
+        const result = await authService.loginUserService(email, password, userAgent, ip);
+
+        if (result.requires2FA) {
+            return sendResponse(res, 200, "2FA Required", {
+                requires2FA: true,
+                email: result.email
+            });
+        }
+
+        setAuthCookies(res, result.accessToken!); // ! because it might be undefined if 2FA
         sendResponse(res, 200, "User logged in successfully", {
             userId: result.userId,
             email: result.email,
@@ -34,6 +45,22 @@ const authController = {
             approvalStatus: result.approvalStatus,
             accessToken: result.accessToken,
             roleName: result.roleName,
+        });
+    }),
+    verifyLoginOtp: catchAsync<{}, any, OtpVerifyBody>(async (req, res) => {
+        const { email, otp } = req.body;
+        const userAgent = req.headers['user-agent'] || "Unknown Device";
+        const ip = req.ip || "Unknown IP";
+
+        const result = await authService.verifyLoginOtpService(email, otp, userAgent, ip);
+        setAuthCookies(res, result.accessToken!);
+        sendResponse(res, 200, "User logged in successfully", {
+            userId: result.userId,
+            email: result.email,
+            accessToken: result.accessToken,
+            roleName: result.roleName,
+            isEmailVerified: result.isEmailVerified,
+            approvalStatus: result.approvalStatus,
         });
     }),
     sendResetPassOtp: catchAsync<{}, any, EmailBody>(async (req, res) => {

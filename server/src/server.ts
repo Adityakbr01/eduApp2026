@@ -3,6 +3,8 @@ import app from "./app.js";
 import connectDB from "./db/mongo.js";
 import logger from "./utils/logger.js";
 import { isProd } from "./configs/env.js";
+import { startAggregationWorker } from "./workers/aggregationWorker.js";
+import { initSocket } from "./socket.js";
 // import { startVideoWorker } from "../../video-pipline/workers/videoProcessor.worker.js";
 
 // Load environment variables
@@ -26,15 +28,20 @@ const startServer = () => {
         server = app.listen(PORT, async () => {
             //connect to database here
             await connectDB();
+
+            // Initialize Socket.IO with Redis Adapter (awaiting connection)
+            await initSocket(server);
+
             logger.info(`🚀 Server running on port ${PORT}`);
             logger.info(`Server Start in ${isProd}`)
         });
         // startVideoWorker();
+        startAggregationWorker();
     } catch (error) {
         logger.error("❌ Server failed to start", error);
         process.exit(1);
     }
-    
+
 };
 
 startServer();

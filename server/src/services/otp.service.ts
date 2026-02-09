@@ -8,7 +8,9 @@ import logger from "src/utils/logger.js";
 type EmailPayload =
     | { email: string; otp?: string } // VERIFY_OTP, LOGIN_OTP
     | { email: string; name?: string } // WELCOME
-    | { email: string; resetLink?: string }; // PASSWORD_RESET
+    | { email: string; resetLink?: string } // PASSWORD_RESET
+    | { email: string; device?: string; time?: string }; // LOGIN_ALERT
+
 
 // Initialize Resend client
 const resend = new Resend(env.RESEND_API_KEY);

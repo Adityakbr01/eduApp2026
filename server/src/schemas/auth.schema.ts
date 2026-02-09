@@ -81,6 +81,11 @@ const verifyOtpSchema = z.object({
     otp: z.string().length(6, "OTP must be 6 characters"),
     newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });
+
+const verify2faSchema = z.object({
+    email: z.string().email("Invalid email"),
+    otp: z.string().length(6, "OTP must be 6 characters"),
+});
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, "Current password is required"),
     newPassword: z.string().min(6, "New password must be at least 6 characters"),
@@ -106,7 +111,7 @@ const updateUserSchema = z.object({
 
 
 
-export { registerSchema, loginSchema, registerOtpSchema, verifyOtpSchema, registerVerifyOtpSchema, changePasswordSchema, updateUserSchema };
+export { registerSchema, loginSchema, registerOtpSchema, verifyOtpSchema, registerVerifyOtpSchema, changePasswordSchema, updateUserSchema, verify2faSchema };
 export type RegisterSchemaInput = z.infer<typeof registerSchema>;
 export type LoginSchemaInput = z.infer<typeof loginSchema>;
 

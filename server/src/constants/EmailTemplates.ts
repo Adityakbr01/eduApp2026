@@ -283,4 +283,75 @@ export const templates: Record<EmailType, any> = {
       </tr>
     `),
   }),
+
+  [EMAIL_TYPES.HIGH_ERROR_RATE_ALERT]: (data: { errorRate: number; total: number; batchSize: number }) => ({
+    subject: `🚨 CRITICAL: High API Error Rate Detected (${data.errorRate.toFixed(1)}%)`,
+    text: `High error rate detected: ${data.errorRate.toFixed(1)}% errors in the last batch.`,
+    html: emailTheme(`
+      <tr>
+        <td class="header">
+          <h1 style="color: #ef4444;">High Error Rate Alert</h1>
+          <div class="divider"></div>
+          <p>The system detected a critical error rate in the last log batch.</p>
+          
+          <div class="box" style="border-left-color:#ef4444; background-color: rgba(239, 68, 68, 0.1);">
+            <div class="otp" style="color: #ef4444; font-size: 32px;">${data.errorRate.toFixed(1)}%</div>
+            <div class="note">Error Rate</div>
+          </div>
+
+          <table width="100%" style="margin-top: 20px;">
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Total Requests:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${data.total}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Batch Size:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${data.batchSize}</td>
+            </tr>
+          </table>
+
+          <p style="margin-top: 24px;">Please check the monitoring dashboard immediately.</p>
+        </td>
+      </tr>
+    `),
+  }),
+
+  [EMAIL_TYPES.LOGIN_ALERT]: (data: { device: string; time: string; location?: string }) => ({
+    subject: "New Login Detected 🔐",
+    text: `New login to your account from ${data.device} at ${data.time}.`,
+    html: emailTheme(`
+      <tr>
+        <td class="header">
+          <h1>New Login Detected</h1>
+          <div class="divider"></div>
+          <p>We noticed a new login to your account.</p>
+          <div class="box">
+            <p><strong>Device:</strong> ${data.device}</p>
+            <p><strong>Time:</strong> ${data.time}</p>
+            ${data.location ? `<p><strong>Location:</strong> ${data.location}</p>` : ""}
+          </div>
+          <p>If this was you, you can ignore this email. If not, please change your password immediately.</p>
+        </td>
+      </tr>
+    `),
+  }),
+
+  [EMAIL_TYPES.TWO_FACTOR_OTP]: (data: { otp: string }) => ({
+    subject: "Login Verification Code 🛡️",
+    text: `Your login verification code is ${data.otp}. Valid for 5 minutes.`,
+    html: emailTheme(`
+      <tr>
+        <td class="header">
+          <h1>Two-Factor Authentication</h1>
+          <div class="divider"></div>
+          <p>Please use the code below to complete your login.</p>
+          <div class="box">
+            <div class="otp">${data.otp}</div>
+            <div class="note">Expires in 5 minutes</div>
+          </div>
+          <p>If you didn’t try to login, please secure your account.</p>
+        </td>
+      </tr>
+    `),
+  }),
 };

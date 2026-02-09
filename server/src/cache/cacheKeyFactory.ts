@@ -83,6 +83,7 @@ export const cacheKeyFactory = {
         register: (email: string) => `otp:register:${email}`,
         resetPassword: (email: string) => `otp:reset:${email}`,
         verify: (email: string) => `otp:verify:${email}`,
+        login: (email: string) => `otp:login:${email}`,
     },
 
     // =====================

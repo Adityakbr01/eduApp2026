@@ -17,7 +17,7 @@ export interface OtpData {
 // OTP TYPES
 // =====================
 
-export type OtpType = "register" | "resetPassword";
+export type OtpType = "register" | "resetPassword" | "login" | "verify";
 
 // =====================
 // OTP CACHE SERVICE
@@ -30,6 +30,8 @@ class OtpCacheService {
                 return cacheKeyFactory.otp.register(email);
             case "resetPassword":
                 return cacheKeyFactory.otp.resetPassword(email);
+            case "login":
+                return cacheKeyFactory.otp.login(email);
             default:
                 return cacheKeyFactory.otp.verify(email);
         }

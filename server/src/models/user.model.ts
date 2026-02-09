@@ -3,10 +3,10 @@ import type { Secret, SignOptions } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import { Schema, model } from "mongoose";
 import { ROLES, type Role } from "../constants/roles.js";
-import { RoleModel as RoleSchema } from "./role.model.js";
+import { RoleModel as RoleSchema } from "./permission/role.model.js";
 import { env } from "src/configs/env.js";
 import { approvalStatusEnum, ProfessionEnum, type IUser } from "src/types/user.model.type.js";
-import { PermissionModel } from "./permission.model.js";
+import { PermissionModel } from "./permission/permission.model.js";
 import type { PermissionDTO } from "src/types/auth.type.js";
 import userProfileSchema from "./userProfileSchema.js";
 

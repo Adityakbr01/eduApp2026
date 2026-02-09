@@ -4,9 +4,9 @@ import { env } from "src/configs/env.js";
 import { PERMISSIONS } from "src/constants/permissions.js";
 import { DEFAULT_ROLE_PERMISSIONS } from "src/constants/rolePermissions.js";
 import { ROLES } from "src/constants/roles.js";
-import { PermissionModel } from "src/models/permission.model.js";
-import { RoleModel } from "src/models/role.model.js";
-import { RolePermissionModel } from "src/models/rolePermission.model.js";
+import { PermissionModel } from "src/models/permission/permission.model.js";
+import { RoleModel } from "src/models/permission/role.model.js";
+import { RolePermissionModel } from "src/models/permission/rolePermission.model.js";
 import logger from "src/utils/logger.js";
 
 async function seed() {

@@ -68,6 +68,10 @@ const envSchema = z.object({
     GEMINI_API_KEY: z.string().min(10).optional(),
     GEMINI_MODEL: z.string().default("models/gemini-2.5-flash"),
 
+    //Admin - credentials
+    ADMIN_EMAIL: z.string().email(),
+    ADMIN_PASSWORD: z.string().min(6),
+
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

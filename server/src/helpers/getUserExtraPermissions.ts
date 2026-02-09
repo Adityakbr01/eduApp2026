@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
-import { PermissionModel } from "src/models/permission.model.js";
+import { PermissionModel } from "src/models/permission/permission.model.js";
 import logger from "src/utils/logger.js";
 
 export interface PermissionSummary {

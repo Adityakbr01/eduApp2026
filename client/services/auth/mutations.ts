@@ -59,6 +59,34 @@ export const useVerifyRegisterOtp = (
         ...options,
     });
 
+export const useVerifyLoginOtp = (
+    options?: UseMutationOptions<AuthResponse, unknown, { email: string; otp: string }>
+) => {
+    const { setUser } = useAuthStore();
+    const qc = useQueryClient();
+
+    return useMutation({
+        mutationFn: authApi.verifyLoginOtp,
+        onSuccess: (data) => {
+            setUser({
+                userId: data.id!,
+                name: data.name!,
+                roleId: data.roleId,
+                phone: data.phone,
+                email: data.email,
+                isEmailVerified: data.isEmailVerified,
+                roleName: data.roleName,
+            });
+            qc.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.ME });
+            mutationHandlers.success("2FA Verification Successful");
+        },
+        onError: (error) => {
+            mutationHandlers.error(error);
+        },
+        ...options,
+    });
+};
+
 /* ---------------- LOGIN ---------------- */
 
 export const useLogin = (
@@ -70,6 +98,11 @@ export const useLogin = (
     return useMutation({
         mutationFn: authApi.login,
         onSuccess: (data) => {
+            if (data.requires2FA) {
+                mutationHandlers.success("2FA Verification Required");
+                return;
+            }
+
             setUser({
                 userId: data.id!,
                 name: data.name!,
@@ -169,6 +202,7 @@ export const authMutations = {
     useRegister,
     useSendRegisterOtp,
     useVerifyRegisterOtp,
+    useVerifyLoginOtp,
     useLogin,
     useSendResetPasswordOtp,
     useVerifyResetPasswordOtp,

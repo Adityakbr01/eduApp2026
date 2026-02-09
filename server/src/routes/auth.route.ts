@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changePasswordSchema, loginSchema, registerOtpSchema, registerSchema, registerVerifyOtpSchema, verifyOtpSchema } from "src/schemas/auth.schema.js";
+import { changePasswordSchema, loginSchema, registerOtpSchema, registerSchema, registerVerifyOtpSchema, verifyOtpSchema, verify2faSchema } from "src/schemas/auth.schema.js";
 import { authRateLimiter } from "src/middlewares/system/rateLimit.middleware.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import { validateRequest } from "src/middlewares/custom/validateRequest.js";
@@ -23,5 +23,8 @@ router.get("/me/profile", authMiddleware, profileController.getProfile);
 router.patch("/me/profile", authMiddleware, profileController.updateProfile);
 router.delete("/me/resume", authMiddleware, profileController.deleteResume);
 
+
+// 2FA Verification
+router.post("/verify-2fa", authRateLimiter, validateRequest(verify2faSchema), authController.verifyLoginOtp);
 
 export default router;

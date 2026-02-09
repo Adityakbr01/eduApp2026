@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
-import { RolePermissionModel } from "src/models/rolePermission.model.js";
+import { RolePermissionModel } from "src/models/permission/rolePermission.model.js";
 import logger from "src/utils/logger.js";
 
 export const getUserRolePermissions = async (roleId: string | Types.ObjectId) => {

@@ -28,7 +28,7 @@ export interface UserProfile {
     resumeVersion?: number;
     resumeUrl?: string;
     resumeName?: string; // For frontend display purposes (can be same as resumeFilename or derived from it)
-    
+
 }
 
 export interface User {
@@ -131,7 +131,7 @@ export interface AuthResponse {
     accessToken?: string;
     refreshToken?: string;
     enrolledCourses?: EnrolledCourse[];
-
+    requires2FA?: boolean;
 }
 
 export interface UserProfileResponse {
