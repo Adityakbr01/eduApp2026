@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://app.edulaunch.shop/api/v1/" || "http://localhost:3001/api/v1/";
+const API_URL = process.env.NODE_ENV === "production" ? "https://app.edulaunch.shop/api/v1/" : "http://localhost:3001/api/v1/";
 
 
 export const getMonitoringStats = async (service?: string) => {

@@ -66,7 +66,7 @@ export const useMonitoring = () => {
         fetchData(true);
 
         // Determine socket URL - remove /api/v1 suffix if present
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const apiUrl = (process.env.NODE_ENV==="production" ? "https://app.edulaunch.shop" : "http://localhost:3001");
         const socketUrl = apiUrl.replace(/\/api\/v1\/?$/, "");
 
         const socket = io(socketUrl, {
