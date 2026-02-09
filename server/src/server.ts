@@ -4,7 +4,7 @@ import connectDB from "./db/mongo.js";
 import logger from "./utils/logger.js";
 import { isProd } from "./configs/env.js";
 import { startAggregationWorker } from "./workers/aggregationWorker.js";
-import { initSocket } from "./socket.js";
+import { initSocket } from "./Socket/socket.js";
 // import { startVideoWorker } from "../../video-pipline/workers/videoProcessor.worker.js";
 
 // Load environment variables

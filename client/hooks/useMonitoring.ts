@@ -66,16 +66,21 @@ export const useMonitoring = () => {
         fetchData(true);
 
         // Determine socket URL - remove /api/v1 suffix if present
-        const apiUrl = (process.env.NODE_ENV==="production" ? "https://app.edulaunch.shop" : "http://localhost:3001");
-       const socketUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://app.edulaunch.shop"
-    : "http://localhost:3001";
+        const socketUrl =
+            process.env.NODE_ENV === "production"
+                ? "https://app.edulaunch.shop"
+                : "http://localhost:3001";
 
-const socket = io(socketUrl, {
-    path: "/socket.io/",
-    transports: ["websocket"],
-});
+        const socket = io(socketUrl, {
+            path: "/socket.io/",
+            transports: ["websocket", "polling"], // Try WebSocket first, fallback to polling
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000, // 20 seconds connection timeout
+            autoConnect: true,
+        });
 
 
         socket.on("connect", () => {
@@ -83,13 +88,26 @@ const socket = io(socketUrl, {
             setIsLive(true);
         });
 
-        socket.on("connect_error", (err) => {
-            console.error("Socket connection error:", err);
+        socket.on("connect_error", (err: any) => {
+            console.error("Socket connection error:", err.message, {
+                description: err.message,
+                type: err.type,
+                socketUrl,
+            });
             setIsLive(false);
         });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", (reason) => {
+            console.log("Socket disconnected:", reason);
             setIsLive(false);
+        });
+
+        socket.on("reconnect_attempt", (attempt) => {
+            console.log(`Reconnection attempt ${attempt}...`);
+        });
+
+        socket.on("reconnect_failed", () => {
+            console.error("Failed to reconnect after all attempts");
         });
 
         socket.on("new-log", (newLog: any) => {

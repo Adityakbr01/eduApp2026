@@ -49,7 +49,7 @@ export const monitorMiddleware = (serviceName: string) => {
                 await redis.rpush("monitoring:logs", JSON.stringify(logData));
 
                 // Emit live log (Keep for real-time dashboard)
-                const { emitLog } = await import("../socket.js");
+                const { emitLog } = await import("../Socket/socket.js");
                 emitLog(logData);
 
                 // 2. Record raw metric - Push to Redis Queue
