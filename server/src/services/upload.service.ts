@@ -10,7 +10,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "src/configs/env.js";
 import { s3 } from "src/configs/s3.js";
 import { LessonContent } from "src/models/course/index.js";
-import UserModel from "src/models/user.model.js";
+import UserModel from "src/models/user/user.model.js";
 import { courseRepository } from "src/repositories/course.repository.js";
 import { getPartSize } from "src/utils/upload.utils.js";
 import {

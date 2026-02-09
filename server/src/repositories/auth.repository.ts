@@ -1,7 +1,7 @@
 import type { Types } from "mongoose";
 import { ROLES } from "src/constants/roles.js";
 import { RoleModel } from "src/models/permission/role.model.js";
-import User from "src/models/user.model.js";
+import User from "src/models/user/user.model.js";
 import type { PopulatedRole, UserWithRole } from "src/types/auth.type.js";
 import type { IUser } from "src/types/user.model.type.js";
 export const authRepository = {

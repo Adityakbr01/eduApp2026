@@ -1,4 +1,4 @@
-import UserModel from "src/models/user.model.js";
+import UserModel from "src/models/user/user.model.js";
 import { ProfessionEnum, type UserProfile } from "src/types/user.model.type.js";
 import { getCdnUrl } from "src/utils/s3KeyGenerator.js";
 import logger from "src/utils/logger.js";

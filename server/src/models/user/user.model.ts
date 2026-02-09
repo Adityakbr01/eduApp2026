@@ -1,13 +1,11 @@
 import bcrypt from "bcryptjs";
-import type { Secret, SignOptions } from "jsonwebtoken";
+import type { SignOptions } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
-import { Schema, model } from "mongoose";
-import { ROLES, type Role } from "../constants/roles.js";
-import { RoleModel as RoleSchema } from "./permission/role.model.js";
+import { model, Schema } from "mongoose";
 import { env } from "src/configs/env.js";
-import { approvalStatusEnum, ProfessionEnum, type IUser } from "src/types/user.model.type.js";
-import { PermissionModel } from "./permission/permission.model.js";
-import type { PermissionDTO } from "src/types/auth.type.js";
+import { approvalStatusEnum, type IUser } from "src/types/user.model.type.js";
+import { ROLES, type Role } from "../../constants/roles.js";
+import { RoleModel as RoleSchema } from "../permission/role.model.js";
 import userProfileSchema from "./userProfileSchema.js";
 
 

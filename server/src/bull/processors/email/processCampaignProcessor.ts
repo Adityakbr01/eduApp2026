@@ -1,8 +1,8 @@
 import type { Job } from "bullmq";
 import EmailCampaignModel, { CampaignStatus } from "src/models/emailCampaign.model.js";
-import UserModel from "src/models/user.model.js";
+import UserModel from "src/models/user/user.model.js";
 import logger from "src/utils/logger.js";
-import UserPreferenceModel from "src/models/userPreference.model.js";
+import UserPreferenceModel from "src/models/user/userPreference.model.js";
 import type { ProcessCampaignJobData } from "src/bull/jobs/email/processCampaign.job.js";
 import { sendMarketingEmailJob } from "src/bull/jobs/email/marketingEmail.job.js";
 

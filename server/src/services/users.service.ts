@@ -9,7 +9,7 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { attachPermissionsToUser, type RolePermissionCache } from "src/helpers/attachUserPermissionHelper.js";
 import { RoleModel } from "src/models/permission/role.model.js";
-import UserModel from "src/models/user.model.js";
+import UserModel from "src/models/user/user.model.js";
 import { authRepository } from "src/repositories/auth.repository.js";
 import { approvalStatusEnum } from "src/types/user.model.type.js";
 import AppError from "src/utils/AppError.js";

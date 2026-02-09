@@ -6,7 +6,7 @@ import UserPreferenceModel, {
     type IAppearancePreferences,
     type IRegionalPreferences,
     type IPrivacyPreferences
-} from "src/models/userPreference.model.js";
+} from "src/models/user/userPreference.model.js";
 
 // ============================================
 // USER PREFERENCE REPOSITORY

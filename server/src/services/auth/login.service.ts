@@ -41,7 +41,7 @@ export const loginService = {
         }
 
         // --- CHECK USER PREFERENCES ---
-        const { default: UserPreferenceModel } = await import("src/models/userPreference.model.js");
+        const { default: UserPreferenceModel } = await import("src/models/user/userPreference.model.js");
         const preferences = await UserPreferenceModel.findOne({ userId: user._id }).lean();
 
         // 1. Two-Factor Authentication
@@ -264,7 +264,7 @@ export const loginService = {
         await otpCache.deleteOtp(email, "login");
 
         // Send Login Notification for 2FA users
-        const { default: UserPreferenceModel } = await import("src/models/userPreference.model.js");
+        const { default: UserPreferenceModel } = await import("src/models/user/userPreference.model.js");
         const preferences = await UserPreferenceModel.findOne({ userId: user._id }).lean();
 
         if (preferences?.email?.loginNotification ?? true) {

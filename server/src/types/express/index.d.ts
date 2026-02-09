@@ -1,6 +1,6 @@
 // server/src/types/express/index.d.ts
 import 'express';
-import { UserDocument } from "../../models/user.model.ts";
+import { UserDocument } from "../../models/user/user.model.ts";
 
 declare global {
     namespace Express {

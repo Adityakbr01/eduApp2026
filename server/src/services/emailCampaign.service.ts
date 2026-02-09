@@ -3,7 +3,7 @@ import { CampaignStatus, RecipientType, type IEmailCampaign } from "src/models/e
 import { processCampaignJob } from "src/bull/jobs/email/processCampaign.job.js";
 import logger from "src/utils/logger.js";
 import type { Types } from "mongoose";
-import UserModel from "src/models/user.model.js";
+import UserModel from "src/models/user/user.model.js";
 
 export const emailCampaignService = {
     /**

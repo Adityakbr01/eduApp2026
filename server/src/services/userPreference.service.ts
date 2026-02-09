@@ -10,7 +10,7 @@ import type {
     IAppearancePreferences,
     IRegionalPreferences,
     IPrivacyPreferences
-} from "src/models/userPreference.model.js";
+} from "src/models/user/userPreference.model.js";
 
 // ============================================
 // USER PREFERENCE SERVICE

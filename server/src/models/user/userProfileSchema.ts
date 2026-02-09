@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import versionedAssetSchema from "./versionedAssetSchema.js";
+import versionedAssetSchema from "../versionedAssetSchema.js";
 import { ProfessionEnum } from "src/types/user.model.type.js";
 
 // User profile schema
