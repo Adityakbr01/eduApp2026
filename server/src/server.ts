@@ -1,16 +1,15 @@
 import dotenv from "dotenv";
+import http from "http";
 import app from "./app.js";
 import connectDB from "./db/mongo.js";
 import logger from "./utils/logger.js";
 import { isProd } from "./configs/env.js";
 import { startAggregationWorker } from "./workers/aggregationWorker.js";
 import { initSocket } from "./Socket/socket.js";
-// import { startVideoWorker } from "../../video-pipline/workers/videoProcessor.worker.js";
 
-// Load environment variables
 dotenv.config();
 
-// Handle sync errors (VERY IMPORTANT)
+// ---------------- ERROR HANDLING ----------------
 process.on("uncaughtException", (err: Error) => {
     logger.error("UNCAUGHT EXCEPTION 💥", {
         message: err.message,
@@ -19,47 +18,44 @@ process.on("uncaughtException", (err: Error) => {
     process.exit(1);
 });
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 
-let server: any;
+let server: http.Server;
 
-const startServer = () => {
+// ---------------- START SERVER ----------------
+const startServer = async () => {
     try {
-        server = app.listen(PORT, async () => {
-            //connect to database here
+        // ✅ CREATE HTTP SERVER MANUALLY
+        server = http.createServer(app);
+
+        // ✅ INIT SOCKET.IO BEFORE LISTEN
+        await initSocket(server);
+
+        // ✅ NOW LISTEN
+        server.listen(PORT, "0.0.0.0", async () => {
             await connectDB();
 
-            // Initialize Socket.IO with Redis Adapter (awaiting connection)
-            await initSocket(server);
-
             logger.info(`🚀 Server running on port ${PORT}`);
-            logger.info(`Server Start in ${isProd}`)
+            logger.info(`Server Start in ${isProd}`);
         });
-        // startVideoWorker();
+
         startAggregationWorker();
+
     } catch (error) {
         logger.error("❌ Server failed to start", error);
         process.exit(1);
     }
-
 };
 
 startServer();
 
-// Handle async promise rejections
+// ---------------- PROMISE REJECTION ----------------
 process.on("unhandledRejection", (reason: any) => {
     logger.error("UNHANDLED REJECTION 💥", reason);
-
-    if (server) {
-        server.close(() => {
-            process.exit(1);
-        });
-    } else {
-        process.exit(1);
-    }
+    process.exit(1);
 });
 
-// Graceful shutdown (PM2 / Docker / EC2)
+// ---------------- GRACEFUL SHUTDOWN ----------------
 const shutdown = (signal: string) => {
     logger.warn(`🛑 ${signal} received. Shutting down gracefully...`);
 
@@ -70,7 +66,6 @@ const shutdown = (signal: string) => {
         });
     }
 
-    // Force shutdown after 10 seconds
     setTimeout(() => {
         logger.error("❌ Force shutdown after timeout");
         process.exit(1);
