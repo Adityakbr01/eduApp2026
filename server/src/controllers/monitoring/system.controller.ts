@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
 import si from "systeminformation";
-import logger from "../../utils/logger.js";
+import fs from "fs";
 
 /**
  * @route GET /api/v1/monitoring/system
  * @desc Get system health stats (CPU, RAM, Uptime)
  */
+
 export const getSystemStats = async (req: Request, res: Response) => {
     try {
         const [cpu, mem, time] = await Promise.all([
@@ -13,6 +14,18 @@ export const getSystemStats = async (req: Request, res: Response) => {
             si.mem(),
             si.time()
         ]);
+
+        // 👇 Linux se REAL available memory nikaal rahe hain
+        const meminfo = fs.readFileSync("/proc/meminfo", "utf8");
+        const availableLine = meminfo
+            .split("\n")
+            .find(line => line.startsWith("MemAvailable"));
+
+        const available =
+            parseInt(availableLine!.split(/\s+/)[1], 10) * 1024;
+
+        const used = mem.total - available;
+        const usedPercent = Math.round((used / mem.total) * 100);
 
         res.json({
             success: true,
@@ -23,9 +36,9 @@ export const getSystemStats = async (req: Request, res: Response) => {
                 },
                 memory: {
                     total: mem.total,
-                    active: mem.active,
-                    free: mem.free,
-                    usedPercent: Math.round((mem.active / mem.total) * 100)
+                    available,
+                    used,
+                    usedPercent
                 },
                 uptime: {
                     seconds: time.uptime,
@@ -35,7 +48,7 @@ export const getSystemStats = async (req: Request, res: Response) => {
             }
         });
     } catch (error) {
-        logger.error("❌ Failed to fetch system stats", error);
-        res.status(500).json({ success: false, message: "Failed to fetch system stats" });
+        res.status(500).json({ success: false });
     }
 };
+

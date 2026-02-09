@@ -39,9 +39,9 @@ export const SystemHealth: React.FC<SystemHealthProps> = ({
   };
 
   const getStatusColor = (percent: number) => {
-    if (percent < 50) return "bg-green-500";
-    if (percent < 80) return "bg-yellow-500";
-    return "bg-red-500";
+    if (percent < 70) return "bg-green-500"; // Safe
+    if (percent < 85) return "bg-yellow-500"; // Warning
+    return "bg-red-500"; // Danger
   };
 
   return (
