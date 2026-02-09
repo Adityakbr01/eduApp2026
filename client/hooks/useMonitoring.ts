@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import {
     getMonitoringStats,
     getMonitoringMetrics,
@@ -20,7 +20,6 @@ export const useMonitoring = () => {
     const [loading, setLoading] = useState(true);
     const [isLive, setIsLive] = useState(false);
 
-    // Pagination & Search state
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
@@ -28,35 +27,33 @@ export const useMonitoring = () => {
     const fetchData = useCallback(async (isInitial = false) => {
         if (isInitial) setLoading(true);
         try {
-            const [statsData, metricsData, logsData, systemData] = await Promise.all([
-                getMonitoringStats(),
-                getMonitoringMetrics(),
-                getMonitoringLogs({ page, search: searchQuery, limit: 20 }),
-                getSystemStats(),
-            ]);
+            console.log("[MONITORING] Fetching REST data...", {
+                page,
+                searchQuery,
+            });
 
-            console.log(statsData, metricsData, logsData);
+            const [statsData, metricsData, logsData, systemData] =
+                await Promise.all([
+                    getMonitoringStats(),
+                    getMonitoringMetrics(),
+                    getMonitoringLogs({ page, search: searchQuery, limit: 20 }),
+                    getSystemStats(),
+                ]);
+
+            console.log("[MONITORING] REST response", {
+                statsData,
+                metricsCount: metricsData?.length,
+                logsCount: logsData?.data?.length,
+            });
 
             setStats(statsData);
             setMetrics(metricsData);
             setSystemStats(systemData);
-
-            // If live mode is active, we might not want to overwrite logs with paginated data
-            // unless the user is explicitly paginating or searching.
-            // For simplicity in this hybrid mode:
-            // - If user is on page 1 and no search is active, we append live logs.
-            // - If user is paginating, we show static historical data (live logs still arrive but maybe don't jump the view).
-
-            if (isInitial || (page === 1 && !searchQuery)) {
-                setLogs(logsData.data);
-            } else {
-                setLogs(logsData.data); // Just show what we fetched for that page
-            }
-
+            setLogs(logsData.data);
             setTotalPages(logsData.pagination.pages);
 
         } catch (error) {
-            console.error("Failed to fetch data", error);
+            console.error("[MONITORING] REST fetch failed", error);
         } finally {
             if (isInitial) setLoading(false);
         }
@@ -65,72 +62,93 @@ export const useMonitoring = () => {
     useEffect(() => {
         fetchData(true);
 
-        // Determine socket URL - remove /api/v1 suffix if present
         const socketUrl =
             process.env.NODE_ENV === "production"
                 ? "https://app.edulaunch.shop"
                 : "http://localhost:3001";
 
-        const socket = io(socketUrl, {
-            path: "/socket.io/",
-            transports: ["websocket", "polling"], // Try WebSocket first, fallback to polling
+        console.log("[SOCKET] Initializing socket", {
+            socketUrl,
+            path: "/socket.io",
+            transports: ["websocket", "polling"],
+        });
+
+        const socket: Socket = io(socketUrl, {
+            path: "/socket.io",
+            transports: ["websocket", "polling"],
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
-            timeout: 20000, // 20 seconds connection timeout
+            timeout: 20000,
             autoConnect: true,
         });
 
-
         socket.on("connect", () => {
-            console.log("Monitoring Socket connected to:", socketUrl);
+            console.log("[SOCKET] ✅ Connected", {
+                id: socket.id,
+                transport: socket.io.engine.transport.name,
+            });
             setIsLive(true);
+
+            // Listen for transport upgrade on the engine (available after connect)
+            socket.io.engine.on("upgrade", (transport) => {
+                console.log("[SOCKET] 🔄 Transport upgraded", transport.name);
+            });
+        });
+
+        socket.io.on("error", (err) => {
+            console.error("[SOCKET] ❌ Engine error", err);
         });
 
         socket.on("connect_error", (err: any) => {
-            console.error("Socket connection error:", err.message, {
-                description: err.message,
-                type: err.type,
+            console.error("[SOCKET] ❌ Connect error", {
+                message: err.message,
+                name: err.name,
+                description: err.description,
+                context: err.context,
                 socketUrl,
             });
             setIsLive(false);
         });
 
         socket.on("disconnect", (reason) => {
-            console.log("Socket disconnected:", reason);
+            console.warn("[SOCKET] 🔌 Disconnected", reason);
             setIsLive(false);
         });
 
         socket.on("reconnect_attempt", (attempt) => {
-            console.log(`Reconnection attempt ${attempt}...`);
+            console.log(`[SOCKET] 🔁 Reconnect attempt ${attempt}`);
         });
 
         socket.on("reconnect_failed", () => {
-            console.error("Failed to reconnect after all attempts");
+            console.error("[SOCKET] 💥 Reconnect failed");
+        });
+
+        socket.onAny((event, ...args) => {
+            console.log(`[SOCKET] 📡 Event received: ${event}`, args);
         });
 
         socket.on("new-log", (newLog: any) => {
-            // Update Stats locally for real-time feel
-            setStats((prevStats) => {
-                const newTotal = prevStats.totalRequests + 1;
-                const isError = newLog.statusCode >= 400;
-                const newErrorCount = prevStats.errorCount + (isError ? 1 : 0);
-                const newErrorRate = (newErrorCount / newTotal) * 100;
+            console.log("[SOCKET] 🆕 new-log received", newLog);
 
-                // Approximate moving average for latency
-                // New Avg = Old Avg + (New Value - Old Avg) / New Total
-                const newAvgLatency = prevStats.avgLatency + (newLog.latencyMs - prevStats.avgLatency) / newTotal;
+            setStats((prev) => {
+                const total = prev.totalRequests + 1;
+                const isError = newLog.statusCode >= 400;
+                const errorCount = prev.errorCount + (isError ? 1 : 0);
+                const errorRate = (errorCount / total) * 100;
+                const avgLatency =
+                    prev.avgLatency +
+                    (newLog.latencyMs - prev.avgLatency) / total;
 
                 return {
-                    totalRequests: newTotal,
-                    errorCount: newErrorCount,
-                    errorRate: newErrorRate,
-                    avgLatency: newAvgLatency
+                    totalRequests: total,
+                    errorCount,
+                    errorRate,
+                    avgLatency,
                 };
             });
 
-            // Only prepend live logs if we are on the first page and not searching
             if (page === 1 && !searchQuery) {
                 setLogs((prev) => {
                     const updated = [newLog, ...prev];
@@ -140,9 +158,13 @@ export const useMonitoring = () => {
             }
         });
 
-        const interval = setInterval(() => fetchData(false), 30000);
+        const interval = setInterval(() => {
+            console.log("[MONITORING] Periodic refresh");
+            fetchData(false);
+        }, 30000);
 
         return () => {
+            console.log("[SOCKET] Cleanup: disconnecting socket");
             socket.disconnect();
             clearInterval(interval);
         };
@@ -160,6 +182,6 @@ export const useMonitoring = () => {
         totalPages,
         searchQuery,
         setSearchQuery,
-        refresh: () => fetchData(false)
+        refresh: () => fetchData(false),
     };
 };

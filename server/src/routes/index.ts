@@ -13,6 +13,7 @@ import aiRouter from "./ai/index.js";
 import uploadRouter from "./upload/index.js";
 import communicationRouter from "./communication/index.js";
 import systemRouter from "./system/index.js";
+import userPreferenceRouter from "./preferences/index.js";
 
 const router = express.Router();
 
@@ -24,6 +25,9 @@ router.use(`${API_PREFIX}/auth`, authRouter);
 
 // Users
 router.use(`${API_PREFIX}/users`, userRouter);
+
+// User Preferences
+router.use(`${API_PREFIX}/preferences`, userPreferenceRouter);
 
 // Courses
 router.use(`${API_PREFIX}/courses`, courseRouter);

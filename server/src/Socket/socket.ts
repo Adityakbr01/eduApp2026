@@ -10,7 +10,7 @@ import { redis } from "../configs/redis.js";
 
 export const initSocket = async (httpServer: HttpServer) => {
     io = new SocketIOServer(httpServer, {
-        path: "/socket.io/",
+        path: "/socket.io",
         cors: {
             origin: [
                 env.CLIENT_ORIGIN,
