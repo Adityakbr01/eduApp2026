@@ -1,21 +1,45 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
-    useGetPreferences,
-    useUpdateAppearancePreferences,
-    useUpdateEmailPreferences,
-    useUpdateNotificationPreferences,
-    useUpdatePrivacyPreferences,
-    useUpdateRegionalPreferences,
-    useUpdateSecurityPreferences,
+  useGetPreferences,
+  useUpdateAppearancePreferences,
+  useUpdateEmailPreferences,
+  useUpdateNotificationPreferences,
+  useUpdatePrivacyPreferences,
+  useUpdateRegionalPreferences,
+  useUpdateSecurityPreferences,
 } from "@/services/preferences";
-import { Bell, Globe, Loader2, Lock, Mail, MessageSquare, Palette, Shield, Smartphone } from "lucide-react";
+import { useAuthStore } from "@/store/auth";
+import {
+  Bell,
+  Globe,
+  Loader2,
+  Lock,
+  Mail,
+  MessageSquare,
+  Palette,
+  Shield,
+  Smartphone,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Common timezones
 const TIMEZONES = [
@@ -38,13 +62,25 @@ const LANGUAGES = [
 ];
 
 export default function SettingsPage() {
-  const { data, isLoading, isError } = useGetPreferences();
-  const { mutate: updateEmail, isPending: isUpdatingEmail } = useUpdateEmailPreferences();
-  const { mutate: updateSecurity, isPending: isUpdatingSecurity } = useUpdateSecurityPreferences();
-  const { mutate: updateNotification, isPending: isUpdatingNotification } = useUpdateNotificationPreferences();
-  const { mutate: updateAppearance, isPending: isUpdatingAppearance } = useUpdateAppearancePreferences();
-  const { mutate: updateRegional, isPending: isUpdatingRegional } = useUpdateRegionalPreferences();
-  const { mutate: updatePrivacy, isPending: isUpdatingPrivacy } = useUpdatePrivacyPreferences();
+  const { user } = useAuthStore();
+  const router = useRouter();
+  if (!user) {
+    router.push("/");
+    return null;
+  }
+  const { data, isLoading, isError } = useGetPreferences(user?.id || "");
+  const { mutate: updateEmail, isPending: isUpdatingEmail } =
+    useUpdateEmailPreferences();
+  const { mutate: updateSecurity, isPending: isUpdatingSecurity } =
+    useUpdateSecurityPreferences();
+  const { mutate: updateNotification, isPending: isUpdatingNotification } =
+    useUpdateNotificationPreferences();
+  const { mutate: updateAppearance, isPending: isUpdatingAppearance } =
+    useUpdateAppearancePreferences();
+  const { mutate: updateRegional, isPending: isUpdatingRegional } =
+    useUpdateRegionalPreferences();
+  const { mutate: updatePrivacy, isPending: isUpdatingPrivacy } =
+    useUpdatePrivacyPreferences();
 
   const preferences = data?.data;
 
@@ -56,7 +92,9 @@ export default function SettingsPage() {
     isUpdatingRegional ||
     isUpdatingPrivacy;
 
-  const handleEmailToggle = (key: "marketing" | "courseUpdates" | "loginNotification") => {
+  const handleEmailToggle = (
+    key: "marketing" | "courseUpdates" | "loginNotification",
+  ) => {
     if (!preferences?.email) return;
     updateEmail({
       [key]: !preferences.email[key],
@@ -89,7 +127,9 @@ export default function SettingsPage() {
     updateRegional({ timezone });
   };
 
-  const handlePrivacyToggle = (key: "shareProfile" | "showActivity" | "allowAnalytics") => {
+  const handlePrivacyToggle = (
+    key: "shareProfile" | "showActivity" | "allowAnalytics",
+  ) => {
     if (!preferences?.privacy) return;
     updatePrivacy({
       [key]: !preferences.privacy[key],
@@ -117,7 +157,9 @@ export default function SettingsPage() {
     return (
       <div className="container max-w-4xl mx-auto p-6">
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-600">Failed to load preferences. Please try again later.</p>
+          <p className="text-sm text-red-600">
+            Failed to load preferences. Please try again later.
+          </p>
         </div>
       </div>
     );
@@ -185,7 +227,10 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between space-x-4">
             <div className="flex-1 space-y-1">
-              <Label htmlFor="loginNotification" className="text-base font-medium">
+              <Label
+                htmlFor="loginNotification"
+                className="text-base font-medium"
+              >
                 Login Notifications
               </Label>
               <p className="text-sm text-muted-foreground">
@@ -216,7 +261,10 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between space-x-4">
             <div className="flex-1 space-y-1">
-              <Label htmlFor="twoFactorEnabled" className="text-base font-medium">
+              <Label
+                htmlFor="twoFactorEnabled"
+                className="text-base font-medium"
+              >
                 Two-Factor Authentication (2FA)
               </Label>
               <p className="text-sm text-muted-foreground">
@@ -332,7 +380,9 @@ export default function SettingsPage() {
             </Label>
             <Select
               value={preferences.appearance?.theme}
-              onValueChange={(value) => handleThemeChange(value as "light" | "dark" | "system")}
+              onValueChange={(value) =>
+                handleThemeChange(value as "light" | "dark" | "system")
+              }
               disabled={isUpdatingAppearance}
             >
               <SelectTrigger id="theme">
