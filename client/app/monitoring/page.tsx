@@ -22,8 +22,6 @@ export default function MonitoringPage() {
     refresh,
     systemStats,
   } = useMonitoring();
-  console.log(stats, metrics, logs);
-
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
   return (

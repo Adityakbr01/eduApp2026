@@ -40,12 +40,6 @@ export const useMonitoring = () => {
                     getSystemStats(),
                 ]);
 
-            console.log("[MONITORING] REST response", {
-                statsData,
-                metricsCount: metricsData?.length,
-                logsCount: logsData?.data?.length,
-            });
-
             setStats(statsData);
             setMetrics(metricsData);
             setSystemStats(systemData);
