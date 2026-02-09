@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ROLES } from "src/constants/roles.js";
-import courseController from "src/controllers/course.controller.js";
+import courseController from "src/controllers/course/course.controller.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import checkRole from "src/middlewares/system/checkRole.js";
 

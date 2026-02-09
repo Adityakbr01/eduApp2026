@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ROLES } from "src/constants/roles.js";
-import { assignmentController, quizController } from "src/controllers/assessment.controller.js";
+import { assignmentController, quizController } from "src/controllers/assessment/assessment.controller.js";
 import { validateRequest } from "src/middlewares/custom/validateRequest.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import checkRole from "src/middlewares/system/checkRole.js";

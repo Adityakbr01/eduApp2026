@@ -1,15 +1,16 @@
 "use client";
 
+import RequestCallbackModal from "@/components/modals/RequestCallback";
+import links from "@/constants/links";
 import { useAuthStore } from "@/store/auth";
 import { Squeeze as Hamburger } from "hamburger-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import MobileNav from "./MobileNav";
+import NavCTA from "./NavCTA";
 import NavLinks from "./NavLInks";
 import ProfileDropdown from "./ProfileDropdown";
-import NavCTA from "./NavCTA";
-import RequestCallbackModal from "@/components/modals/RequestCallback";
 
 export default function Nav() {
   const [showNav, setShowNav] = useState(true);
@@ -33,8 +34,9 @@ export default function Nav() {
   useEffect(() => {
     if (isMobileMenuOpen) {
       // Get scrollbar width to prevent layout shift
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+
       // Lock scroll on html element (more reliable than body)
       document.documentElement.style.overflow = "hidden";
       document.documentElement.style.paddingRight = `${scrollbarWidth}px`;
@@ -66,22 +68,18 @@ export default function Nav() {
       >
         <div className="mx-auto grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-16 py-3 md:py-4 lg:max-w-8xl h-full">
           {/* Left: Logo */}
-         <Link
-  href="/"
-  className="justify-self-start"
->
-  <div className="relative w-40 h-12 md:w-48 md:h-14">
-    <Image
-      src="https://dfdx9u0psdezh.cloudfront.net/logos/full-logo.webp"
-      alt="Logo"
-      fill
-      priority
-      sizes="(max-width: 768px) 160px, 192px"
-      className="object-contain cursor-pointer"
-    />
-  </div>
-</Link>
-
+          <Link href="/" className="justify-self-start">
+            <div className="relative w-40 h-12 md:w-48 md:h-14">
+              <Image
+                src="https://dfdx9u0psdezh.cloudfront.net/logos/full-logo.webp"
+                alt="Logo"
+                fill
+                priority
+                sizes="(max-width: 768px) 160px, 192px"
+                className="object-contain cursor-pointer"
+              />
+            </div>
+          </Link>
 
           {/* Center: Nav Links (Desktop/Laptop only) */}
           <NavLinks onRequestCallback={() => setIsCallbackModalOpen(true)} />
@@ -97,11 +95,14 @@ export default function Nav() {
             ) : isLoggedIn ? (
               <ProfileDropdown />
             ) : (
-             <div className="hidden min-[850px]:flex items-center gap-3">
-  <NavCTA href="/signin" label="Sign In" />
-  <NavCTA href="/signup" label="Sign Up" primary />
-</div>
-
+              <div className="hidden min-[850px]:flex items-center gap-3">
+                <NavCTA href="/signin" label="Sign In" />
+                <NavCTA
+                  href={links.AUTH.REGISTER_NEW_STUDENT}
+                  label="Sign Up"
+                  primary
+                />
+              </div>
             )}
           </div>
 
@@ -120,9 +121,9 @@ export default function Nav() {
       </nav>
 
       {/* Mobile Navigation */}
-      <MobileNav 
-        isOpen={isMobileMenuOpen} 
-        onClose={closeMobileMenu} 
+      <MobileNav
+        isOpen={isMobileMenuOpen}
+        onClose={closeMobileMenu}
         onRequestCallback={() => {
           closeMobileMenu();
           setIsCallbackModalOpen(true);

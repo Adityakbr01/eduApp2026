@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ROLES } from "src/constants/roles.js";
-import { contentProgressController } from "src/controllers/contentProgress.Controller.js";
-import { courseProgressController } from "src/controllers/courseProgress.Controller.js";
+import { contentProgressController } from "src/controllers/progress/contentProgress.controller.js";
+import { courseProgressController } from "src/controllers/progress/courseProgress.controller.js";
 import { validateRequest } from "src/middlewares/custom/validateRequest.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import checkRole from "src/middlewares/system/checkRole.js";

@@ -1,21 +1,18 @@
-// API
-export { enrollmentApi } from "./api";
+// Enrollment API
+export { enrollmentApi, default as api } from "./api";
 
-// Types
-export * from "./types";
+// Enrollment Mutations
+export { useEnrollInFreeCourse } from "./mutations";
 
-// Queries
-export {
-    useGetMyEnrolledCourses,
-    useGetMyPayments,
-    useGetPaymentDetails,
-} from "./queries";
+// Enrollment Queries
+export { useGetMyEnrolledCourses } from "./queries";
 
-// Mutations
-export {
-    useEnrollInFreeCourse,
-    useCreatePaymentOrder,
-    useVerifyPayment,
-    useHandlePaymentFailure,
-    useRazorpayPayment,
-} from "./mutations";
+// Enrollment Types
+export type {
+    IEnrollment,
+    EnrollmentStatusResponse,
+    EnrollInCourseResponse,
+    MyEnrolledCoursesResponse,
+} from "./types";
+
+export { EnrollmentStatus } from "./types";

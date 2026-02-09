@@ -1,30 +1,58 @@
 import express from "express";
 import { API_PREFIX } from "src/constants/api.js";
-import healthRouter from "./health.route.js";
-import authRouter from "./auth.route.js"
-import userRouter from "./user.route.js";
-import categoryRouter from "./category.route.js";
+import rootRouter from "./root.route.js";
+import authRouter from "./auth/index.js";
+import userRouter from "./user/index.js";
 import courseRouter from "./course/index.js";
-import enrollmentRouter from "./enrollment.route.js";
-import uploadRouter from "./upload.route.js";
+import categoryRouter from "./category/index.js";
 import assessmentRouter from "./assessment/index.js";
-import reviewRouter from "./review.route.js";
-import userPreferenceRouter from "./userPreference.route.js";
-import emailCampaignRouter from "./emailCampaign.route.js";
-import aiRouter from "./ai.route.js";
+import enrollmentRouter from "./enrollment/index.js";
+import paymentRouter from "./payment/index.js";
+import reviewRouter from "./review/index.js";
+import aiRouter from "./ai/index.js";
+import uploadRouter from "./upload/index.js";
+import communicationRouter from "./communication/index.js";
+import systemRouter from "./system/index.js";
 
 const router = express.Router();
-router.use(`${API_PREFIX}/health`, healthRouter);
-router.use(`${API_PREFIX}/auth`, authRouter)
-router.use(`${API_PREFIX}/users`, userRouter)
-router.use(`${API_PREFIX}/upload`, uploadRouter) // Role management routes
-router.use(`${API_PREFIX}/categories`, categoryRouter)
+
+// Root
+router.use(`${API_PREFIX}/`, rootRouter);
+
+// Auth
+router.use(`${API_PREFIX}/auth`, authRouter);
+
+// Users
+router.use(`${API_PREFIX}/users`, userRouter);
+
+// Courses
 router.use(`${API_PREFIX}/courses`, courseRouter);
-router.use(`${API_PREFIX}/assessments`, assessmentRouter); // Quiz & Assignment routes
-router.use(`${API_PREFIX}/reviews`, reviewRouter); // Course review routes
-router.use(`${API_PREFIX}`, enrollmentRouter); // Enrollment & Payment routes
-router.use(`${API_PREFIX}/preferences`, userPreferenceRouter); // User preferences routes
-router.use(`${API_PREFIX}/campaigns`, emailCampaignRouter); // Email marketing campaigns
-router.use(`${API_PREFIX}/ai`, aiRouter); // AI generation routes
+
+// Categories
+router.use(`${API_PREFIX}/categories`, categoryRouter);
+
+// Assessments
+router.use(`${API_PREFIX}/assessments`, assessmentRouter);
+
+// Enrollments
+router.use(`${API_PREFIX}`, enrollmentRouter);
+
+//Payments
+router.use(`${API_PREFIX}/payments`, paymentRouter);
+
+// Reviews
+router.use(`${API_PREFIX}/reviews`, reviewRouter);
+
+// AI
+router.use(`${API_PREFIX}/ai`, aiRouter);
+
+// Upload
+router.use(`${API_PREFIX}/upload`, uploadRouter);
+
+// Communication
+router.use(`${API_PREFIX}/campaigns`, communicationRouter);
+
+// System (monitoring, health)
+router.use(`${API_PREFIX}`, systemRouter);
 
 export default router;

@@ -17,7 +17,7 @@ import { monitorMiddleware } from "./middlewares/monitorMiddleware.js";
 app.use(monitorMiddleware("edu-app-server"));
 
 // Monitoring Routes
-import monitoringRoutes from "./routes/monitoring.routes.js";
+import monitoringRoutes from "./routes/system/monitoring.route.js";
 app.use("/api/v1/monitoring", monitoringRoutes);
 
 /* ---------------- links ---------------- */

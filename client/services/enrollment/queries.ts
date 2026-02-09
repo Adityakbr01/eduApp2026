@@ -21,33 +21,3 @@ export const useGetMyEnrolledCourses = (params?: {
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
 };
-
-// ==================== PAYMENT QUERIES ====================
-
-/**
- * Get user's payment history
- */
-export const useGetMyPayments = (params?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-}) => {
-    return useQuery({
-        queryKey: params?.page
-            ? QUERY_KEYS.PAYMENTS.HISTORY_PAGINATED(params.page)
-            : QUERY_KEYS.PAYMENTS.HISTORY,
-        queryFn: () => enrollmentApi.getMyPayments(params),
-        staleTime: 1000 * 60 * 2, // 2 minutes
-    });
-};
-
-/**
- * Get specific payment details
- */
-export const useGetPaymentDetails = (paymentId: string, enabled: boolean = true) => {
-    return useQuery({
-        queryKey: QUERY_KEYS.PAYMENTS.DETAIL(paymentId),
-        queryFn: () => enrollmentApi.getPaymentDetails(paymentId),
-        enabled: enabled && !!paymentId,
-    });
-};

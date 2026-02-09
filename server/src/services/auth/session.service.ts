@@ -5,7 +5,7 @@ import { STATUSCODE } from "src/constants/statusCodes.js";
 import AppError from "src/utils/AppError.js";
 import { authRepository } from "src/repositories/auth.repository.js";
 import { default as sessionCache, default as userCache } from "src/cache/userCache.js";
-import { enrollmentService } from "src/services/enrollment.service.js";
+import { enrollmentService } from "src/services/enrollment/enrollment.service.js";
 import { getCdnUrl } from "src/utils/s3KeyGenerator.js";
 
 export const sessionService = {

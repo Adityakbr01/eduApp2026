@@ -9,10 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ICourse, ISection } from "@/services/courses";
-import {
-  useEnrollInFreeCourse,
-  useRazorpayPayment,
-} from "@/services/enrollment";
+import { useEnrollInFreeCourse } from "@/services/enrollment";
+import { useRazorpayPayment } from "@/services/payment";
 import { useAuthStore } from "@/store/auth";
 import {
   Bookmark,
@@ -23,6 +21,7 @@ import {
   Play,
 } from "lucide-react";
 import { formatDuration } from "@/lib/utils/formatDuration";
+import { PAYMENT_MESSAGES } from "@/config/razorpay.config";
 
 interface EnrollmentCardProps {
   course: ICourse;
@@ -53,7 +52,7 @@ function EnrollmentCard({
   console.log("My Enrollment Data:", user);
   const isEnrolled =
     user?.enrolledCourses?.some(
-      (enrollment) => enrollment.courseId === course._id
+      (enrollment) => enrollment.courseId === course._id,
     ) || false;
 
   // Mutations
@@ -62,14 +61,14 @@ function EnrollmentCard({
   // Razorpay payment hook
   const { initiatePayment, isLoading: isPaymentLoading } = useRazorpayPayment({
     onSuccess: () => {
-      toast.success("🎉 Payment successful! Welcome to the course.");
-      router.push(`/course/${course.slug || course._id}/learn`);
+      toast.success(PAYMENT_MESSAGES.success.title);
+      router.push(`/classroom/batch/${course.slug || course._id}`);
     },
     onError: (error) => {
-      toast.error(error.message || "Payment failed. Please try again.");
+      toast.error(error.message || PAYMENT_MESSAGES.failed.description);
     },
     onDismiss: () => {
-      toast.error("Payment cancelled. You can try again anytime.");
+      toast.error(PAYMENT_MESSAGES.cancelled.description);
     },
   });
 
@@ -92,7 +91,7 @@ function EnrollmentCard({
         // Direct enrollment for free courses
         await enrollInFreeCourse.mutateAsync(course._id);
         toast.success("🎉 Successfully enrolled! Start learning now.");
-        router.push(`/course/${course.slug || course._id}/learn`);
+        router.push(`/classroom/batch/${course.slug || course._id}`);
       } else {
         // Initiate Razorpay payment for paid courses
         await initiatePayment(course._id, {
@@ -108,7 +107,7 @@ function EnrollmentCard({
 
   // Handle continue learning
   const handleContinueLearning = () => {
-    router.push(`/course/${course.slug || course._id}/learn`);
+    router.push(`/classroom/batch/${course.slug || course._id}`);
   };
 
   // Loading states

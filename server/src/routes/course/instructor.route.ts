@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { ROLES } from "src/constants/roles.js";
-import courseController from "src/controllers/course.controller.js";
-import { lessonController } from "src/controllers/lesson.Controller.js";
-import { lessonContentController } from "src/controllers/lessonContent.Controller.js";
-import { sectionController } from "src/controllers/section.Controller.js";
+import courseController from "src/controllers/course/course.controller.js";
+import { lessonController } from "src/controllers/course/lesson.controller.js";
+import { lessonContentController } from "src/controllers/course/lessonContent.controller.js";
+import { sectionController } from "src/controllers/course/section.controller.js";
 import { validateRequest } from "src/middlewares/custom/validateRequest.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import checkRole from "src/middlewares/system/checkRole.js";

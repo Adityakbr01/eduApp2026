@@ -2,14 +2,7 @@ import apiClient from "@/lib/api/axios";
 import {
     EnrollmentStatusResponse,
     EnrollInCourseResponse,
-    CreateOrderResponse,
-    VerifyPaymentResponse,
     MyEnrolledCoursesResponse,
-    PaymentHistoryResponse,
-    CreateOrderDTO,
-    VerifyPaymentDTO,
-    PaymentFailureDTO,
-    IPayment,
 } from "./types";
 
 // ==================== API RESPONSE TYPE ====================
@@ -52,54 +45,6 @@ export const enrollmentApi = {
         status?: string;
     }): Promise<ApiResponse<MyEnrolledCoursesResponse>> => {
         const response = await apiClient.get("/my-courses", { params });
-        return response.data;
-    },
-
-    // ============================
-    // 💳 PAYMENT (RAZORPAY)
-    // ============================
-
-    /**
-     * Create Razorpay order for course enrollment
-     */
-    createOrder: async (data: CreateOrderDTO): Promise<ApiResponse<CreateOrderResponse>> => {
-        const response = await apiClient.post("/payment/razorpay/order", data);
-        return response.data;
-    },
-
-    /**
-     * Verify Razorpay payment and activate enrollment
-     */
-    verifyPayment: async (data: VerifyPaymentDTO): Promise<ApiResponse<VerifyPaymentResponse>> => {
-        const response = await apiClient.post("/payment/razorpay/verify", data);
-        return response.data;
-    },
-
-    /**
-     * Handle payment failure
-     */
-    handlePaymentFailure: async (data: PaymentFailureDTO): Promise<ApiResponse<{ message: string }>> => {
-        const response = await apiClient.post("/payment/razorpay/failed", data);
-        return response.data;
-    },
-
-    /**
-     * Get user's payment history
-     */
-    getMyPayments: async (params?: {
-        page?: number;
-        limit?: number;
-        status?: string;
-    }): Promise<ApiResponse<PaymentHistoryResponse>> => {
-        const response = await apiClient.get("/payments", { params });
-        return response.data;
-    },
-
-    /**
-     * Get specific payment details
-     */
-    getPaymentDetails: async (paymentId: string): Promise<ApiResponse<IPayment>> => {
-        const response = await apiClient.get(`/payments/${paymentId}`);
         return response.data;
     },
 };
