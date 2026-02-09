@@ -1,12 +1,11 @@
+import type { NextFunction, Request, Response } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import type { Request, Response, NextFunction } from "express";
-import AppError from "src/utils/AppError.js";
-import { env } from "src/configs/env.js";
 import sessionService from "src/cache/userCache.js";
-import logger from "src/utils/logger.js";
-import { STATUSCODE } from "src/constants/statusCodes.js";
+import { env } from "src/configs/env.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
-import type { PermissionDTO } from "src/types/auth.type.js";
+import { STATUSCODE } from "src/constants/statusCodes.js";
+import AppError from "src/utils/AppError.js";
+import logger from "src/utils/logger.js";
 
 interface AccessTokenPayload extends JwtPayload {
     userId: string;
@@ -21,6 +20,26 @@ const authMiddleware = async (
     next: NextFunction
 ) => {
     try {
+
+         if (req.path.startsWith("/socket.io")) {
+            return next();
+        }
+
+        // 🔥 HEALTH CHECK BYPASS
+        if (req.path === "/health") {
+            return next();
+        }
+
+        // 🔥 MONITORING BYPASS
+        if (req.path.startsWith("/api/v1/monitoring")) {
+            return next();
+        }
+
+        // 🔥 PREFLIGHT
+        if (req.method === "OPTIONS") {
+            return next();
+        }
+
         const accessToken =
             req.cookies?.accessToken ||
             req.headers.authorization?.replace("Bearer ", "");

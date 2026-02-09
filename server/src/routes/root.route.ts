@@ -14,6 +14,13 @@ router.get("/", (_req, res) => {
 }
 );
 
+router.get("/health", (_req, res) => {
+    sendResponse(res, 200, "Server is healthy", {
+        version: API_VERSION || "v1",
+        environment: env.NODE_ENV || "development",
+    });
+});
+
 export default router;
 
 
