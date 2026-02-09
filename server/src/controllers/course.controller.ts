@@ -101,6 +101,18 @@ const courseController = {
         const result = await courseService.getFeaturedCourses();
         sendResponse(res, 200, "Featured courses fetched successfully", { courses: result });
     }),
+
+    // -------------------- REORDER COURSES (ADMIN) --------------------
+    reorderCourses: catchAsync(async (req, res) => {
+        const { items } = req.body; // Expecting { items: { id: string, order: number }[] }
+
+        // We'll trust the service to handle the logic, or we can do a simple loop here if service method doesn't exist yet.
+        // Since I need to implement the service method too, I'll add it to the service first or simply do the update here if it's simple enough.
+        // Actually, better to keep logic in service.
+        await courseService.reorderCourses(items);
+
+        sendResponse(res, 200, "Courses reordered successfully", null);
+    }),
 };
 
 export default courseController;

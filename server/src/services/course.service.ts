@@ -293,6 +293,20 @@ export const courseService = {
     return courseRepository.findFeaturedCourses();
   },
 
+  // -------------------- REORDER COURSES (ADMIN) --------------------
+  reorderCourses: async (items: { id: string; order: number }[]) => {
+    const bulkOps = items.map((item) => ({
+      updateOne: {
+        filter: { _id: item.id },
+        update: { $set: { order: item.order } },
+      },
+    }));
+
+    if (bulkOps.length > 0) {
+      await courseRepository.bulkWrite(bulkOps);
+    }
+  },
+
 };
 
 

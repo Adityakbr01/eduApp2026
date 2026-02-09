@@ -73,7 +73,7 @@ const ALLOWED_FORMATS = [
 // Schema for assignment form
 const assignmentFormSchema = z.object({
     title: z.string().min(1, "Title is required").max(200),
-    description: z.string().optional(),
+    description: z.string().min(10,"Description must be at least 10 characters").max(2000).optional(),
     instructions: z.array(z.string().min(1, "Instruction cannot be empty")).min(1, "At least one instruction required"),
     submission: z.object({
         type: z.enum(["file", "text", "link"]),
@@ -269,7 +269,7 @@ export function AssignmentDialog({
                                         name="description"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Description (optional)</FormLabel>
+                                                <FormLabel>Description</FormLabel>
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="Brief description of the assignment"

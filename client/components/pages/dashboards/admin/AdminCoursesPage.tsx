@@ -1,8 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Leaf, MoreHorizontal, Star } from "lucide-react";
+import { Leaf, MoreHorizontal, Star, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,33 +50,97 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useGetCoursesForAdmin } from "@/services/courses/queries";
-import { useAdminReviewCourseRequest, useToggleFeaturedCourse } from "@/services/courses/mutations";
+import {
+  useAdminReviewCourseRequest,
+  useToggleFeaturedCourse,
+  useReorderCourses,
+} from "@/services/courses/mutations";
 import { AdminCourse, CourseStatus } from "@/services/courses";
+
+interface SortableRowProps {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const SortableRow = ({ id, children, className }: SortableRowProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : "auto",
+    position: isDragging ? "relative" : ("unset" as any), // Typescript hack for TableRow
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={`${className} ${isDragging ? "opacity-50 bg-muted" : ""}`}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </TableRow>
+  );
+};
 
 export default function AdminCoursesPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
+  const [localCourses, setLocalCourses] = useState<AdminCourse[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   /* ----------------------------- reject dialog ----------------------------- */
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
-    null
+    null,
   );
-
-
 
   /* ----------------------------- view course dialog ----------------------------- */
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(
-    null
+    null,
   );
 
   /* ----------------------------- queries ----------------------------- */
   const { data, isLoading, isError } = useGetCoursesForAdmin({ page, limit });
 
   const { mutate: reviewRequest, isPending } = useAdminReviewCourseRequest();
-  const { mutate: toggleFeatured, isPending: isTogglingFeatured } = useToggleFeaturedCourse();
+  const { mutate: toggleFeatured, isPending: isTogglingFeatured } =
+    useToggleFeaturedCourse();
+  const { mutate: reorderCourses } = useReorderCourses();
+
+  // Sync data to local state
+
+  const courses = data?.data.courses ?? [];
+  const pagination = data?.data.pagination;
+
+  // Effect to sync courses to local state when data changes
+  useEffect(() => {
+    if (courses.length > 0) {
+      setLocalCourses(courses);
+    }
+  }, [courses]);
 
   if (isLoading) {
     return (
@@ -75,8 +156,27 @@ export default function AdminCoursesPage() {
     return <p className="text-sm text-red-500">Failed to load courses.</p>;
   }
 
-  const courses = data?.data.courses ?? [];
-  const pagination = data?.data.pagination;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setLocalCourses((items) => {
+        const oldIndex = items.findIndex((item) => item._id === active.id);
+        const newIndex = items.findIndex((item) => item._id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        // Trigger API call
+        const reorderPayload = newItems.map((item, index) => ({
+          id: item._id,
+          order: index,
+        }));
+        reorderCourses(reorderPayload);
+
+        return newItems;
+      });
+    }
+  };
 
   /* ----------------------------- handlers ----------------------------- */
   const handleApprove = (requestId: string) => {
@@ -130,95 +230,125 @@ export default function AdminCoursesPage() {
           </TableHeader>
 
           <TableBody>
-            {courses.map((course) => (
-              <TableRow key={course._id}>
-                <TableCell className="font-medium">{course.title}</TableCell>
-
-                <TableCell>{course.category?.name}</TableCell>
-
-                <TableCell>
-                  <p>{course.instructor.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {course.instructor.email}
-                  </p>
-                </TableCell>
-
-                <TableCell>
-                  <Badge variant={course.isPublished ? "default" : "secondary"}>
-                    {course.status}
-                  </Badge>
-                </TableCell>
-
-                <TableCell>
-                  <Badge
-                    variant={course.isFeatured ? "default" : "secondary"}
-                    className={course.isFeatured ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-none" : ""}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={localCourses.map((c) => c._id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {localCourses.map((course) => (
+                  <SortableRow
+                    key={course._id}
+                    id={course._id}
+                    className="cursor-grab"
                   >
-                    <Star className={`w-3 h-3 mr-1 ${course.isFeatured ? "fill-white" : ""}`} />
-                    {course.isFeatured ? "Featured" : "Not Featured"}
-                  </Badge>
-                </TableCell>
+                    <TableCell>
+                      <GripVertical className="h-4 w-4 text-muted-foreground mr-2 cursor-grab" />
+                      {course.title}
+                    </TableCell>
 
-                <TableCell>
-                  {course.requestType ? (
-                    <Badge variant="outline" className="capitalize">
-                      {course.requestType}
-                    </Badge>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
+                    <TableCell>{course.category?.name}</TableCell>
 
-                <TableCell className="text-sm text-muted-foreground">
-                  {format(new Date(course.createdAt), "dd MMM yyyy")}
-                </TableCell>
+                    <TableCell>
+                      <p>{course.instructor.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {course.instructor.email}
+                      </p>
+                    </TableCell>
 
-                <TableCell className="text-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="sm" variant="ghost">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {course.requestId && (
-                        <>
+                    <TableCell>
+                      <Badge
+                        variant={course.isPublished ? "default" : "secondary"}
+                      >
+                        {course.status}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge
+                        variant={course.isFeatured ? "default" : "secondary"}
+                        className={
+                          course.isFeatured
+                            ? "bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-none"
+                            : ""
+                        }
+                      >
+                        <Star
+                          className={`w-3 h-3 mr-1 ${course.isFeatured ? "fill-white" : ""}`}
+                        />
+                        {course.isFeatured ? "Featured" : "Not Featured"}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      {course.requestType ? (
+                        <Badge variant="outline" className="capitalize">
+                          {course.requestType}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+
+                    <TableCell className="text-sm text-muted-foreground">
+                      {format(new Date(course.createdAt), "dd MMM yyyy")}
+                    </TableCell>
+
+                    <TableCell className="text-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="ghost">
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {course.requestId && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleApprove(course.requestId!)}
+                                disabled={isPending}
+                              >
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedRequestId(course.requestId!);
+                                  setRejectOpen(true);
+                                }}
+                                disabled={isPending}
+                              >
+                                Reject
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           <DropdownMenuItem
-                            onClick={() => handleApprove(course.requestId!)}
-                            disabled={isPending}
+                            onClick={() => handleToggleFeatured(course._id)}
+                            disabled={isTogglingFeatured}
                           >
-                            Approve
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedRequestId(course.requestId!);
-                              setRejectOpen(true);
-                            }}
-                            disabled={isPending}
-                          >
-                            Reject
+                            <Star
+                              className={`w-4 h-4 mr-2 ${course.isFeatured ? "fill-amber-500 text-amber-500" : ""}`}
+                            />
+                            {course.isFeatured
+                              ? "Unmark as Featured"
+                              : "Mark as Featured"}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                        </>
-                      )}
-                      <DropdownMenuItem
-                        onClick={() => handleToggleFeatured(course._id)}
-                        disabled={isTogglingFeatured}
-                      >
-                        <Star className={`w-4 h-4 mr-2 ${course.isFeatured ? "fill-amber-500 text-amber-500" : ""}`} />
-                        {course.isFeatured ? "Unmark as Featured" : "Mark as Featured"}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => handleViewCourse(course)}
-                      >
-                        View Course
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                          <DropdownMenuItem
+                            onClick={() => handleViewCourse(course)}
+                          >
+                            View Course
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </SortableRow>
+                ))}
+              </SortableContext>
+            </DndContext>
 
             {!courses.length && (
               <TableRow>
@@ -324,9 +454,15 @@ export default function AdminCoursesPage() {
                 <strong>Featured:</strong>
                 <Badge
                   variant={selectedCourse.isFeatured ? "default" : "secondary"}
-                  className={selectedCourse.isFeatured ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-none" : ""}
+                  className={
+                    selectedCourse.isFeatured
+                      ? "bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white border-none"
+                      : ""
+                  }
                 >
-                  <Star className={`w-3 h-3 mr-1 ${selectedCourse.isFeatured ? "fill-white" : ""}`} />
+                  <Star
+                    className={`w-3 h-3 mr-1 ${selectedCourse.isFeatured ? "fill-white" : ""}`}
+                  />
                   {selectedCourse.isFeatured ? "Yes" : "No"}
                 </Badge>
               </p>

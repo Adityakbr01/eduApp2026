@@ -4,10 +4,10 @@ import healthRouter from "./health.route.js";
 import authRouter from "./auth.route.js"
 import userRouter from "./user.route.js";
 import categoryRouter from "./category.route.js";
-import courseRouter from "./course.route.js";
+import courseRouter from "./course/index.js";
 import enrollmentRouter from "./enrollment.route.js";
 import uploadRouter from "./upload.route.js";
-import assessmentRouter from "./assessment.route.js";
+import assessmentRouter from "./assessment/index.js";
 import reviewRouter from "./review.route.js";
 import userPreferenceRouter from "./userPreference.route.js";
 import emailCampaignRouter from "./emailCampaign.route.js";

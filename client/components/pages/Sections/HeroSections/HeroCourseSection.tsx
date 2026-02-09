@@ -91,7 +91,6 @@ const HeroCourseSection = () => {
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   const { data, isLoading, isError } = useGetFeaturedCourses();
-  console.log(data);
 
   const courses = useMemo(() => {
     if (
@@ -269,7 +268,7 @@ const HeroCourseSection = () => {
           ref={cardsContainerRef}
           className="relative w-full mt-2 md:mt-0 h-[60vh] sm:h-[70vh] md:h-[80vh] "
         >
-          {courses.map((course, index) => (
+          {courses?.map((course, index) => (
             <HomeCourseCard key={index} {...course} index={index} />
           ))}
         </div>

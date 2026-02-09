@@ -290,5 +290,10 @@ export const adminCourseApi = {
     toggleFeaturedCourse: async (courseId: string): Promise<ApiResponse<CourseDetailData>> => {
         const response = await apiClient.put(`${ADMIN_BASE}/${courseId}/toggleFeatured`);
         return response.data;
+    },
+
+    reorderCourses: async (items: ReorderItemDTO[]): Promise<ApiResponse<null>> => {
+        const response = await apiClient.put(`${ADMIN_BASE}/reorder-courses`, { items });
+        return response.data;
     }
 };

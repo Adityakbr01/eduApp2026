@@ -86,8 +86,8 @@ export const useSubmitCourseRequest = () => {
             courseApi.toggleCourseStatus(data),
         onSuccess: (response, data) => {
             mutationHandlers.success(response.message || "Course Status change submitted, wait for review");
-           queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES], }); 
-           queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES.DETAIL(data.id)], });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES], });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.COURSES.DETAIL(data.id)], });
         },
         onError: (error) => mutationHandlers.error(error),
     });
@@ -436,6 +436,23 @@ export const useToggleFeaturedCourse = () => {
                 queryKey: [QUERY_KEYS.COURSES.ADMIN_ALL],
             });
         }
-        ,        onError: (error) => mutationHandlers.error(error),
+        , onError: (error) => mutationHandlers.error(error),
+    });
+};
+
+/**
+ * Reorder courses (Admin)
+ */
+export const useReorderCourses = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (items: ReorderItemDTO[]) => adminCourseApi.reorderCourses(items),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Courses reordered successfully");
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.ADMIN_ALL],
+            });
+        },
+        onError: (error) => mutationHandlers.error(error),
     });
 };

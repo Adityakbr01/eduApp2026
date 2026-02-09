@@ -183,6 +183,9 @@ const courseSchema = new mongoose.Schema({
 
     // Timestamps
     lastUpdated: { type: Date, default: Date.now },
+
+    // Ordering
+    order: { type: Number, default: 0 },
 },
     {
         timestamps: true,

@@ -316,7 +316,7 @@ export const courseRepository = {
             isFeatured: true,
             "Deleted.isDeleted": { $ne: true }
         })
-            .sort({ publishedAt: -1 })
+            .sort({ order: 1 })
             .limit(limit)
             .populate("instructor", "name avatar")
             .populate("category", "name slug")
@@ -424,6 +424,12 @@ export const courseRepository = {
         });
         return !!course;
     },
+
+    // Bulk write operations
+    bulkWrite: async (ops: any[]) => {
+        return Course.bulkWrite(ops);
+    },
+
     // -------------------- FIND COURSES FOR ADMIN WITH PAGINATION AND FILTERING WITH REGEX --------------------
     findForAdmin: async (
         query: {
@@ -449,7 +455,7 @@ export const courseRepository = {
         /* ----------------------------- pipeline ---------------------------- */
         const pipeline: PipelineStage[] = [
             { $match: match },
-            { $sort: { createdAt: -1 } },
+            { $sort: { order: 1 } },
             { $skip: skip },
             { $limit: limit },
 
