@@ -37,14 +37,14 @@ export const initSocket = async (httpServer: HttpServer) => {
     io.adapter(createAdapter(pubClient, subClient));
 
     io.on("connection", (socket) => {
-        logger.info(`🔌 Socket connected: ${socket.id}`);
+        console.info(`🔌 Socket connected: ${socket.id}`);
 
         socket.on("disconnect", () => {
             // logger.info(`❌ Socket disconnected: ${socket.id}`);
         });
     });
 
-    logger.info("✅ Socket.IO initialized with Redis Adapter (using shared config)");
+    console.info("✅ Socket.IO initialized with Redis Adapter (using shared config)");
     return io;
 };
 
