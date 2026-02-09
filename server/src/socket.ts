@@ -9,13 +9,20 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import { redis } from "./configs/redis.js";
 
 export const initSocket = async (httpServer: HttpServer) => {
-    io = new SocketIOServer(httpServer, {
-        cors: {
-            origin: [env.CLIENT_ORIGIN, env.CLIENT_URL, "http://localhost:3000"],
-            methods: ["GET", "POST"],
-            credentials: true
-        }
-    });
+   io = new SocketIOServer(httpServer, {
+    path: "/socket.io/",
+    cors: {
+        origin: [
+            env.CLIENT_ORIGIN,
+            env.CLIENT_URL,
+            "http://localhost:3000",
+            "https://app.edulaunch.shop"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
 
     const pubClient = redis;
     const subClient = redis.duplicate();

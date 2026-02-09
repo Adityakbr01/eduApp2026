@@ -4,7 +4,13 @@ import { Activity, Cpu, Database, Clock } from "lucide-react";
 
 interface SystemStats {
   cpu: { load: number; cores: number };
-  memory: { total: number; active: number; free: number; usedPercent: number };
+  memory: {
+    total: number;
+    active: number;
+    free: number;
+    usedPercent: number;
+    used: number;
+  };
   uptime: { seconds: number; startedAt: string };
   timestamp: string;
 }
@@ -85,8 +91,7 @@ export const SystemHealth: React.FC<SystemHealthProps> = ({
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            {formatBytes(stats.memory.active)} /{" "}
-            {formatBytes(stats.memory.total)}
+            {formatBytes(stats.memory.used)} / {formatBytes(stats.memory.total)}
           </p>
         </div>
 

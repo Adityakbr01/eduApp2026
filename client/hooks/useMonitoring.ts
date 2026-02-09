@@ -67,13 +67,16 @@ export const useMonitoring = () => {
 
         // Determine socket URL - remove /api/v1 suffix if present
         const apiUrl = (process.env.NODE_ENV==="production" ? "https://app.edulaunch.shop" : "http://localhost:3001");
-        const socketUrl = apiUrl.replace(/\/api\/v1\/?$/, "");
+       const socketUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://app.edulaunch.shop"
+    : "http://localhost:3001";
 
-        const socket = io(socketUrl, {
-            path: "/socket.io/",
-            reconnectionAttempts: 5,
-            transports: ["websocket", "polling"], // Try websocket first
-        });
+const socket = io(socketUrl, {
+    path: "/socket.io/",
+    transports: ["websocket"],
+});
+
 
         socket.on("connect", () => {
             console.log("Monitoring Socket connected to:", socketUrl);
