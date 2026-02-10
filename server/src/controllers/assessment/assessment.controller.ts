@@ -11,6 +11,7 @@ import {
     updateQuestionSchema,
     createAssignmentSchema,
     updateAssignmentSchema,
+    gradeAssignmentSchema,
 } from "src/schemas/assessment.schema.js";
 
 // ============================================
@@ -151,6 +152,30 @@ export const quizController = {
 
         sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.DELETED, quiz);
     }),
+
+    /**
+     * @desc    Submit quiz question
+     * @route   POST /api/v1/assessments/student/quiz/:quizId/question/submit
+     * @access  Private (Student)
+     */
+    submitQuestion: catchAsync(async (req: Request, res: Response) => {
+        const { quizId } = req.params;
+        const result = await quizService.submitQuestion(req.user.id, quizId, req.body);
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Get quiz attempt for student
+     * @route   GET /api/v1/assessments/student/quiz/:quizId/attempt
+     * @access  Private (Student)
+     */
+    getQuizAttempt: catchAsync(async (req: Request, res: Response) => {
+        const { quizId } = req.params;
+        const result = await quizService.getQuizAttempt(req.user.id, quizId);
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
 };
 
 // ============================================
@@ -252,5 +277,68 @@ export const assignmentController = {
         await assignmentService.deleteAssignment(assignmentId);
 
         sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.DELETED, null);
+    }),
+
+    /**
+     * @desc    Submit assignment
+     * @route   POST /api/v1/assessments/student/assignment/:assignmentId/submit
+     * @access  Private (Student)
+     */
+    submitAssignment: catchAsync(async (req: Request, res: Response) => {
+        const { assignmentId } = req.params;
+        const result = await assignmentService.submitAssignment(req.user.id, assignmentId, req.body);
+
+        sendResponse(res, STATUSCODE.CREATED, SUCCESS_CODE.CREATED, result);
+    }),
+
+    /**
+     * @desc    Get assignment submission for student
+     * @route   GET /api/v1/assessments/student/assignment/:assignmentId/submission
+     * @access  Private (Student)
+     */
+    getAssignmentSubmission: catchAsync(async (req: Request, res: Response) => {
+        const { assignmentId } = req.params;
+        const result = await assignmentService.getAssignmentSubmission(req.user.id, assignmentId);
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Get all assignments with submission counts (Instructor)
+     * @route   GET /api/v1/assessments/instructor/assignments
+     * @access  Private (Instructor)
+     */
+    getAssignmentsWithSubmissions: catchAsync(async (req: Request, res: Response) => {
+        const result = await assignmentService.getAssignmentsWithSubmissions(req.user.id);
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Get all submissions for an assignment (Instructor)
+     * @route   GET /api/v1/assessments/instructor/assignment/:assignmentId/submissions
+     * @access  Private (Instructor)
+     */
+    getSubmissions: catchAsync(async (req: Request, res: Response) => {
+        const { assignmentId } = req.params;
+        const result = await assignmentService.getSubmissions(assignmentId);
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Grade a student's assignment submission
+     * @route   PUT /api/v1/assessments/instructor/assignment/submission/:submissionId/grade
+     * @access  Private (Instructor)
+     */
+    gradeAssignment: catchAsync(async (req: Request, res: Response) => {
+        const { submissionId } = req.params;
+        const validatedData = gradeAssignmentSchema.parse(req.body);
+        const result = await assignmentService.gradeAssignment(
+            submissionId,
+            req.user.id,
+            validatedData,
+        );
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
     }),
 };

@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
 import { ContentType } from "@/services/courses";
 import { Loader2 } from "lucide-react";
-
 
 type EditContentDialogProps = {
   open: boolean;
@@ -34,6 +33,13 @@ type EditContentDialogProps = {
 
   editMinWatchPercent: number;
   setEditMinWatchPercent: (v: number) => void;
+
+  editStartDate: string;
+  setEditStartDate: (v: string) => void;
+  editDueDate: string;
+  setEditDueDate: (v: string) => void;
+  editPenaltyPercent: number;
+  setEditPenaltyPercent: (v: number) => void;
 
   isLoading: boolean;
   isUploading: boolean;
@@ -66,6 +72,13 @@ export function EditContentDialog({
 
   editMinWatchPercent,
   setEditMinWatchPercent,
+
+  editStartDate,
+  setEditStartDate,
+  editDueDate,
+  setEditDueDate,
+  editPenaltyPercent,
+  setEditPenaltyPercent,
 
   isLoading,
   isUploading,
@@ -107,9 +120,7 @@ export function EditContentDialog({
                 type="number"
                 min={0}
                 value={editMarks}
-                onChange={(e) =>
-                  setEditMarks(parseInt(e.target.value) || 0)
-                }
+                onChange={(e) => setEditMarks(parseInt(e.target.value) || 0)}
                 disabled={isLoading}
               />
             </div>
@@ -127,6 +138,40 @@ export function EditContentDialog({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Deadline & Penalty */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Start Date</Label>
+              <Input
+                type="datetime-local"
+                value={editStartDate}
+                onChange={(e) => setEditStartDate(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Input
+                type="datetime-local"
+                value={editDueDate}
+                onChange={(e) => setEditDueDate(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Penalty Percentage (%)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={editPenaltyPercent}
+              onChange={(e) => setEditPenaltyPercent(+e.target.value || 0)}
+              disabled={isLoading}
+            />
           </div>
 
           {/* Current file */}

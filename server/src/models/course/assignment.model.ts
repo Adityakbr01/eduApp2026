@@ -118,6 +118,6 @@ const assignmentSchema = new Schema<IAssignment>(
 // Indexes
 assignmentSchema.index({ courseId: 1, lessonId: 1 });
 
-const Assignment = mongoose.model<IAssignment>("Assignment", assignmentSchema);
+const Assignment = mongoose.model<IAssignment>("assignment", assignmentSchema);
 
 export default Assignment;

@@ -10,7 +10,15 @@ import type {
     UpdateQuizInput,
     CreateAssignmentInput,
     UpdateAssignmentInput,
+    SubmitQuizAttemptInput,
+    SubmitAssignmentInput,
+    GradeAssignmentInput,
 } from "src/schemas/assessment.schema.js";
+import { QuizAttempt, AssignmentSubmission } from "src/models/assessment/index.js";
+import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
+import { Course } from "src/models/course/index.js";
+import logger from "src/utils/logger.js";
+
 
 // ============================================
 // QUIZ SERVICE
@@ -162,6 +170,190 @@ export const quizService = {
 
         return quizRepository.removeQuestion(quizId, questionId);
     },
+
+    // -------------------- SUBMIT QUIZ QUESTION (STUDENT) --------------------
+    submitQuestion: async (
+        userId: string,
+        quizId: string,
+        data: { questionId: string; selectedOptionIndex: number }
+    ) => {
+        const quiz = await quizRepository.findById(quizId);
+        if (!quiz) {
+            throw new AppError("Quiz not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const content = await lessonContentRepository.findById(quiz.contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        // Check if question exists
+        const question = quiz.questions.find((q) => q._id?.toString() === data.questionId);
+        if (!question) {
+            throw new AppError("Question not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        // Get or create ContentAttempt
+        let attempt = await contentAttemptRepository.findByUserAndContent(userId, quiz.contentId);
+        if (!attempt) {
+            attempt = await contentAttemptRepository.upsert(userId, quiz.contentId, {
+                courseId: quiz.courseId,
+                lessonId: quiz.lessonId,
+                totalMarks: quiz.totalMarks,
+            });
+        }
+
+        // Get or create QuizAttempt
+        let quizAttempt = await QuizAttempt.findOne({ userId, quizId });
+        if (!quizAttempt) {
+            quizAttempt = await QuizAttempt.create({
+                userId,
+                quizId,
+                contentAttemptId: attempt._id,
+                totalMarks: quiz.totalMarks,
+                responses: [],
+            });
+        }
+
+        // 🛑 GUARD: Prevent re-answering after quiz is completed
+        if (quizAttempt.isCompleted) {
+            throw new AppError(
+                "Quiz already completed. You cannot re-answer questions.",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        // 🛑 GUARD: Prevent re-answering already answered questions
+        const alreadyAnswered = quizAttempt.responses.some(
+            (r) => r.questionId.toString() === data.questionId
+        );
+        if (alreadyAnswered) {
+            throw new AppError(
+                "You have already answered this question.",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        // Calculate: Correct?
+        const isCorrect = question.correctAnswerIndex === data.selectedOptionIndex;
+        let earnedMarks = isCorrect ? question.marks : 0;
+
+        // ⏰ DEADLINE CHECK & PENALTY
+        let penaltyApplied = false;
+        if (content.deadline?.dueDate && new Date() > new Date(content.deadline.dueDate)) {
+            const penaltyPercent = content.deadline.penaltyPercent || 0;
+            if (penaltyPercent > 0 && earnedMarks > 0) {
+                earnedMarks = Math.floor(earnedMarks * (1 - penaltyPercent / 100));
+                penaltyApplied = true;
+            }
+        }
+
+        // Add response to QuizAttempt
+        quizAttempt.responses.push({
+            questionId: new Types.ObjectId(data.questionId),
+            selectedOptionIndex: data.selectedOptionIndex,
+            isCorrect,
+            marks: earnedMarks,
+        });
+
+        // Recalculate score
+        quizAttempt.score = quizAttempt.responses.reduce((sum, r) => sum + r.marks, 0);
+
+        // Check if all questions answered --> Mark quiz as completed
+        const allAnswered = quiz.questions.every((q) =>
+            quizAttempt?.responses.some((r) => r.questionId.toString() === q._id?.toString())
+        );
+
+        if (allAnswered) {
+            quizAttempt.isCompleted = true;
+            quizAttempt.completedAt = new Date();
+        }
+
+        await quizAttempt.save();
+
+        // Sync with ContentAttempt
+        await contentAttemptRepository.upsert(userId, quiz.contentId, {
+            obtainedMarks: quizAttempt.score,
+            isCompleted: allAnswered,
+        });
+
+        return {
+            isCorrect,
+            earnedMarks,
+            penaltyApplied,
+            totalScore: quizAttempt.score,
+            totalMarks: quiz.totalMarks,
+            questionsAnswered: quizAttempt.responses.length,
+            totalQuestions: quiz.questions.length,
+            isQuizCompleted: allAnswered,
+            correctAnswerIndex: quiz.showCorrectAnswers ? question.correctAnswerIndex : undefined,
+            explanation: quiz.showCorrectAnswers ? question.explanation : undefined,
+        };
+    },
+
+    // -------------------- GET QUIZ ATTEMPT (STUDENT) --------------------
+    getQuizAttempt: async (userId: string, quizId: string) => {
+        const quiz = await quizRepository.findById(quizId);
+        if (!quiz) {
+            throw new AppError("Quiz not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const quizAttempt = await QuizAttempt.findOne({ userId, quizId }).lean();
+
+        if (!quizAttempt) {
+            return {
+                attempted: false,
+                quiz: {
+                    title: quiz.title,
+                    totalMarks: quiz.totalMarks,
+                    passingMarks: quiz.passingMarks || 0,
+                    totalQuestions: quiz.questions.length,
+                    timeLimit: quiz.timeLimit,
+                },
+            };
+        }
+
+        // Build per-question breakdown
+        const breakdown = quiz.questions.map((q) => {
+            const response = quizAttempt.responses.find(
+                (r) => r.questionId.toString() === q._id?.toString()
+            );
+            return {
+                questionId: q._id?.toString(),
+                question: q.question,
+                options: q.options,
+                marks: q.marks,
+                selectedOptionIndex: response?.selectedOptionIndex ?? null,
+                isCorrect: response?.isCorrect ?? null,
+                earnedMarks: response?.marks ?? 0,
+                correctAnswerIndex: quiz.showCorrectAnswers ? q.correctAnswerIndex : undefined,
+                explanation: quiz.showCorrectAnswers ? q.explanation : undefined,
+                answered: !!response,
+            };
+        });
+
+        return {
+            attempted: true,
+            isCompleted: quizAttempt.isCompleted,
+            score: quizAttempt.score,
+            totalMarks: quizAttempt.totalMarks,
+            passingMarks: quiz.passingMarks || 0,
+            passed: quiz.passingMarks ? quizAttempt.score >= quiz.passingMarks : true,
+            questionsAnswered: quizAttempt.responses.length,
+            totalQuestions: quiz.questions.length,
+            completedAt: quizAttempt.completedAt,
+            breakdown,
+            quiz: {
+                title: quiz.title,
+                totalMarks: quiz.totalMarks,
+                passingMarks: quiz.passingMarks || 0,
+                totalQuestions: quiz.questions.length,
+                timeLimit: quiz.timeLimit,
+            },
+        };
+    },
 };
 
 // ============================================
@@ -267,5 +459,350 @@ export const assignmentService = {
     // -------------------- GET OVERDUE ASSIGNMENTS --------------------
     getOverdueAssignments: async (courseId: string) => {
         return assignmentRepository.findOverdue(courseId);
+    },
+
+    // -------------------- SUBMIT ASSIGNMENT (STUDENT) --------------------
+    submitAssignment: async (
+        userId: string,
+        assignmentId: string,
+        data: SubmitAssignmentInput
+    ) => {
+        const assignment = await assignmentRepository.findById(assignmentId);
+        if (!assignment) {
+            throw new AppError("Assignment not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        // 🛑 GUARD: Prevent duplicate submissions
+        const existingSubmission = await AssignmentSubmission.findOne({ userId, assignmentId });
+        if (existingSubmission) {
+            throw new AppError(
+                "You have already submitted this assignment.",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.ALREADY_EXISTS
+            );
+        }
+
+        const content = await lessonContentRepository.findById(assignment.contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        // Get or create ContentAttempt
+        let attempt = await contentAttemptRepository.findByUserAndContent(userId, assignment.contentId);
+        if (!attempt) {
+            attempt = await contentAttemptRepository.upsert(userId, assignment.contentId, {
+                courseId: assignment.courseId,
+                lessonId: assignment.lessonId,
+                totalMarks: assignment.totalMarks,
+            });
+        }
+
+        // ⏰ DEADLINE CHECK
+        const now = new Date();
+        const dueDate = content.deadline?.dueDate ? new Date(content.deadline.dueDate) : null;
+        const isLate = !!(dueDate && now > dueDate);
+
+        let penaltyPercent = 0;
+        if (isLate && content.deadline) {
+            penaltyPercent = content.deadline.penaltyPercent || (content.deadline as any).defaultPenalty || 0;
+        }
+
+        // Resolve submission content
+        const submissionContent =
+            data.submissionType === "file" ? data.fileUrl :
+                data.submissionType === "link" ? data.linkUrl :
+                    data.submissionType === "code" ? data.codeContent :
+                        data.textContent;
+
+        if (!submissionContent) {
+            throw new AppError(
+                "Submission content is required.",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        // Create Submission
+        const submission = await AssignmentSubmission.create({
+            userId,
+            assignmentId,
+            contentAttemptId: attempt._id,
+            submissionType: data.submissionType,
+            content: submissionContent,
+            codeLanguage: data.codeLanguage,
+            isLate,
+            penalty: {
+                percent: penaltyPercent,
+                deductedMarks: 0 // Calculated during grading
+            }
+        });
+
+        // Mark ContentAttempt as completed (submitted)
+        await contentAttemptRepository.upsert(userId, assignment.contentId, {
+            isCompleted: true,
+        });
+
+        return {
+            submissionId: submission._id,
+            submittedAt: submission.submittedAt,
+            isLate,
+            penaltyPercent,
+            submissionType: submission.submissionType,
+        };
+    },
+
+    // -------------------- GET ASSIGNMENT SUBMISSION (STUDENT) --------------------
+    getAssignmentSubmission: async (userId: string, assignmentId: string) => {
+        const assignment = await assignmentRepository.findById(assignmentId);
+        if (!assignment) {
+            throw new AppError("Assignment not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const submission = await AssignmentSubmission.findOne({ userId, assignmentId }).lean();
+
+        if (!submission) {
+            return {
+                submitted: false,
+                assignment: {
+                    title: assignment.title,
+                    description: assignment.description,
+                    instructions: assignment.instructions,
+                    totalMarks: assignment.totalMarks,
+                    submissionConfig: assignment.submission,
+                },
+            };
+        }
+
+        return {
+            submitted: true,
+            submissionId: submission._id,
+            submissionType: submission.submissionType,
+            content: submission.content,
+            codeLanguage: submission.codeLanguage,
+            submittedAt: submission.submittedAt,
+            isLate: submission.isLate,
+            penalty: submission.penalty,
+            grade: submission.grade || null,
+            isGraded: !!submission.grade?.gradedAt,
+            assignment: {
+                title: assignment.title,
+                description: assignment.description,
+                instructions: assignment.instructions,
+                totalMarks: assignment.totalMarks,
+                submissionConfig: assignment.submission,
+            },
+        };
+    },
+
+    // -------------------- GET ALL ASSIGNMENTS WITH SUBMISSION COUNTS (INSTRUCTOR) --------------------
+    getAssignmentsWithSubmissions: async (instructorId: string) => {
+        if (!instructorId || !Types.ObjectId.isValid(instructorId)) {
+            throw new AppError(
+                "Valid Instructor ID is required",
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT
+            );
+        }
+
+        const instructorOid = new Types.ObjectId(instructorId);
+
+        // 1️⃣ Get all courses of instructor
+        const courses = await Course.find(
+            {
+                instructor: instructorOid,          // ✅ FIXED FIELD
+                "Deleted.isDeleted": { $ne: true }, // ✅ Ignore deleted
+            },
+            { _id: 1, title: 1 }
+        ).lean();
+
+        logger.info("Instructor courses found:", courses.length);
+
+        if (!courses.length) return [];
+
+        const courseIds = courses.map(c => c._id);
+        const courseMap = new Map(
+            courses.map(c => [c._id.toString(), c.title])
+        );
+
+        // 2️⃣ Get all assignments of these courses
+        const Assignment = (await import("src/models/course/assignment.model.js")).default;
+
+        const assignments = await Assignment.find(
+            {
+                courseId: { $in: courseIds },
+            },
+            {
+                _id: 1,
+                title: 1,
+                courseId: 1,
+                totalMarks: 1,
+                dueDate: 1,
+            }
+        )
+            .sort({ createdAt: -1 })
+            .lean();
+
+        logger.info("Assignments found:", assignments.length);
+
+        if (!assignments.length) return [];
+
+        // 3️⃣ Aggregate submission stats
+        const assignmentIds = assignments.map(a => a._id);
+
+        const submissionAgg = await AssignmentSubmission.aggregate([
+            {
+                $match: {
+                    assignmentId: { $in: assignmentIds },
+                },
+            },
+            {
+                $group: {
+                    _id: "$assignmentId",
+                    total: { $sum: 1 },
+                    graded: {
+                        $sum: {
+                            $cond: [
+                                { $ifNull: ["$grade.gradedAt", false] },
+                                1,
+                                0,
+                            ],
+                        },
+                    },
+                },
+            },
+        ]);
+
+        const submissionMap = new Map(
+            submissionAgg.map(s => [
+                s._id.toString(),
+                { total: s.total, graded: s.graded },
+            ])
+        );
+
+        // 4️⃣ Final response
+        return assignments.map(a => {
+            const counts = submissionMap.get(a._id.toString()) || {
+                total: 0,
+                graded: 0,
+            };
+
+            return {
+                id: a._id,
+                title: a.title,
+                courseId: a.courseId,
+                courseTitle: courseMap.get(a.courseId.toString()) ?? "Unknown",
+                totalMarks: a.totalMarks,
+                dueDate: a.dueDate,
+                totalSubmissions: counts.total,
+                gradedCount: counts.graded,
+                hasSubmissions: counts.total > 0, // ✅ frontend-friendly
+            };
+        });
+    },
+    // -------------------- GET ALL SUBMISSIONS (INSTRUCTOR) --------------------
+    async getSubmissions(assignmentId: string) {
+        const assignment = await assignmentRepository.findById(assignmentId);
+        if (!assignment) {
+            throw new AppError(
+                "Assignment not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+            );
+        }
+
+        const submissions = await AssignmentSubmission.find({ assignmentId })
+            .populate("userId", "name email avatar")
+            .sort({ submittedAt: -1 })
+            .lean();
+
+        return {
+            assignment: {
+                id: assignment._id,
+                title: assignment.title,
+                totalMarks: assignment.totalMarks,
+                dueDate: assignment.dueDate,
+            },
+            submissions: submissions.map((s: any) => ({
+                id: s._id,
+                student: s.userId,
+                submissionType: s.submissionType,
+                content: s.content,
+                codeLanguage: s.codeLanguage,
+                submittedAt: s.submittedAt,
+                isLate: s.isLate,
+                penalty: s.penalty,
+                grade: s.grade || null,
+                isGraded: !!s.grade?.gradedAt,
+            })),
+            totalSubmissions: submissions.length,
+            gradedCount: submissions.filter((s: any) => s.grade?.gradedAt).length,
+        };
+    },
+
+    // -------------------- GRADE ASSIGNMENT (INSTRUCTOR) --------------------
+    async gradeAssignment(
+        submissionId: string,
+        gradedBy: string,
+        data: { obtainedMarks: number; feedback?: string },
+    ) {
+        const submission = await AssignmentSubmission.findById(submissionId);
+        if (!submission) {
+            throw new AppError(
+                "Submission not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+            );
+        }
+
+        const assignment = await assignmentRepository.findById(
+            submission.assignmentId.toString(),
+        );
+        if (!assignment) {
+            throw new AppError(
+                "Assignment not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+            );
+        }
+
+        if (data.obtainedMarks > assignment.totalMarks) {
+            throw new AppError(
+                `Marks cannot exceed total marks (${assignment.totalMarks})`,
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT,
+            );
+        }
+
+        // Apply penalty reduction if late
+        let finalMarks = data.obtainedMarks;
+        if (submission.isLate && submission.penalty?.percent) {
+            const penaltyDeduction = (data.obtainedMarks * submission.penalty.percent) / 100;
+            finalMarks = Math.round(data.obtainedMarks - penaltyDeduction);
+        }
+
+        submission.grade = {
+            obtainedMarks: finalMarks,
+            feedback: data.feedback,
+            gradedBy: new Types.ObjectId(gradedBy),
+            gradedAt: new Date(),
+        };
+        await submission.save();
+
+        // Update contentAttempt with obtained marks
+        if (submission.contentAttemptId) {
+            const { ContentAttempt } = await import("src/models/course/index.js");
+            await ContentAttempt.findByIdAndUpdate(
+                submission.contentAttemptId,
+                { $set: { obtainedMarks: finalMarks } },
+            );
+        }
+
+        return {
+            submissionId: submission._id,
+            finalMarks,
+            penaltyApplied: submission.isLate && !!submission.penalty?.percent,
+            originalMarks: data.obtainedMarks,
+            gradedAt: submission.grade.gradedAt,
+        };
     },
 };

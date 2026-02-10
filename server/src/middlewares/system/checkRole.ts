@@ -20,7 +20,7 @@ const checkRole = (...allowedRoles: string[]) => {
 
         if (!allowedRoles.includes(userRole)) {
             return next(
-                new AppError("Access denied. Insufficient role permissions.", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN, [{ path: "role", message: "User does not have the required role" }])
+                new AppError("Access denied. Insufficient role permissions Required roles: " + allowedRoles.join(", ") + " User role: " + userRole, STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN, [{ path: "role", message: "User does not have the required role" }])
             );
         }
 

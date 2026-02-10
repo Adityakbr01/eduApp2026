@@ -19,7 +19,7 @@ import { CreateCourseInput } from "@/validators/course.schema";
 
 export function DurationSection({ form }: { form: UseFormReturn<CreateCourseInput> }) {
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Course Duration</CardTitle>
       </CardHeader>

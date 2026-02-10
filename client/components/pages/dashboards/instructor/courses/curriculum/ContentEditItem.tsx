@@ -100,6 +100,20 @@ export function ContentItem({
   const [editMinWatchPercent, setEditMinWatchPercent] = useState(
     content.video?.minWatchPercent || 90,
   );
+  // Deadline & Penalty
+  const [editStartDate, setEditStartDate] = useState(
+    content.deadline?.startDate
+      ? new Date(content.deadline.startDate).toISOString().slice(0, 16)
+      : "",
+  );
+  const [editDueDate, setEditDueDate] = useState(
+    content.deadline?.dueDate
+      ? new Date(content.deadline.dueDate).toISOString().slice(0, 16)
+      : "",
+  );
+  const [editPenaltyPercent, setEditPenaltyPercent] = useState(
+    content.deadline?.penaltyPercent ?? 30,
+  );
 
   const updateContent = useUpdateContent();
   const deleteContent = useDeleteContent();
@@ -119,6 +133,17 @@ export function ContentItem({
     setEditIsPreview(content.isPreview);
     setEditDuration(content.video?.duration || content.audio?.duration || 0);
     setEditMinWatchPercent(content.video?.minWatchPercent || 90);
+    setEditStartDate(
+      content.deadline?.startDate
+        ? new Date(content.deadline.startDate).toISOString().slice(0, 16)
+        : "",
+    );
+    setEditDueDate(
+      content.deadline?.dueDate
+        ? new Date(content.deadline.dueDate).toISOString().slice(0, 16)
+        : "",
+    );
+    setEditPenaltyPercent(content.deadline?.penaltyPercent ?? 30);
     setNewFileKey("");
     setEditDialogOpen(true);
   };
@@ -129,15 +154,29 @@ export function ContentItem({
         title: editTitle.trim(),
         marks: editMarks,
         isPreview: editIsPreview,
+        deadline: {
+          startDate: editStartDate
+            ? new Date(editStartDate).toISOString()
+            : undefined,
+          dueDate: editDueDate
+            ? new Date(editDueDate).toISOString()
+            : undefined,
+          penaltyPercent: editPenaltyPercent,
+        },
       };
-
+      console.log("Video update data:", updateData.video);
       if (content.type === ContentType.VIDEO) {
         updateData.video = {
-          rawKey: newFileKey || content.video?.rawKey || "",
           duration: editDuration < 10 ? 10 : editDuration,
           minWatchPercent: editMinWatchPercent,
-          hlsKey: content.video?.hlsKey || "",
+          hlsKey: content.video?.hlsKey,
+          status: content.video?.status,
+          rawKey: content.video?.rawKey,
         };
+        // Only include rawKey if a new file is uploaded
+        if (newFileKey) {
+          updateData.video.rawKey = newFileKey;
+        }
       }
 
       if (content.type === ContentType.AUDIO) {
@@ -299,6 +338,12 @@ export function ContentItem({
         setEditIsPreview={setEditIsPreview}
         editMinWatchPercent={editMinWatchPercent}
         setEditMinWatchPercent={setEditMinWatchPercent}
+        editStartDate={editStartDate}
+        setEditStartDate={setEditStartDate}
+        editDueDate={editDueDate}
+        setEditDueDate={setEditDueDate}
+        editPenaltyPercent={editPenaltyPercent}
+        setEditPenaltyPercent={setEditPenaltyPercent}
         isLoading={updateContent?.isPending}
         isUploading={isUploading}
         isVideoUploadDisabled={isVideoUploadDisabled}

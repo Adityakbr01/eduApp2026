@@ -15,6 +15,10 @@ const lessonSchema = new mongoose.Schema({
     title: { type: String, required: true },
     order: Number,
 
+    // Sequential locking
+    isLocked: { type: Boolean, default: true },
+    isManuallyUnlocked: { type: Boolean, default: false },
+
     isVisible: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },

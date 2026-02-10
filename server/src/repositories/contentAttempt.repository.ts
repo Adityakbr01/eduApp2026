@@ -46,31 +46,55 @@ export const contentAttemptRepository = {
     markCompleted: async (
         userId: string | Types.ObjectId,
         contentId: string | Types.ObjectId,
-        obtainedMarks?: number
+        courseId: string | Types.ObjectId,
+        lessonId: string | Types.ObjectId,
+        obtainedMarks?: number,
+        completionMethod: "auto" | "manual" = "auto"
     ) => {
-        const updateData: any = { isCompleted: true, lastAccessedAt: new Date() };
+        const updateData: any = {
+            courseId,
+            lessonId,
+            isCompleted: true,
+            lastAccessedAt: new Date(),
+            completionMethod,
+        };
         if (obtainedMarks !== undefined) updateData.obtainedMarks = obtainedMarks;
 
         return ContentAttempt.findOneAndUpdate(
             { userId, contentId },
             { $set: updateData },
-            { new: true }
+            { upsert: true, new: true }
         );
     },
 
     // Update resume position
+    // Update resume position
     updateResumePosition: async (
         userId: string | Types.ObjectId,
         contentId: string | Types.ObjectId,
+        courseId: string | Types.ObjectId,
+        lessonId: string | Types.ObjectId,
         resumeAt: number,
-        totalDuration?: number
+        totalDuration?: number,
+        obtainedMarks?: number
     ) => {
-        const updateData: any = { resumeAt, lastAccessedAt: new Date() };
+        const updateData: any = {
+            courseId,
+            lessonId,
+            resumeAt,
+            lastAccessedAt: new Date()
+        };
         if (totalDuration !== undefined) updateData.totalDuration = totalDuration;
+
+        // Use $max for obtainedMarks to ensure it never decreases
+        const updateOp: any = { $set: updateData };
+        if (obtainedMarks !== undefined) {
+            updateOp.$max = { obtainedMarks: obtainedMarks };
+        }
 
         return ContentAttempt.findOneAndUpdate(
             { userId, contentId },
-            { $set: updateData },
+            updateOp,
             { upsert: true, new: true }
         );
     },

@@ -14,6 +14,7 @@ import uploadRouter from "./upload/index.js";
 import communicationRouter from "./communication/index.js";
 import systemRouter from "./system/index.js";
 import userPreferenceRouter from "./preferences/index.js";
+import classroomRouter from "./classroom/index.js";
 
 const router = express.Router();
 
@@ -58,5 +59,8 @@ router.use(`${API_PREFIX}/campaigns`, communicationRouter);
 
 // System (monitoring, health)
 router.use(`${API_PREFIX}`, systemRouter);
+
+// Classroom
+router.use(`${API_PREFIX}/classroom`, classroomRouter);
 
 export default router;

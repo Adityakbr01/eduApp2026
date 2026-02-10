@@ -11,7 +11,7 @@ logger.info("Environment:", process.env.NODE_ENV), isProd;
 const envSchema = z.object({
     NODE_ENV: z.enum(["development", "production", "test", "staging", ""]).default("development"),
     PORT: z.coerce.number().default(3001),
-
+  
     // Mongo
     MONGO_URI: z.string().url(),
 

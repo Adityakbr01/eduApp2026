@@ -10,6 +10,7 @@ import {
   Globe,
   MessageCircle,
 } from "lucide-react";
+import { SocialLink, SocialLinkType } from "@/services/courses";
 
 // Custom Discord Icon since Lucide doesn't have the brand logo
 const DiscordIcon = ({ className }: { className?: string }) => (
@@ -24,17 +25,7 @@ const DiscordIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export type SocialLinkType =
-  | "discord"
-  | "github"
-  | "youtube"
-  | "website"
-  | "other";
 
-export interface SocialLink {
-  type: SocialLinkType;
-  url: string;
-}
 
 interface CourseCardProps {
   title: string;

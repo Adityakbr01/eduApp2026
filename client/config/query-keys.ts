@@ -81,5 +81,13 @@ export const QUERY_KEYS = {
         BY_COURSE_PAGINATED: (courseId: string, page: number) => ["reviews", "course", courseId, page],
         MY_REVIEW: (courseId: string) => ["reviews", "my-review", courseId],
     },
+
+    // Classroom
+    CLASSROOM: {
+        DATA: ["classroom", "data"],
+        BATCH: (courseId: string) => ["classroom", "batch", courseId],
+        CONTENT: (courseId: string, contentId: string) => ["classroom", "content", courseId, contentId],
+    },
+
     PREFERENCES: ["preferences"],
 };

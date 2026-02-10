@@ -42,12 +42,20 @@ const contentAttemptSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+
+    // Anti-cheat: how was this marked complete?
+    completionMethod: {
+        type: String,
+        enum: ["auto", "manual"],
+        default: "auto",
+    },
+
     lastAccessedAt: Date
 }, { timestamps: true });
 
 // Unique constraint: one attempt per user per content
 contentAttemptSchema.index(
-    { userId: 1 },
+    { userId: 1, contentId: 1 },
     { unique: true }
 );
 
@@ -57,4 +65,18 @@ contentAttemptSchema.index(
     { userId: 1, courseId: 1, lastAccessedAt: -1 }
 );
 
-export default mongoose.model("ContentAttempt", contentAttemptSchema);
+const ContentAttempt = mongoose.model("ContentAttempt", contentAttemptSchema);
+
+// 🛠️ SELF-HEALING: Drop legacy index that causes DUPLICATE_RESOURCE errors
+// The old index was { userId: 1 }, which prevents a user from having more than one attempt globally.
+// We now rely on { userId: 1, contentId: 1 }.
+ContentAttempt.collection.dropIndex("userId_1")
+    .then(() => console.log("✅ Dropped legacy index 'userId_1' from ContentAttempt"))
+    .catch((err) => {
+        // Ignore error if index doesn't exist (code 27)
+        if (err.code !== 27) {
+            console.log("ℹ️ Index 'userId_1' not found or already dropped.");
+        }
+    });
+
+export default ContentAttempt;

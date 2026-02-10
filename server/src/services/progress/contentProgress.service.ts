@@ -41,13 +41,42 @@ export const contentProgressService = {
     },
 
     // -------------------- MARK COMPLETED --------------------
-    markCompleted: async (userId: string, contentId: string, obtainedMarks?: number) => {
+    markCompleted: async (
+        userId: string,
+        contentId: string,
+        obtainedMarks?: number,
+        completionMethod: "auto" | "manual" = "auto"
+    ) => {
         const content = await lessonContentRepository.findById(contentId);
         if (!content) {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
-        return contentAttemptRepository.markCompleted(userId, contentId, obtainedMarks);
+        // Anti-cheat: manual complete caps at 90% of total marks
+        const totalMarks = content.marks || 100;
+        let finalMarks = obtainedMarks ?? totalMarks;
+
+        if (completionMethod === "manual") {
+            const maxManualMarks = Math.floor(totalMarks * 0.9); // 90% cap
+            finalMarks = Math.min(finalMarks, maxManualMarks);
+        }
+
+        // ⏰ DEADLINE PENALTY CHECK
+        if (content.deadline?.dueDate && new Date() > new Date(content.deadline.dueDate)) {
+            const penaltyPercent = content.deadline.penaltyPercent || 0;
+            if (penaltyPercent > 0) {
+                finalMarks = Math.floor(finalMarks * (1 - penaltyPercent / 100));
+            }
+        }
+
+        return contentAttemptRepository.markCompleted(
+            userId,
+            contentId,
+            content.courseId,
+            content.lessonId,
+            finalMarks,
+            completionMethod
+        );
     },
 
     // -------------------- UPDATE RESUME POSITION --------------------
@@ -57,11 +86,34 @@ export const contentProgressService = {
         resumeAt: number,
         totalDuration?: number
     ) => {
+        const content = await lessonContentRepository.findById(contentId);
+        if (!content) {
+            throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        // Calculate proportional marks if totalDuration is available
+        let obtainedMarks = 0;
+        if (totalDuration && totalDuration > 0 && content.marks > 0) {
+            const percentage = Math.min(Math.max(resumeAt / totalDuration, 0), 1);
+            obtainedMarks = Math.floor(content.marks * percentage);
+
+            // ⏰ DEADLINE PENALTY CHECK
+            if (content.deadline?.dueDate && new Date() > new Date(content.deadline.dueDate)) {
+                const penaltyPercent = content.deadline.penaltyPercent || 0;
+                if (penaltyPercent > 0) {
+                    obtainedMarks = Math.floor(obtainedMarks * (1 - penaltyPercent / 100));
+                }
+            }
+        }
+
         return contentAttemptRepository.updateResumePosition(
             userId,
             contentId,
+            content.courseId,
+            content.lessonId,
             resumeAt,
-            totalDuration
+            totalDuration,
+            obtainedMarks // Pass calculated marks
         );
     },
 };

@@ -61,6 +61,15 @@ export enum Currency {
     GBP = "GBP",
 }
 
+
+export enum SocialLinkType {
+    DISCORD = "discord",
+    GITHUB = "github",
+    YOUTUBE = "youtube",
+    WEBSITE = "website",
+    OTHER = "other",
+}
+
 // ==================== INTERFACES ====================
 
 // Quiz Question Interface

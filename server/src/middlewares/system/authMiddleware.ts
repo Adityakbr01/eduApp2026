@@ -21,24 +21,24 @@ const authMiddleware = async (
 ) => {
     try {
 
-         if (req.path.startsWith("/socket.io")) {
-            return next();
-        }
+        //  if (req.path.startsWith("/socket.io")) {
+        //     return next();
+        // }
 
-        // 🔥 HEALTH CHECK BYPASS
-        if (req.path === "/health") {
-            return next();
-        }
+        // // 🔥 HEALTH CHECK BYPASS
+        // if (req.path === "/health") {
+        //     return next();
+        // }
 
-        // 🔥 MONITORING BYPASS
-        if (req.path.startsWith("/api/v1/monitoring")) {
-            return next();
-        }
+        // // 🔥 MONITORING BYPASS
+        // if (req.path.startsWith("/api/v1/monitoring")) {
+        //     return next();
+        // }
 
-        // 🔥 PREFLIGHT
-        if (req.method === "OPTIONS") {
-            return next();
-        }
+        // // 🔥 PREFLIGHT
+        // if (req.method === "OPTIONS") {
+        //     return next();
+        // }
 
         const accessToken =
             req.cookies?.accessToken ||

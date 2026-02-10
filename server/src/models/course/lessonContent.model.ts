@@ -30,12 +30,18 @@ const audioSchema = new mongoose.Schema({
 });
 
 const assessmentSchema = new mongoose.Schema({
-    refId: { type: mongoose.Schema.Types.ObjectId },
+    refId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refPath: "assessment.type",
+    },
     type: {
         type: String,
         enum: ["quiz", "assignment"],
+        required: true,
     },
 });
+
 
 
 
@@ -59,7 +65,7 @@ const lessonContentSchema = new mongoose.Schema({
 
     title: { type: String, required: true },
     order: { type: Number, required: true },
-    marks: { type: Number, default: 0 },
+    marks: { type: Number, default: 100 },
 
     // NESTED — NOW MATCHES ZOD
     video: { type: videoSchema, sparse: true }, // sparse allows null/undefined
@@ -67,6 +73,14 @@ const lessonContentSchema = new mongoose.Schema({
     assessment: { type: assessmentSchema },
     audio: { type: audioSchema, sparse: true },
     draftID: { type: String }, //draftid for ecs worker
+
+    // Deadline & Penalty
+    deadline: {
+        dueDate: { type: Date },                                      // When the content is due
+        startDate: { type: Date },                                    // When content unlocks (before this → "locked")
+        penaltyPercent: { type: Number, default: 30, min: 0, max: 100 }, // Penalty % for late completion
+        defaultPenalty: { type: Number, default: 30 },
+    },
 
     // VISIBILITY
     isVisible: { type: Boolean, default: true },

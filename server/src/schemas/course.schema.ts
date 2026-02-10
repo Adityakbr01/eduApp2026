@@ -1,4 +1,4 @@
-import { BatchStatus, ContentType, CourseLevel, DeliveryMode, Language } from "src/types/course.type.js";
+import { BatchStatus, ContentType, CourseLevel, DeliveryMode, Language, SocialLinkType } from "src/types/course.type.js";
 import { z } from "zod";
 
 
@@ -10,6 +10,12 @@ export const batchSchema = z.object({
         return date.toISOString();
     }),
     batchStatus: z.nativeEnum(BatchStatus).default(BatchStatus.UPCOMING),
+});
+
+export const socialLinkSchema = z.object({
+    type: z.nativeEnum(SocialLinkType),
+    url: z.string().url(),
+    isPublic: z.boolean().default(true),
 });
 
 // ============================================
@@ -46,6 +52,7 @@ export const createCourseSchema = z.object({
     durationWeeks: z.number().min(1).max(520).optional(),
     batch: batchSchema.required(),
     mentorSupport: z.boolean().default(true),
+    socialLinks: z.array(socialLinkSchema).optional(),
 });
 
 export const updateCourseSchema = z.object({
@@ -80,6 +87,7 @@ export const updateCourseSchema = z.object({
     isDeleted: z.boolean().optional(),
     mentorSupport: z.boolean().default(true),
     batch: batchSchema.optional(),
+    socialLinks: z.array(socialLinkSchema).optional(),
 });
 
 // ============================================

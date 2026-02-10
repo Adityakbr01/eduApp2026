@@ -1,13 +1,12 @@
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
+import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import {
   courseRepository,
 } from "src/repositories/course.repository.js";
-import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
-import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import { lessonRepository } from "src/repositories/lesson.repository.js";
+import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import AppError from "src/utils/AppError.js";
-import extractS3Path from "src/utils/extractS3Path.js";
 import normalizeVideoPayload from "src/utils/normalizeVideoPayload.js";
 
 
@@ -36,10 +35,13 @@ export const lessonContentService = {
 
     const maxOrder = await lessonContentRepository.getMaxOrder(lessonId);
 
+    console.log("Video data:", data.video);
     // 🔥 VIDEO STATUS INIT
     if (data.type === "video" && data.video?.rawKey) {
       data.video = normalizeVideoPayload(data.video);
     }
+
+    console.log("Video data after normalization:", data.video);
 
     const contentData = {
       ...data,
@@ -89,7 +91,7 @@ export const lessonContentService = {
     const updateData = { ...data };
 
     // 🔥 VIDEO RE-UPLOAD HANDLING
-    if (content.type === "video" && data.video?.rawKey) {
+    if (content.type === "video" && data.video?.rawKey && !data.video?.hlsKey && data.video?.status !== "uploaded") {
       updateData.video = normalizeVideoPayload(data.video);
     }
 

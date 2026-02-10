@@ -3,43 +3,21 @@
 import CourseCard from "@/components/Classroom/CourseCard";
 import Heatmap from "@/components/Classroom/Heatmap";
 import Notifications from "@/components/Classroom/Notifications";
+import { useGetClassroomData } from "@/services/classroom";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpDown, Search } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-
-const COURSES = [
-  {
-    id: "691dd880a4074343af9c23b5",
-    title: "2.0 Job Ready AI Powered Cohort",
-    date: "August 19, 2025",
-    progress: 4.6,
-    image:
-      "https://ik.imagekit.io/sheryians/Cohort%202.0/cohort-3_ekZjBiRzc-2_76HU4-Mz5z.jpeg?updatedAt=1757741949621",
-    links: [
-      { type: "discord", url: "https://discord.gg/cohort" },
-      { type: "github", url: "https://github.com/sheryians/cohort-2.0" },
-    ],
-  },
-  {
-    id: "fullstack-web-dev",
-    title: "Full Stack Web Development",
-    date: "September 10, 2025",
-    progress: 32,
-    image:
-      "https://ik.imagekit.io/sheryians/Cohort%202.0/cohort-3_ekZjBiRzc-2_76HU4-Mz5z.jpeg?updatedAt=1757741949621",
-    links: [
-      { type: "youtube", url: "https://youtube.com/playlist?list=..." },
-      { type: "website", url: "https://sheryians.com" },
-    ],
-  },
-];
+import { getS3PublicUrl } from "../dashboard/Instructor/courses/create/getS3PublicUrl";
 
 const ClassroomPage = () => {
+  const { data, isLoading, isError } = useGetClassroomData();
+  const courses = data?.data?.courses || [];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const filteredCourses = useMemo(() => {
-    let result = [...COURSES];
+    let result = [...courses];
 
     // Filter by search query
     if (searchQuery) {
@@ -57,7 +35,7 @@ const ClassroomPage = () => {
     });
 
     return result;
-  }, [searchQuery, sortOrder]);
+  }, [courses, searchQuery, sortOrder]);
 
   const toggleSort = () => {
     setSortOrder((prev) => (prev === "newest" ? "oldest" : "newest"));
@@ -101,21 +79,51 @@ const ClassroomPage = () => {
         </div>
 
         <div className="h-full overflow-y-auto px-5 md:px-7 pb-20 custom-scrollbar">
-          {filteredCourses.length > 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <p className="text-white/50">Loading your courses...</p>
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+              <p className="text-red-400">
+                Failed to load courses. Please try again.
+              </p>
+            </div>
+          ) : filteredCourses.length > 0 ? (
             filteredCourses.map((course) => (
-              // @ts-ignore - links are dynamic now
-              <CourseCard key={course.id} {...course} />
+              <CourseCard
+                key={course.id}
+                id={course.id}
+                title={course.title}
+                date={new Date(course.date).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+                progress={course.progress}
+                image={getS3PublicUrl(course.image.key!) as string}
+                links={course.links}
+              />
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
               <p className="text-white/50">
-                No enrolled courses found for "{searchQuery}"
+                {searchQuery
+                  ? `No enrolled courses found for "${searchQuery}"`
+                  : "You haven't enrolled in any courses yet."}
               </p>
               <Link
-                href={`/courses?query=${encodeURIComponent(searchQuery)}`}
+                href={
+                  searchQuery
+                    ? `/courses?query=${encodeURIComponent(searchQuery)}`
+                    : "/courses"
+                }
                 className="text-primary hover:text-primary/80 underline underline-offset-4 text-sm transition-colors"
               >
-                Search in all available courses →
+                {searchQuery
+                  ? "Search in all available courses →"
+                  : "Browse courses →"}
               </Link>
             </div>
           )}

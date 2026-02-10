@@ -22,6 +22,7 @@ import {
   instructorSidebarItems,
   InstructorSidebarValue,
 } from "./utils";
+import GradingPage from "@/app/(routes)/dashboard/Instructor/grading/page";
 
 export function InstructorDashboard() {
   const logout = useLogout();
@@ -151,6 +152,8 @@ export function InstructorDashboard() {
               onDelete={handleDelete}
             />
           )}
+
+          {activeSection === "grading" && <GradingPage />}
         </div>
       </main>
     </div>

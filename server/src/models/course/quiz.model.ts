@@ -151,6 +151,6 @@ quizSchema.pre("save", function (next) {
     next();
 });
 
-const Quiz = mongoose.model<IQuiz>("Quiz", quizSchema);
+const Quiz = mongoose.model<IQuiz>("quiz", quizSchema);
 
 export default Quiz;

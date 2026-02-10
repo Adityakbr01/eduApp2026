@@ -1,5 +1,4 @@
 // ==================== ENUMS ====================
-
 import z from "zod";
 
 
@@ -69,6 +68,22 @@ export enum Currency {
     GBP = "GBP",
 }
 
+
+export enum SocialLinkType {
+    DISCORD = "discord",
+    GITHUB = "github",
+    YOUTUBE = "youtube",
+    WEBSITE = "website",
+    OTHER = "other",
+}
+
+export interface SocialLink {
+    type: SocialLinkType;
+    url: string;
+    isPublic: boolean;
+}
+
+
 // ==================== INTERFACES ====================
 
 export interface ICoursePricing {
@@ -130,6 +145,11 @@ export interface ILessonContent {
     audio?: IAudioContent;
     pdf?: IPdfContent;
     assessment?: IAssessmentContent;
+    deadline?: {
+        dueDate?: string;
+        startDate?: string;
+        penaltyPercent?: number;
+    };
     createdAt: string;
     updatedAt: string;
 }
@@ -222,6 +242,7 @@ export interface ICourse {
     updatedAt: string;
     batch: IBatch
     mentorSupport: boolean;
+    socialLinks?: SocialLink[];
 }
 
 export interface IInstructorInfo {
@@ -341,18 +362,26 @@ export interface CreateContentDTO {
         duration?: number;
         minWatchPercent?: number;
         hlsKey?: string;
+        status?: string;
     };
     audio?: {
         rawKey?: string;
         duration?: number;
+        status?: string;
     };
     pdf?: {
         rawKey?: string;
         totalPages?: number;
+        status?: string;
     };
     assessment?: {
         refId?: string;
         type?: "quiz" | "assignment";
+    };
+    deadline?: {
+        dueDate?: string;
+        startDate?: string;
+        penaltyPercent?: number;
     };
 }
 

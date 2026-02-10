@@ -28,11 +28,12 @@ export const contentProgressController = {
     // -------------------- MARK COMPLETED --------------------
     markCompleted: catchAsync<{ contentId: string }>(async (req, res) => {
         const userId = req.user!.id;
-        const { obtainedMarks } = req.body;
+        const { obtainedMarks, completionMethod } = req.body;
         const result = await contentProgressService.markCompleted(
             userId,
             req.params.contentId,
-            obtainedMarks
+            obtainedMarks,
+            completionMethod || "auto",
         );
         sendResponse(res, 200, "Content marked as completed", result);
     }),

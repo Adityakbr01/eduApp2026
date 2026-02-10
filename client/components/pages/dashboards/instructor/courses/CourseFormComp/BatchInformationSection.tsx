@@ -29,7 +29,7 @@ export function BatchInformationSection({
   form,
 }: BatchInformationSectionProps) {
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Batch Information</CardTitle>
       </CardHeader>

@@ -25,6 +25,7 @@ import {
   DeliveryMode,
   ICourse,
   Language,
+  SocialLinkType,
   useCreateCourse,
   useUpdateCourse,
 } from "@/services/courses";
@@ -39,6 +40,7 @@ import { DurationSection } from "./DurationSection";
 import { PricingSection } from "./PricingSection";
 import { TagsSection } from "./TagsSection";
 import { BatchInformationSection } from "./BatchInformationSection";
+import { SocialLinksSection } from "./SocialLinksSection";
 
 interface CourseFormProps {
   initialData?: ICourse;
@@ -85,6 +87,11 @@ export function CourseForm({
       mentorSupport: initialData?.mentorSupport || true,
       maxEnrollments: initialData?.maxEnrollments || 50,
       isFeatured: initialData?.isFeatured || false,
+      socialLinks: (initialData?.socialLinks || []).map((link) => ({
+        type: link.type as SocialLinkType,
+        url: link.url,
+        isPublic: link.isPublic,
+      })),
     },
   });
 
@@ -136,27 +143,23 @@ export function CourseForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Header */}
         <CourseHeader
           isEditing={isEditing}
           courseId={initialData?._id}
           isLoading={isLoading}
-          isUploadingThumbnail={false} // You can replace this with actual state if you have one
+          isUploadingThumbnail={false}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
+        {/* ─── Row 1: Main Content + Sidebar ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Core Info (2/3) */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Basic Info */}
             <BasicInformationSection
               form={form as UseFormReturn<CreateCourseInput>}
             />
-
-            {/* Tags */}
             <TagsSection form={form as UseFormReturn<CreateCourseInput>} />
-
-            {/* Category & Level */}
             <CategoryAndLevelSection
               form={form as UseFormReturn<CreateCourseInput>}
               categories={categories}
@@ -164,9 +167,8 @@ export function CourseForm({
             />
           </div>
 
-          {/* Sidebar */}
+          {/* Right: Sidebar (1/3) */}
           <div className="space-y-6">
-            {/* Cover Image */}
             {isEditing && initialData?._id && (
               <Card>
                 <CardHeader>
@@ -184,15 +186,13 @@ export function CourseForm({
                             value={field.value}
                             onChange={(thumbnail) => {
                               console.log("Thumbnail changed:", thumbnail);
-                              field.onChange(thumbnail); // 🔥 saved in form
+                              field.onChange(thumbnail);
                             }}
                           />
                         </FormControl>
-
                         <FormDescription>
                           Recommended: 1280×720 (JPG/PNG/WebP, max 5MB)
                         </FormDescription>
-
                         <FormMessage />
                       </FormItem>
                     )}
@@ -200,19 +200,20 @@ export function CourseForm({
                 </CardContent>
               </Card>
             )}
-
-            {/* Pricing */}
             <PricingSection form={form as UseFormReturn<CreateCourseInput>} />
-
-            {/* Course Duration */}
-            <DurationSection form={form as UseFormReturn<CreateCourseInput>} />
-
-            {/* Batch Information */}
-            <BatchInformationSection
-              form={form as UseFormReturn<CreateCourseInput>}
-            />
           </div>
         </div>
+
+        {/* ─── Row 2: Duration + Batch (side by side) ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DurationSection form={form as UseFormReturn<CreateCourseInput>} />
+          <BatchInformationSection
+            form={form as UseFormReturn<CreateCourseInput>}
+          />
+        </div>
+
+        {/* ─── Row 3: Social Links (full width) ─── */}
+        <SocialLinksSection form={form as UseFormReturn<CreateCourseInput>} />
       </form>
     </Form>
   );

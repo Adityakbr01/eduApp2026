@@ -6,157 +6,24 @@ import BatchLeaderboard from "@/components/Batch/BatchLeaderboard";
 import BatchModules from "@/components/Batch/BatchModules";
 import BatchProgress from "@/components/Batch/BatchProgress";
 import BatchSidebarActions from "@/components/Batch/BatchSidebarActions";
+import { useGetBatchDetail } from "@/services/classroom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STORAGE_KEYS } from "@/lib/constants/storage";
 import { secureLocalStorage } from "@/lib/utils/storage";
-import { Trophy } from "lucide-react";
+import { Loader2, Trophy } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// Mock Data (Ideally mocked here or fetched)
-const BATCH_DATA = {
-  title: "2.0 Job Ready AI Powered Cohort",
-  progress: 4.43,
-  modules: 4,
-  totalModules: 7,
-  subModules: 106,
-  totalSubModules: 217,
-  score: 1164,
-  totalScore: 26290,
-};
-
-const MODULES = [
-  {
-    id: "m0",
-    title: "Before We Start",
-    completed: true,
-    items: [
-      {
-        id: "i1",
-        title: "Orientation Session",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 143,
-        penalty: 30,
-      },
-      {
-        id: "i2",
-        title: "Platform and Discord Overview",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 142,
-        penalty: 30,
-      },
-      {
-        id: "i3",
-        title: "VScode Setup",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 141,
-        penalty: 30,
-      },
-    ],
-  },
-  {
-    id: "m1",
-    title: "Git & GitHub",
-    completed: true,
-    items: [
-      {
-        id: "i4",
-        title: "What-is-git",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 140,
-        penalty: 30,
-      },
-      {
-        id: "i5",
-        title: "How-to-setup-git",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 139,
-        penalty: 30,
-      },
-      {
-        id: "i6",
-        title: "how-to-use-git",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 138,
-        penalty: 30,
-      },
-    ],
-  },
-  {
-    id: "m2",
-    title: "Front-End",
-    completed: true,
-    items: [
-      {
-        id: "i7",
-        title: "1 - How Internet Works?",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 135,
-        penalty: 30,
-      },
-      {
-        id: "i8",
-        title: "2 - Client-Server Model",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 134,
-        penalty: 30,
-      },
-      {
-        id: "i9",
-        title: "3 - Internet Protocols",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 133,
-        penalty: 30,
-      },
-      // ... more items
-    ],
-  },
-  {
-    id: "m3",
-    title: "Backend",
-    completed: false,
-    items: [
-      {
-        id: "i_b1",
-        title: "84 | Origin-2.0",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 14,
-        penalty: 30,
-      },
-      {
-        id: "i_b2",
-        title: "85 | Baat Cheet",
-        type: "video" as const,
-        overdue: true,
-        daysLate: 13,
-        penalty: 30,
-      },
-      {
-        id: "i_b3",
-        title: "97 | JWT",
-        type: "video" as const,
-        deadline: "February 7, 2026, 12:00 am",
-      },
-      {
-        id: "i_b4",
-        title: "98 | Bcrypt.js",
-        type: "locked" as const,
-        start: "February 8, 2026, 12:00 am",
-      },
-    ],
-  },
-];
-
 const BatchDetailPage = () => {
+  const params = useParams();
+  const batchId = params?.batchId as string;
+
+  // Fetch batch detail from API
+  const { data, isLoading, isError } = useGetBatchDetail(batchId);
+  const batchData = data?.data?.batchData;
+  const modules = data?.data?.modules || [];
+  const lastVisitedContentId = data?.data?.lastVisitedContentId;
+
   // Use state with default "overview"
   const [activeSidebarView, setActiveSidebarViewState] = useState("overview");
   const [mobileTab, setMobileTabState] = useState("overview");
@@ -197,8 +64,31 @@ const BatchDetailPage = () => {
     secureLocalStorage.setItem(STORAGE_KEYS.BATCH_MOBILE_TAB, tab);
   };
 
-  // Prevent hydration mismatch by rendering default until client loads (or just render default)
-  // Actually, for layout stability, we can just render. state updates safely.
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center w-full h-screen bg-[#171717] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-white/50">Loading batch details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError || !batchData) {
+    return (
+      <div className="flex items-center justify-center w-full h-screen bg-[#171717] text-white">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-red-400">
+            Failed to load batch details. You may not be enrolled in this
+            course.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-auto min-h-screen xl:h-screen flex flex-col xl:flex-row w-full bg-[#171717] py-6 px-4 md:px-6 gap-6 text-white overflow-y-auto xl:overflow-hidden pb-24 xl:pb-6">
@@ -221,8 +111,11 @@ const BatchDetailPage = () => {
               className="mt-0 flex-1 overflow-y-auto custom-scrollbar pb-10"
             >
               <div className="flex flex-col gap-6">
-                <BatchProgress data={BATCH_DATA} />
-                <BatchModules modules={MODULES} />
+                <BatchProgress data={batchData} />
+                <BatchModules
+                  modules={modules}
+                  lastVisitedContentId={lastVisitedContentId}
+                />
               </div>
             </TabsContent>
 
@@ -266,8 +159,11 @@ const BatchDetailPage = () => {
         {/* DESKTOP VIEW: SPLIT LAYOUT */}
         {/* Left Column (Static) */}
         <div className="hidden xl:flex flex-col gap-6 w-[55%] h-full overflow-y-auto custom-scrollbar pb-10">
-          <BatchProgress data={BATCH_DATA} />
-          <BatchModules modules={MODULES} />
+          <BatchProgress data={batchData} />
+          <BatchModules
+            modules={modules}
+            lastVisitedContentId={lastVisitedContentId}
+          />
         </div>
 
         {/* Right Column (Dynamic) */}

@@ -2,6 +2,37 @@ import { Schema } from "mongoose";
 import { BatchStatus, CourseLevel, CourseStatus, Currency, DeliveryMode, Language } from "../../types/course.type.js";
 
 
+export type SocialLinkType =
+    | "discord"
+    | "github"
+    | "youtube"
+    | "website"
+    | "other";
+
+export interface SocialLink {
+    type: SocialLinkType;
+    url: string;
+    isPublic: boolean;
+}
+
+
+
+
+export const socialLinkSchema = new Schema<SocialLink>({
+    type: {
+        type: String,
+        enum: ["discord", "github", "youtube", "website", "other"],
+        required: true,
+    },
+    url: {
+        type: String,
+        required: true,
+    },
+    isPublic: {
+        type: Boolean,
+        default: true,
+    },
+});
 
 import mongoose from "mongoose";
 
@@ -186,6 +217,12 @@ const courseSchema = new mongoose.Schema({
 
     // Ordering
     order: { type: Number, default: 0 },
+
+    //Links
+    socialLinks: {
+        type: [socialLinkSchema],
+        default: [],
+    },
 },
     {
         timestamps: true,

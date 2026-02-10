@@ -84,7 +84,7 @@ export const startAggregationWorker = () => {
 
             if (bulkOps.length > 0) {
                 await MetricAgg.bulkWrite(bulkOps);
-                logger.info(`✅ Aggregated ${bulkOps.length} metric buckets.`);
+                logger.info(`✅ Aggregate ${bulkOps.length} metric buckets.`);
             }
 
         } catch (error) {

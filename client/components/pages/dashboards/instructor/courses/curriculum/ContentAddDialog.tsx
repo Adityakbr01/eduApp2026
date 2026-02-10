@@ -29,7 +29,6 @@ import {
 } from "@/services/courses";
 import { Loader2 } from "lucide-react";
 
-
 interface ContentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,26 +42,46 @@ export function ContentDialog({
   lessonId,
 }: ContentDialogProps) {
   const [contentType, setContentType] = useState<ContentType>(
-    ContentType.VIDEO
+    ContentType.VIDEO,
   );
   const [title, setTitle] = useState("");
-  const [marks, setMarks] = useState<number>(10);
+  const [marks, setMarks] = useState<number>(100);
   const [isPreview, setIsPreview] = useState(false);
   const [minWatchPercent, setMinWatchPercent] = useState<number>(90);
   // S3
   const [uploadedKey, setUploadedKey] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
 
+  // Deadline & Penalty
+  const [startDate, setStartDate] = useState<string>("");
+  const [dueDate, setDueDate] = useState<string>("");
+  const [penaltyPercent, setPenaltyPercent] = useState<number>(30); // Default 30%
+
   const createContent = useCreateContent();
 
   const resetForm = () => {
     setTitle("");
-    setMarks(10);
+    setMarks(100);
     setIsPreview(false);
     setMinWatchPercent(90);
     setUploadedKey(null);
     setDuration(0);
     setContentType(ContentType.VIDEO);
+    setStartDate("");
+
+    // Default dueDate: Tomorrow 12:00 PM
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(12, 0, 0, 0);
+    // Format for datetime-local: YYYY-MM-DDTHH:mm
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const day = String(tomorrow.getDate()).padStart(2, "0");
+    const hours = String(tomorrow.getHours()).padStart(2, "0");
+    const minutes = String(tomorrow.getMinutes()).padStart(2, "0");
+    setDueDate(`${year}-${month}-${day}T${hours}:${minutes}`);
+
+    setPenaltyPercent(30);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -80,15 +99,20 @@ export function ContentDialog({
         contentType === ContentType.VIDEO
           ? "video"
           : contentType === ContentType.AUDIO
-          ? "audio"
-          : contentType === ContentType.PDF
-          ? "pdf"
-          : contentType === ContentType.QUIZ
-          ? "quiz"
-          : "assignment",
+            ? "audio"
+            : contentType === ContentType.PDF
+              ? "pdf"
+              : contentType === ContentType.QUIZ
+                ? "quiz"
+                : "assignment",
       marks,
       isVisible: true,
       isPreview,
+      deadline: {
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        startDate: startDate ? new Date(startDate).toISOString() : undefined,
+        penaltyPercent: penaltyPercent,
+      },
     };
 
     if (
@@ -122,11 +146,7 @@ export function ContentDialog({
 
   const isFormValid = () => {
     if (!title.trim()) return false;
-    if (
-      [ContentType.AUDIO, ContentType.PDF].includes(
-        contentType
-      )
-    ) {
+    if ([ContentType.AUDIO, ContentType.PDF].includes(contentType)) {
       return !!uploadedKey;
     }
     return true;
@@ -196,7 +216,39 @@ export function ContentDialog({
               </div>
             </div>
 
-            {/* Upload Tabs */}
+            {/* Deadline & Penalty */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date (Optional)</Label>
+                <Input
+                  type="datetime-local"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Due Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Penalty Percentage (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={penaltyPercent}
+                onChange={(e) => setPenaltyPercent(+e.target.value || 0)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Penalty applied if submitted after due date.
+              </p>
+            </div>
             <Tabs value={contentType}>
               {/* VIDEO upload lesson video to s3 */}
               <TabsContent value={ContentType.VIDEO}>
