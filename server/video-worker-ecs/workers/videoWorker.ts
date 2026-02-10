@@ -139,7 +139,7 @@ export async function main() {
     /* 5️⃣ Download → Transcode */
     await downloadFromS3(TEMP_BUCKET, VIDEO_KEY, inputPath);
     //send to sqs latter for 
-   const { durationSeconds, durationMs } = await generateHLS(inputPath, outputDir);
+    const { durationSeconds, durationMs } = await generateHLS(inputPath, outputDir);
 
     /* 6️⃣ Upload HLS */
     const outputPrefix = buildHlsOutputPrefix({
@@ -156,7 +156,7 @@ export async function main() {
     await updateVideoStatus(lessonContentId, "READY", masterUrl, durationSeconds);
 
     /* 8️⃣ Cleanup */
-    await deleteS3Object(TEMP_BUCKET, VIDEO_KEY).catch(() => {});
+    await deleteS3Object(TEMP_BUCKET, VIDEO_KEY).catch(() => { });
     await markJobStatus(lessonContentId, "DONE");
     await deleteSqsMessage();
 
@@ -173,7 +173,7 @@ export async function main() {
     console.error("❌ Video processing FAILED", err);
 
     stopHeartbeat();
-    await markJobStatus(lessonContentId, "FAILED").catch(() => {});
+    await markJobStatus(lessonContentId, "FAILED").catch(() => { });
     await disconnectDB();
 
     process.exit(1);
