@@ -209,22 +209,22 @@ Located in: `server/video-worker-ecs/`
 ```env
 # AWS Configuration
 AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
+AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
 
 # S3 Buckets
 VIDEO_BUCKET_TEMP=eduapp-videos-temp
 VIDEO_BUCKET_PROD=eduapp-videos-prod
 
 # SQS
-SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/xxx/video-queue
+SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/<ACCOUNT_ID>/<QUEUE_NAME>
 SQS_RECEIPT_HANDLE=<runtime_value>
 
 # DynamoDB
 DYNAMO_TABLE=video-processing-jobs
 
 # MongoDB
-MONGODB_URI=mongodb://xxx
+MONGODB_URI=mongodb://<USERNAME>:<PASSWORD>@<HOST>:<PORT>/<DATABASE>
 MONGODB_DB_NAME=eduapp
 
 # Video Processing
@@ -475,29 +475,35 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 
 # JWT
-ACCESS_TOKEN_SECRET=your_access_token_secret
-REFRESH_TOKEN_SECRET=your_refresh_token_secret
+ACCESS_TOKEN_SECRET=<GENERATE_RANDOM_SECRET_MIN_32_CHARS>
+REFRESH_TOKEN_SECRET=<GENERATE_RANDOM_SECRET_MIN_32_CHARS>
 ACCESS_TOKEN_EXPIRES_IN=15m
 REFRESH_TOKEN_EXPIRES_IN=7d
 
 # AWS S3
-AWS_ACCESS_KEY_ID=your_aws_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
+AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
 AWS_REGION=us-east-1
-AWS_S3_BUCKET=your_bucket_name
+AWS_S3_BUCKET=<YOUR_BUCKET_NAME>
 
 # Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_CLOUD_NAME=<YOUR_CLOUD_NAME>
+CLOUDINARY_API_KEY=<YOUR_API_KEY>
+CLOUDINARY_API_SECRET=<YOUR_API_SECRET>
 
 # Razorpay
-RAZORPAY_KEY_ID=your_razorpay_key
-RAZORPAY_KEY_SECRET=your_razorpay_secret
+RAZORPAY_KEY_ID=<YOUR_RAZORPAY_KEY_ID>
+RAZORPAY_KEY_SECRET=<YOUR_RAZORPAY_SECRET_KEY>
 
 # Email (Resend)
-RESEND_API_KEY=your_resend_key
+RESEND_API_KEY=<YOUR_RESEND_API_KEY>
 ```
+
+> **🔒 Security Note:** 
+> - Copy `.env.example` files from respective directories (`server/.env.example`, `client/.env.example`) and rename them to `.env`
+> - Generate secure random secrets using: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+> - **Never commit** `.env` files to version control
+> - Keep your API keys and secrets secure
 
 ---
 
