@@ -161,6 +161,31 @@ export const youtubeVideos: YoutubeVideo[] = [
     likes: "3.4k Likes",
     url: "https://youtube.com/playlist?list=PLbtI3_MArDOkVji53VGRyQIPBOi1nB8rC&si=CH1YLBHdvii1DGrz",
   },
+  {
+    id: 6,
+    title: "How Bank Transactions Work | Advanced Backend Project with Node.js Express & MongoDB",
+    thumbnail: "https://i.ytimg.com/vi/NQOAQP0mow0/hq720.jpg?sqp=-oaymwEnCNAFEJQDSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLB4s816324020648761301214920",
+    views: "18k Views",
+    likes: "1.4k Likes",
+    url: "https://www.youtube.com/watch?v=NQOAQP0mow0",
+  },
+  {
+    id: 7,
+    title: "Complete Backend One Shot | Beginners to Advanced | Learn Node.js, Express, MongoDB from Scratch",
+    thumbnail: "https://i.ytimg.com/vi/0IciwnJ6PJI/hq720.jpg?sqp=-oaymwEnCNAFEJQDSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLB4s816324020648761301214920",
+    views: "118k Views",
+    likes: "5.6k Likes",
+    url: "https://www.youtube.com/watch?v=0IciwnJ6PJI",
+  },
+  {
+    id: 8,
+    title: "The Dark Truth of Indian Hackathons: It’s NOT just About Coding!",
+    thumbnail: "https://i.ytimg.com/vi/blKu81Ok5Fc/hq720.jpg?sqp=-oaymwEnCNAFEJQDSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLB4s816324020648761301214920",
+    views: "17k Views",
+    likes: "1.2k Likes",
+    url: "https://www.youtube.com/watch?v=blKu81Ok5Fc",
+  }
+
 ];
 
 // Community Section Data
