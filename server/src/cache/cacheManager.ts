@@ -305,6 +305,29 @@ class CacheManager {
         }
     }
 
+    /**
+     * Get or Set cache pattern
+     */
+    async getOrSet<T>(key: string, fetcher: () => Promise<T>, ttl?: number): Promise<{ data: T; isCached: boolean }> {
+        try {
+            const cached = await this.get<T>(key);
+            if (cached) {
+                return { data: cached, isCached: true };
+            }
+
+            const data = await fetcher();
+            if (data) {
+                await this.set(key, data, ttl);
+            }
+            return { data, isCached: false };
+        } catch (err) {
+            logger.error(`❌ Cache GETORSET error | key=${key}`, err);
+            // Fallback to fetcher if cache check fails
+            const data = await fetcher();
+            return { data, isCached: false };
+        }
+    }
+
     // =====================
     // HEALTH & MONITORING
     // =====================

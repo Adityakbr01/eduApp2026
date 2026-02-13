@@ -12,6 +12,7 @@ import { sectionRepository } from "src/repositories/section.repository.js";
 import { CourseStatus } from "src/types/course.type.js";
 import AppError from "src/utils/AppError.js";
 import generateSlug from "src/utils/generateSlug.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 
 
 // ============================================
@@ -104,13 +105,16 @@ export const courseService = {
 
     console.log("Updating course with data:", data);
 
-    const course = await courseRepository.updateById(courseId, data);
+    const updatedCourse = await courseRepository.updateById(courseId, data);
 
-    if (!course) {
+    if (!updatedCourse) {
       throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
     }
 
-    return course;
+    // Invalidate if title or anything else changed.
+    await batchRepository.invalidateCourseStructure(courseId);
+
+    return updatedCourse;
   },
 
   // -------------------- DELETE COURSE --------------------
@@ -148,8 +152,7 @@ export const courseService = {
     ]);
 
     await courseRepository.deleteById(courseId, instructorId);
-
-
+    await batchRepository.invalidateCourseStructure(courseId);
 
     return { message: "Course deleted successfully" };
   },

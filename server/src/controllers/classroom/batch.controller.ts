@@ -31,4 +31,17 @@ export const batchController = {
 
         sendResponse(res, 200, "Content detail retrieved", result);
     }),
+
+    /**
+     * Get lesson details (contents list) - Lazy Loading
+     * GET /api/classroom/:courseId/lesson/:lessonId
+     */
+    getLessonDetails: catchAsync(async (req, res) => {
+        const userId = req.user!.id;
+        const { courseId, lessonId } = req.params;
+
+        const result = await batchService.getLessonDetails(userId, courseId, lessonId);
+
+        sendResponse(res, 200, "Lesson details retrieved", result);
+    }),
 };

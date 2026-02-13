@@ -65,6 +65,9 @@ contentAttemptSchema.index(
     { userId: 1, courseId: 1, lastAccessedAt: -1 }
 );
 
+// 🚀 Performance index for fetching ALL user progress in a course
+contentAttemptSchema.index({ userId: 1, courseId: 1 });
+
 const ContentAttempt = mongoose.model("ContentAttempt", contentAttemptSchema);
 
 // 🛠️ SELF-HEALING: Drop legacy index that causes DUPLICATE_RESOURCE errors

@@ -24,7 +24,13 @@ export interface Lesson {
     title: string;
     completed: boolean;
     isLocked: boolean;
-    items: ModuleItem[];
+    marks: number;
+    obtainedMarks: number;
+    overdue?: boolean;
+    daysLate?: number;
+    penalty?: number;
+    deadline?: string;
+    start?: string;
 }
 
 export interface Module {
@@ -49,7 +55,7 @@ export interface BatchData {
 export interface BatchDetailResponse {
     batchData: BatchData;
     modules: Module[];
-    lastVisitedContentId?: string;
+    lastVisitedId?: string;
 }
 
 // ==================== CONTENT DETAIL TYPES ====================

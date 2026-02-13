@@ -152,10 +152,12 @@ export interface ILessonContent {
     };
     createdAt: string;
     updatedAt: string;
+    completed?: boolean;
 }
 
 export interface ILesson {
     _id: string;
+    id?: string;
     title: string;
     section: string;
     isVisible: boolean;
@@ -163,6 +165,7 @@ export interface ILesson {
     contents?: ILessonContent[];
     createdAt: string;
     updatedAt: string;
+    completed?: boolean;
 }
 
 export interface ISection {
@@ -174,6 +177,8 @@ export interface ISection {
     lessons?: ILesson[];
     createdAt: string;
     updatedAt: string;
+    isLocked?: boolean;
+    completed?: boolean;
 }
 
 export interface ICategoryInfo {

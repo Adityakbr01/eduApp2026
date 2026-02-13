@@ -1,6 +1,7 @@
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 import {
   courseRepository,
 } from "src/repositories/course.repository.js";
@@ -50,7 +51,9 @@ export const lessonContentService = {
       order: maxOrder + 1,
     };
 
-    return lessonContentRepository.create(contentData);
+    const newContent = await lessonContentRepository.create(contentData);
+    await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+    return newContent;
   },
 
 
@@ -95,7 +98,9 @@ export const lessonContentService = {
       updateData.video = normalizeVideoPayload(data.video);
     }
 
-    return lessonContentRepository.updateById(contentId, updateData);
+    const updated = await lessonContentRepository.updateById(contentId, updateData);
+    await batchRepository.invalidateCourseStructure(content.courseId.toString());
+    return updated;
   },
 
 
@@ -118,6 +123,8 @@ export const lessonContentService = {
     // Delete all attempts for this content
     await contentAttemptRepository.deleteByContent(contentId);
     await lessonContentRepository.deleteById(contentId);
+
+    await batchRepository.invalidateCourseStructure(content.courseId.toString());
 
     return { message: "Content deleted successfully" };
   },
@@ -143,7 +150,9 @@ export const lessonContentService = {
     }
 
     await lessonContentRepository.bulkReorder(contents);
-    return lessonContentRepository.findByLesson(lessonId);
+    const result = await lessonContentRepository.findByLesson(lessonId);
+    await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+    return result;
   },
 
   // -------------------- TOGGLE CONTENT VISIBILITY --------------------
@@ -162,6 +171,8 @@ export const lessonContentService = {
       );
     }
 
-    return lessonContentRepository.toggleVisibility(contentId);
+    const result = await lessonContentRepository.toggleVisibility(contentId);
+    await batchRepository.invalidateCourseStructure(content.courseId.toString());
+    return result;
   },
 };

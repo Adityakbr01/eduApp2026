@@ -144,6 +144,7 @@ body {
   --custom-textColor: #e9e9e9;
   --custom-inputColor: #1e1e1e;
   --custom-accentColor: #e8602e;
+  --custom-successColor: #26760b;
 
   /*  */
   --radius: 0.625rem;
@@ -556,4 +557,11 @@ input {
 .datetime-input::-webkit-datetime-edit-ampm-field {
   background-color: transparent !important;
   color: white;
+}
+
+
+
+.btn-primary {
+  background-color: var(--custom-accentColor) !important;
+  color: white !important;
 }

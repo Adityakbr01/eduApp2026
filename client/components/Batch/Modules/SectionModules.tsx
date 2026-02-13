@@ -1,18 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AlertCircle } from "lucide-react";
-import type { Module, ModuleItem } from "@/services/classroom/batch-types";
-import LiveClassBanner from "./Modules/LiveClassBanner";
-import ModuleAccordion from "./Modules/ModuleAccordion";
+import type {
+  Lesson,
+  Module,
+  ModuleItem,
+} from "@/services/classroom/batch-types";
+import LiveClassBanner from "./LiveClassBanner";
+import SectionAccordion from "./SectionAccordion";
 
-interface BatchModulesProps {
+interface SectionModulesProps {
   modules: Module[];
-  lastVisitedContentId?: string;
+  lastVisitedId?: string;
+  onContentSelect?: (contentId: string) => void;
+  activeContentId?: string;
 }
 
-const BatchModules = ({ modules, lastVisitedContentId }: BatchModulesProps) => {
+const SectionModules = ({
+  modules,
+  lastVisitedId,
+  onContentSelect,
+  activeContentId,
+}: SectionModulesProps) => {
   const router = useRouter();
   const params = useParams();
   const batchId = params?.batchId as string;
@@ -20,58 +31,44 @@ const BatchModules = ({ modules, lastVisitedContentId }: BatchModulesProps) => {
   const [activeTab, setActiveTab] = useState<"modules" | "announcements">(
     "modules",
   );
-  const [expandedModules, setExpandedModules] = useState<string[]>([]);
-  const [expandedLessons, setExpandedLessons] = useState<string[]>([]);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
-  // Auto-expand module/lesson containing lastVisitedContentId
+  // Auto-expand section containing lastVisitedId
   useEffect(() => {
     if (modules.length === 0) return;
 
-    let targetModuleId = modules[0].id;
-    let targetLessonId =
-      modules[0].lessons.length > 0 ? modules[0].lessons[0].id : null;
+    let targetSectionId = modules[0].id;
 
-    if (lastVisitedContentId) {
+    if (lastVisitedId) {
       for (const module of modules) {
-        for (const lesson of module.lessons) {
-          const hasContent = lesson.items.some(
-            (item) => item.id === lastVisitedContentId,
-          );
-          if (hasContent) {
-            targetModuleId = module.id;
-            targetLessonId = lesson.id;
-            break;
-          }
+        const hasLesson = module.lessons.some((l) => l.id === lastVisitedId);
+        if (hasLesson) {
+          targetSectionId = module.id;
+          break;
         }
-        if (targetLessonId && targetModuleId !== modules[0].id) break;
       }
     }
 
-    setExpandedModules([targetModuleId]);
-    if (targetLessonId) {
-      setExpandedLessons([targetLessonId]);
+    setExpandedSections([targetSectionId]);
+  }, [modules, lastVisitedId]);
+
+  const toggleSection = (id: string) => {
+    setExpandedSections((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  };
+
+  const handleItemClick = (item: Lesson) => {
+    if (item.isLocked) return;
+    if (onContentSelect) {
+      onContentSelect(item.id);
+    } else {
+      router.push(`/classroom/batch/${batchId}/lessons/${item.id}`);
     }
-  }, [modules, lastVisitedContentId]);
-
-  const toggleModule = (id: string) => {
-    setExpandedModules((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
-    );
-  };
-
-  const toggleLesson = (id: string) => {
-    setExpandedLessons((prev) =>
-      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id],
-    );
-  };
-
-  const handleItemClick = (item: ModuleItem) => {
-    if (item.type === "locked") return;
-    router.push(`/classroom/batch/${batchId}/content/${item.id}`);
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-dark-card border border-white/5 rounded-2xl overflow-hidden relative">
+    <div className="flex flex-col w-full h-full bg-dark-card border border-white/5 rounded-2xl overflow-hidden relative text-white/80">
       {/* Tabs Header */}
       <div className="flex items-center md:justify-start justify-center gap-1 md:gap-3 border-b border-white/5 bg-dark-extra-light px-2 sm:px-6 h-14 sm:h-16 shrink-0">
         <button
@@ -117,15 +114,13 @@ const BatchModules = ({ modules, lastVisitedContentId }: BatchModulesProps) => {
             <LiveClassBanner />
 
             {modules.map((module) => (
-              <ModuleAccordion
+              <SectionAccordion
                 key={module.id}
-                module={module}
-                isExpanded={expandedModules.includes(module.id)}
-                onToggle={() => toggleModule(module.id)}
-                expandedLessons={expandedLessons}
-                onToggleLesson={toggleLesson}
+                section={module}
+                isExpanded={expandedSections.includes(module.id)}
+                onToggle={() => toggleSection(module.id)}
                 onItemClick={handleItemClick}
-                lastVisitedContentId={lastVisitedContentId}
+                lastVisitedId={lastVisitedId}
               />
             ))}
           </div>
@@ -142,4 +137,4 @@ const BatchModules = ({ modules, lastVisitedContentId }: BatchModulesProps) => {
   );
 };
 
-export default BatchModules;
+export default SectionModules;

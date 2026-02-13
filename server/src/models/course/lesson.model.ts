@@ -24,4 +24,6 @@ const lessonSchema = new mongoose.Schema({
     deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
+lessonSchema.index({ sectionId: 1, courseId: 1 });
+
 export default mongoose.model("Lesson", lessonSchema);

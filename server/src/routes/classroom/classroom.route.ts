@@ -39,6 +39,14 @@ router.get("/:courseId/batch", isEnrolled(), batchController.getBatchDetail);
  */
 router.get("/:courseId/content/:contentId", isEnrolled(), batchController.getContentDetail);
 
+/**
+ * @route   GET /api/classroom/:courseId/lesson/:lessonId
+ * @desc    Get lesson details (contents list for lazy loading)
+ * @access  Private (Enrolled users only)
+ */
+router.get("/:courseId/lesson/:lessonId", isEnrolled(), batchController.getLessonDetails);
+
+
 // ============================================
 // 🎓 INSTRUCTOR ROUTES
 // ============================================

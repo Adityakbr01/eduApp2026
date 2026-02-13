@@ -70,6 +70,14 @@ export const createAssignmentSchema = z.object({
     totalMarks: z.number().min(0).default(100),
     dueDate: z.string().optional(), // ISO date string
     isAutoEvaluated: z.boolean().default(false),
+}).refine((data) => {
+    if (data.dueDate) {
+        return new Date(data.dueDate) > new Date();
+    }
+    return true;
+}, {
+    message: "Due date must be in the future",
+    path: ["dueDate"],
 });
 
 export const updateAssignmentSchema = createAssignmentSchema.partial().omit({

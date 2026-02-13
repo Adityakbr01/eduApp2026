@@ -17,6 +17,7 @@ export const classroomApi = {
      */
     getClassroomData: async (): Promise<ApiResponse<ClassroomDataResponse>> => {
         const response = await apiClient.get("/classroom");
+        console.log("batchData", response.data);
         return response.data;
     },
 };

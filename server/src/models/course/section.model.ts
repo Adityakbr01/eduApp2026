@@ -12,11 +12,13 @@ const sectionSchema = new mongoose.Schema({
 
     // Sequential locking
     isLocked: { type: Boolean, default: true },             // Auto: locked until previous section completed
-    isManuallyUnlocked: { type: Boolean, default: false,UnlockedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" } },  // Instructor override
+    isManuallyUnlocked: { type: Boolean, default: false, UnlockedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" } },  // Instructor override
 
     isVisible: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
 }, { timestamps: true });
+
+sectionSchema.index({ courseId: 1 });
 
 export default mongoose.model("Section", sectionSchema);

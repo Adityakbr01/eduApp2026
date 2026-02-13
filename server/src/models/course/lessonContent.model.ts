@@ -43,8 +43,6 @@ const assessmentSchema = new mongoose.Schema({
 });
 
 
-
-
 const lessonContentSchema = new mongoose.Schema({
     courseId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -91,5 +89,6 @@ const lessonContentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 lessonContentSchema.index({ lessonId: 1, order: 1 });
+lessonContentSchema.index({ lessonId: 1, courseId: 1 });
 
 export default mongoose.model("LessonContent", lessonContentSchema);

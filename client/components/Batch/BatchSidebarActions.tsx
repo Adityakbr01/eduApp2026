@@ -133,7 +133,7 @@ const BatchSidebarActions = ({
             variant="ghost"
             size="icon"
             onClick={toggleCollapse}
-            className="text-white/50 hover:text-white hover:bg-white/5"
+            className="text-white/50  hover:text-white hover:bg-white/5"
             aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {isCollapsed ? (
@@ -162,7 +162,7 @@ const BatchSidebarActions = ({
               variant="ghost"
               onClick={() => setActiveView(action.id)}
               className={cn(
-                "group transition-all relative",
+                "group transition-all relative ",
 
                 // Mobile
                 "flex flex-col items-center gap-1 p-2 rounded-lg w-full",
@@ -173,7 +173,7 @@ const BatchSidebarActions = ({
 
                 // Active State Styling (Desktop)
                 isActive
-                  ? `xl:${action.activeBg} xl:text-white`
+                  ? `btn-primary cursor-pointer xl:text-white`
                   : `xl:bg-transparent xl:${action.bg} xl:text-white/50`,
 
                 // Collapsed State Styling (Desktop)

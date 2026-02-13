@@ -157,6 +157,13 @@ export const createContentSchema = z.object({
 
     // Quiz/Assignment fields
     quizId: z.string().optional(),
+
+    // Deadline fields
+    deadline: z.object({
+        dueDate: z.string().optional(),
+        startDate: z.string().optional(),
+        penaltyPercent: z.number().min(0).max(100).default(30),
+    }).optional(),
 }).refine((data) => {
     // Validate video type has videoUrl
     if (data.type === "video" && !data.videoUrl) {
@@ -166,9 +173,29 @@ export const createContentSchema = z.object({
     if (data.type === "pdf" && !data.pdfUrl) {
         return false;
     }
+
+    // Validate Dates
+    const now = new Date();
+    if (data.deadline?.startDate) {
+        if (new Date(data.deadline.startDate) <= now) {
+            return false;
+        }
+    }
+    if (data.deadline?.dueDate) {
+        if (new Date(data.deadline.dueDate) <= now) {
+            return false;
+        }
+    }
+
+    if (data.deadline?.startDate && data.deadline?.dueDate) {
+        if (new Date(data.deadline.dueDate) <= new Date(data.deadline.startDate)) {
+            return false;
+        }
+    }
+
     return true;
 }, {
-    message: "Video content requires videoUrl, PDF content requires pdfUrl",
+    message: "Invalid dates: Start and Due dates must be in the future, and Due Date must be after Start Date",
 });
 
 export const updateContentSchema = z.object({

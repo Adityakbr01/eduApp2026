@@ -7,6 +7,7 @@ import { lessonContentRepository } from "src/repositories/lessonContent.reposito
 import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { sectionRepository } from "src/repositories/section.repository.js";
 import AppError from "src/utils/AppError.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 
 
 
@@ -40,7 +41,9 @@ export const lessonService = {
             order: maxOrder + 1,
         };
 
-        return lessonRepository.create(lessonData);
+        const newLesson = await lessonRepository.create(lessonData);
+        await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        return newLesson;
     },
 
     // -------------------- GET LESSONS BY SECTION --------------------
@@ -78,7 +81,9 @@ export const lessonService = {
             );
         }
 
-        return lessonRepository.updateById(lessonId, data);
+        const updated = await lessonRepository.updateById(lessonId, data);
+        await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+        return updated;
     },
 
     // -------------------- DELETE LESSON --------------------
@@ -100,6 +105,8 @@ export const lessonService = {
         // Delete all contents in this lesson
         await lessonContentRepository.deleteByLesson(lessonId);
         await lessonRepository.deleteById(lessonId);
+
+        await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
 
         return { message: "Lesson deleted successfully" };
     },
@@ -125,7 +132,10 @@ export const lessonService = {
         }
 
         await lessonRepository.bulkReorder(lessons);
-        return lessonRepository.findBySection(sectionId);
+        await lessonRepository.bulkReorder(lessons);
+        const result = await lessonRepository.findBySection(sectionId);
+        await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        return result;
     },
 
     // -------------------- TOGGLE LESSON VISIBILITY --------------------
@@ -144,6 +154,8 @@ export const lessonService = {
             );
         }
 
-        return lessonRepository.toggleVisibility(lessonId);
+        const result = await lessonRepository.toggleVisibility(lessonId);
+        await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+        return result;
     },
 };

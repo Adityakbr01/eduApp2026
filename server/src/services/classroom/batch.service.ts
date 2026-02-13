@@ -1,343 +1,134 @@
 import mongoose from "mongoose";
-import Course from "src/models/course/course.model.js";
-import Section from "src/models/course/section.model.js";
-import Lesson from "src/models/course/lesson.model.js";
-import LessonContent from "src/models/course/lessonContent.model.js";
-import ContentAttempt from "src/models/course/contentAttempt.model.js";
 import AppError from "src/utils/AppError.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { env } from "src/configs/env.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { type AggContent } from "src/types/classroom/batch.type.js";
+import Section from "src/models/course/section.model.js";
+import Lesson from "src/models/course/lesson.model.js";
+import LessonContent from "src/models/course/lessonContent.model.js";
+import ContentAttempt from "src/models/course/contentAttempt.model.js";
+import computeLessonMeta from "src/utils/computeLessonMeta.js";
+import type { BatchData, BatchDetailResponse, ContentDetailResponse, LessonResult, Module } from "src/types/classroom/batch.type.js";
 
-// ============================================
-// TYPES
-// ============================================
-type ItemContentType = "video" | "pdf" | "quiz" | "audio" | "assignment" | "text" | "locked";
 
-interface ModuleItem {
-    id: string;
-    title: string;
-    type: ItemContentType;
-    contentType: string;
-    completed?: boolean;
-    overdue?: boolean;
-    daysLate?: number;
-    penalty?: number;
-    deadline?: string;
-    start?: string;
-    videoStatus?: string;
-    marks?: number;
-    obtainedMarks?: number;
-    penaltyApplied?: boolean;
-}
-
-interface Lesson {
-    id: string;
-    title: string;
-    completed: boolean;
-    isLocked: boolean;
-    items: ModuleItem[];
-}
-
-interface Module {
-    id: string;
-    title: string;
-    completed: boolean;
-    isLocked: boolean;
-    lessons: Lesson[];
-}
-
-interface BatchData {
-    title: string;
-    progress: number;
-    modules: number;
-    totalModules: number;
-    subModules: number;
-    totalSubModules: number;
-    score: number;
-    totalScore: number;
-}
-
-interface BatchDetailResponse {
-    batchData: BatchData;
-    modules: Module[];
-    lastVisitedContentId?: string;
-}
-
-interface ContentDetailResponse {
-    id: string;
-    title: string;
-    contentType: string;
-    marks: number;
-    isCompleted: boolean;
-    resumeAt: number;
-    totalDuration: number;
-    obtainedMarks: number;
-
-    videoUrl?: string;
-    videoStatus?: string;
-    videoDuration?: number;
-    minWatchPercent?: number;
-
-    pdfUrl?: string;
-    totalPages?: number;
-
-    audioUrl?: string;
-    audioDuration?: number;
-
-    assessmentId?: string;
-    assessmentType?: string;
-    assessment?: {
-        type: string;
-        data: any;
-    };
-
-    deadline?: {
-        dueDate?: string;
-        startDate?: string;
-        penaltyPercent?: number;
-        defaultPenalty?: number;
-    };
-}
-
-// ============================================
-// HELPERS
-// ============================================
-
-/**
- * Determine display type.
- * "locked" if: startDate is in the future OR video is not READY
- */
-function resolveContentType(content: any, now: Date): ItemContentType {
-    const startDate = content.deadline?.startDate ? new Date(content.deadline.startDate) : null;
-
-    if (startDate && startDate > now) return "locked";
-
-    if ((content.type as string) === "video" && content.video) {
-        if (content.video.status && content.video.status !== "READY") return "locked";
-    }
-
-    if ((content.type as string) === "assessment" && content.assessment) {
-        return content.assessment.type === "assignment" ? "assignment" : "quiz";
-    }
-
-    return content.type as ItemContentType;
-}
-
-/**
- * Check if all contents in a given set of lessons are completed by the user.
- */
-function areAllContentsCompleted(
-    lessonIds: string[],
-    contentsByLessonMap: Map<string, any[]>,
-    attemptMap: Map<string, any>,
-): boolean {
-    for (const lessonId of lessonIds) {
-        const contents = contentsByLessonMap.get(lessonId) || [];
-        for (const content of contents) {
-            const attempt = attemptMap.get(content._id.toString());
-            if (!attempt?.isCompleted) return false;
-        }
-    }
-    return true;
-}
 
 // ============================================
 // BATCH SERVICE
 // ============================================
 export const batchService = {
     /**
-     * Get batch detail data for a student
+     * Get batch detail data for a student.
+     * Uses independent cached calls for Structure and Progress, merging them in-memory.
      */
     getBatchDetail: async (userId: string, courseId: string): Promise<BatchDetailResponse> => {
         const userOid = new mongoose.Types.ObjectId(userId);
         const courseOid = new mongoose.Types.ObjectId(courseId);
 
-        const course = await Course.findById(courseOid).select("title batch").lean();
-        if (!course) {
+        // Parallel fetch from Redis/DB via Repository
+        const [courseTitle, structureResult, progressResult] = await Promise.all([
+            batchRepository.findCourseTitle(courseOid),
+            batchRepository.getCourseStructure(courseOid),
+            batchRepository.getUserProgress(userOid, courseOid),
+        ]);
+
+        const { structure, isCached: isStructureCached } = structureResult;
+        const { progress: userProgress, isCached: isProgressCached } = progressResult;
+
+        if (!courseTitle) {
             throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
-        const [sections, lessons, contents, attempts] = await Promise.all([
-            Section.find({ courseId: courseOid, isDeleted: { $ne: true }, isVisible: { $ne: false } })
-                .sort({ order: 1 }).lean(),
-            Lesson.find({ courseId: courseOid, isDeleted: { $ne: true }, isVisible: { $ne: false } })
-                .sort({ order: 1 }).lean(),
-            LessonContent.find({ courseId: courseOid, isDeleted: { $ne: true }, isVisible: { $ne: false } })
-                .sort({ order: 1 }).lean(),
-            ContentAttempt.find({ userId: userOid, courseId: courseOid }).lean(),
-        ]);
-
-        // Get last visited content (most recent access)
-        const lastAttempt = await ContentAttempt.findOne({ userId: userOid, courseId: courseOid })
-            .sort({ lastAccessedAt: -1 })
-            .select("contentId")
-            .lean();
-
-        const lastVisitedContentId = lastAttempt?.contentId?.toString();
-
-        // Build lookup maps
-        const attemptMap = new Map<string, any>();
-        for (const attempt of attempts) {
-            attemptMap.set(attempt.contentId.toString(), attempt);
-        }
-
-        const lessonsBySectionMap = new Map<string, any[]>();
-        for (const lesson of lessons) {
-            const sid = lesson.sectionId.toString();
-            if (!lessonsBySectionMap.has(sid)) lessonsBySectionMap.set(sid, []);
-            lessonsBySectionMap.get(sid)!.push(lesson);
-        }
-
-        const contentsByLessonMap = new Map<string, any[]>();
-        for (const content of contents) {
-            const lid = content.lessonId.toString();
-            if (!contentsByLessonMap.has(lid)) contentsByLessonMap.set(lid, []);
-            contentsByLessonMap.get(lid)!.push(content);
-        }
-
         // ========================================
-        // SEQUENTIAL LOCKING LOGIC
+        // IN-MEMORY MERGE & LOCKING LOGIC
         // ========================================
-        // Rule: Section N is unlocked if:
-        //   - It's the first section (order index 0), OR
-        //   - isManuallyUnlocked = true (instructor override), OR
-        //   - All contents in the PREVIOUS section are completed by this user
-        //
-        // Rule: Lesson N in a section is unlocked if:
-        //   - It's the first lesson in its section, OR
-        //   - isManuallyUnlocked = true, OR
-        //   - All contents in the PREVIOUS lesson (same section) are completed
-
         const now = new Date();
-        let totalCompletedContents = 0;
-        let totalContents = 0;
+        const { history, lastVisitedId } = userProgress;
+
         let completedSections = 0;
         let completedLessons = 0;
         let totalLessons = 0;
         let totalScore = 0;
         let obtainedScore = 0;
 
-        // Track which sections are completed for sequential unlock
         const sectionCompletionMap: boolean[] = [];
 
-        const modules: Module[] = sections.map((section, sectionIndex) => {
-            const sectionLessons = lessonsBySectionMap.get(section._id.toString()) || [];
-
-            // Determine if section is locked for this user
+        // Map cached structure to response format
+        const modules: Module[] = structure.map((section, sectionIndex) => {
             const isFirstSection = sectionIndex === 0;
-            const isManuallyUnlocked = (section as any).isManuallyUnlocked === true;
+            const isManuallyUnlocked = section.isManuallyUnlocked === true;
             const prevSectionCompleted = sectionIndex > 0 ? sectionCompletionMap[sectionIndex - 1] : true;
+            // Auto-lock logic: if not first, not manually unlocked, and previous not done => LOCKED
             const sectionIsLocked = !isFirstSection && !isManuallyUnlocked && !prevSectionCompleted;
 
-            const lessonResults: Lesson[] = [];
+            const lessonResults: LessonResult[] = [];
             let allItemsCompleted = true;
             let sectionHasItems = false;
+            let prevLessonCompleted = true; // First lesson in section is unlocked by default (if section unlocked)
 
-            // Track lesson completion within this section for sequential lesson unlock
-            let prevLessonCompleted = true;
-
-            for (let lessonIndex = 0; lessonIndex < sectionLessons.length; lessonIndex++) {
-                const lesson = sectionLessons[lessonIndex];
+            for (let i = 0; i < section.lessons.length; i++) {
+                const lesson = section.lessons[i];
                 totalLessons++;
-                const lessonContents = contentsByLessonMap.get(lesson._id.toString()) || [];
 
-                // Determine if lesson is locked
-                const isFirstLesson = lessonIndex === 0;
-                const lessonManuallyUnlocked = (lesson as any).isManuallyUnlocked === true;
+                const isFirstLesson = i === 0;
+                const lessonManuallyUnlocked = lesson.isManuallyUnlocked === true;
+                // Lesson lock logic
                 const lessonIsLocked = sectionIsLocked || (!isFirstLesson && !lessonManuallyUnlocked && !prevLessonCompleted);
 
-
-
-
+                // Check content progress
                 let lessonAllCompleted = true;
-                const lessonItems: ModuleItem[] = [];
 
-                for (const content of lessonContents) {
+                // We need to map contents to AggContent format for computeLessonMeta
+                // But computeLessonMeta needs obtainedMarks etc. to be populated.
+                const hydratedContents: AggContent[] = lesson.contents.map(c => {
                     sectionHasItems = true;
-                    totalContents++;
-                    totalScore += content.marks || 0;
+                    const progress = history[c._id.toString()];
 
-                    const contentId = content._id.toString();
-                    const attempt = attemptMap.get(contentId);
-                    const isCompleted = attempt?.isCompleted || false;
+                    const marks = c.marks || 0;
+                    totalScore += marks;
+
+                    const isCompleted = progress?.isCompleted || false;
+                    const obtained = progress?.obtainedMarks || 0;
+                    const lastAttemptedAt = progress?.lastAttemptedAt ? new Date(progress.lastAttemptedAt) : null;
 
                     if (isCompleted) {
-                        totalCompletedContents++;
-                        obtainedScore += attempt?.obtainedMarks || 0;
+                        obtainedScore += obtained;
                     } else {
                         lessonAllCompleted = false;
                         allItemsCompleted = false;
                     }
 
-                    // Resolve display type
-                    let displayType = resolveContentType(content, now);
-
-                    // Override: if section or lesson is locked, force locked type
-                    if (lessonIsLocked && displayType !== "locked") {
-                        displayType = "locked";
-                    }
-
-                    const isLocked = displayType === "locked";
-
-                    // Deadline logic
-                    const deadlineInfo = content.deadline;
-                    const dueDate = deadlineInfo?.dueDate ? new Date(deadlineInfo.dueDate) : null;
-                    const startDate = deadlineInfo?.startDate ? new Date(deadlineInfo.startDate) : null;
-                    const penaltyPercent = deadlineInfo?.penaltyPercent || (deadlineInfo as any)?.defaultPenalty || 0;
-
-                    const item: ModuleItem = {
-                        id: contentId,
-                        title: content.title,
-                        type: displayType,
-                        contentType: content.type,
-                        completed: isCompleted,
-                        marks: content.marks || 0,
-                        obtainedMarks: attempt?.obtainedMarks || 0,
-                        penaltyApplied: isCompleted && (attempt?.obtainedMarks || 0) < (content.marks || 0),
+                    return {
+                        _id: new mongoose.Types.ObjectId(c._id),
+                        type: c.type,
+                        marks,
+                        isCompleted,
+                        obtainedMarks: obtained,
+                        dueDate: c.dueDate ? new Date(c.dueDate) : null,
+                        startDate: c.startDate ? new Date(c.startDate) : null,
+                        penaltyPercent: c.penaltyPercent,
+                        videoStatus: c.videoStatus,
+                        assessmentType: c.assessmentType,
+                        lastAttemptedAt: lastAttemptedAt,
                     };
+                });
 
-                    if ((content.type as string) === "video" && content.video?.status) {
-                        item.videoStatus = content.video.status;
-                    }
+                const lessonCompleted = lessonAllCompleted && lesson.contents.length > 0;
+                if (lessonCompleted) completedLessons++;
 
-                    if (dueDate && !isCompleted && dueDate < now && !isLocked) {
-                        const diffMs = now.getTime() - dueDate.getTime();
-                        item.overdue = true;
-                        item.daysLate = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                        item.penalty = penaltyPercent;
-                    }
-
-                    if (dueDate && !isLocked && !isCompleted) {
-                        item.deadline = dueDate.toLocaleDateString("en-US", {
-                            year: "numeric", month: "long", day: "numeric",
-                            hour: "numeric", minute: "numeric", hour12: true,
-                        });
-                    }
-
-                    if (startDate && startDate > now) {
-                        item.start = startDate.toLocaleDateString("en-US", {
-                            year: "numeric", month: "long", day: "numeric",
-                            hour: "numeric", minute: "numeric", hour12: true,
-                        });
-                    }
-
-                    lessonItems.push(item);
-                }
-
-                const lessonCompleted = lessonAllCompleted && lessonContents.length > 0;
-                if (lessonCompleted) {
-                    completedLessons++;
-                }
+                // Next lesson depends on this one
                 prevLessonCompleted = lessonCompleted;
 
+                // Compute Aggregated Meta (Overdue, Deadline, etc.)
+                const meta = computeLessonMeta(hydratedContents, now, lessonIsLocked);
 
                 lessonResults.push({
                     id: lesson._id.toString(),
                     title: lesson.title,
                     completed: lessonCompleted,
                     isLocked: lessonIsLocked,
-                    items: lessonItems,
+                    ...meta,
                 });
             }
 
@@ -354,23 +145,30 @@ export const batchService = {
             };
         });
 
-        // Calculate progress based on score performance, not just completion
-        const progress = totalScore > 0
+        const progressPercent = totalScore > 0
             ? Math.round((obtainedScore / totalScore) * 100 * 100) / 100
             : 0;
 
         const batchData: BatchData = {
-            title: course.title,
-            progress,
+            title: courseTitle.title,
+            progress: progressPercent,
             modules: completedSections,
-            totalModules: sections.length,
+            totalModules: structure.length,
             subModules: completedLessons,
             totalSubModules: totalLessons,
             score: obtainedScore,
             totalScore,
         };
 
-        return { batchData, modules, lastVisitedContentId };
+        return {
+            batchData,
+            modules,
+            lastVisitedId,
+            meta: {
+                isStructureCached,
+                isProgressCached
+            }
+        };
     },
 
     /**
@@ -396,7 +194,6 @@ export const batchService = {
             })
             .lean();
 
-
         if (!content) {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
@@ -420,7 +217,6 @@ export const batchService = {
         }
 
         // === SEQUENTIAL LOCK CHECK ===
-        // Find the content's lesson, then section, and verify they're not locked for this user
         const lesson = await Lesson.findById(content.lessonId).lean();
         const section = lesson ? await Section.findById(lesson.sectionId).lean() : null;
 
@@ -435,12 +231,10 @@ export const batchService = {
             );
 
             if (sectionIndex > 0 && !(section as any).isManuallyUnlocked) {
-                // Check if all contents in previous section are completed
                 const prevSection = allSectionsForCourse[sectionIndex - 1];
                 const prevLessons = await Lesson.find({
                     courseId: courseOid, sectionId: prevSection._id, isDeleted: { $ne: true },
                 }).lean();
-                const prevLessonIds = prevLessons.map((l) => l._id.toString());
                 const prevContents = await LessonContent.find({
                     courseId: courseOid, lessonId: { $in: prevLessons.map((l) => l._id) }, isDeleted: { $ne: true },
                 }).lean();
@@ -495,7 +289,6 @@ export const batchService = {
             attempt.lastAccessedAt = new Date();
             await attempt.save();
         } else {
-            // Create initial attempt to track access
             attempt = await ContentAttempt.create({
                 userId: userOid,
                 courseId: courseOid,
@@ -506,7 +299,6 @@ export const batchService = {
             });
         }
 
-        // Convert to plain object for response
         const attemptObj = attempt.toObject();
 
         const cdnBase = env.CDN_BASE_URL || "";
@@ -545,10 +337,9 @@ export const batchService = {
         if ((ctype === "assignment" || ctype === "quiz") && content.assessment) {
             response.assessment = {
                 type: content.assessment.type,
-                data: content.assessment.refId, // FULL populated object
+                data: content.assessment.refId,
             };
         }
-
 
         if (content.deadline) {
             const dl = content.deadline as any;
@@ -562,4 +353,74 @@ export const batchService = {
 
         return response;
     },
+
+    /**
+     * Get details for a specific lesson (Lazy Loading)
+     * Returns: Lesson title, order, and list of contents with user progress.
+     */
+    getLessonDetails: async (
+        userId: string,
+        courseId: string,
+        lessonId: string
+    ) => {
+        const userOid = new mongoose.Types.ObjectId(userId);
+        const courseOid = new mongoose.Types.ObjectId(courseId);
+        const lessonOid = new mongoose.Types.ObjectId(lessonId);
+
+        // 1. Fetch Lesson & Contents
+        const lesson = await Lesson.findOne({
+            _id: lessonOid,
+            courseId: courseOid,
+            isDeleted: { $ne: true },
+            isVisible: { $ne: false }
+        }).select("title order sectionId").lean();
+
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const contents = await LessonContent.find({
+            lessonId: lessonOid,
+            courseId: courseOid,
+            isDeleted: { $ne: true },
+            isVisible: { $ne: false }
+        })
+            .sort({ order: 1 })
+            .select("title type marks deadline video.status video.duration pdf.totalPages audio.duration assessment.type")
+            .lean();
+
+        // 2. Fetch User Progress for these contents
+        const { progress: userProgress, isCached: isProgressCached } = await batchRepository.getUserProgress(userOid, courseOid);
+        const { history } = userProgress;
+
+        // 3. Map contents with progress
+        const contentDetails = contents.map(c => {
+            const progress = history[c._id.toString()];
+            const isCompleted = progress?.isCompleted || false;
+            const obtainedMarks = progress?.obtainedMarks || 0;
+
+            return {
+                id: c._id.toString(),
+                title: c.title,
+                type: c.type,
+                marks: c.marks || 0,
+                isCompleted,
+                obtainedMarks,
+                // Add other lightweight meta needed for list view
+                videoStatus: c.video?.status,
+                videoDuration: c.video?.duration,
+                totalPages: c.pdf?.totalPages,
+                audioDuration: c.audio?.duration,
+                assessmentType: c.assessment?.type
+            };
+        });
+
+        return {
+            id: lesson._id.toString(),
+            title: lesson.title, contents: contentDetails,
+            meta: {
+                isProgressCached
+            }
+        };
+    }
 };

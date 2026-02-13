@@ -115,5 +115,13 @@ export const cacheKeyFactory = {
             `courses:page=${page}:limit=${limit}:filters=${filters}`,
         enrollments: (courseId: string) => `course:enrollments:${courseId}`,
         userEnrollments: (userId: string) => `user:enrollments:${userId}`,
+        structure: (courseId: string) => `course:${courseId}:structure`,
+    },
+
+    // =====================
+    // CLASSROOM KEYS
+    // =====================
+    classroom: {
+        userProgress: (userId: string, courseId: string) => `user:${userId}:course:${courseId}:progress`,
     },
 };
