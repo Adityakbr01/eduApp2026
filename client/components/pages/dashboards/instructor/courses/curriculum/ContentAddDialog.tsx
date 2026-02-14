@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 import {
   AlertDialog,
@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge"; // Assuming Badge exists for tags
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +27,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -42,10 +42,16 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { ContentType, useCreateContent } from "@/services/courses";
+import { Textarea } from "@/components/ui/textarea"; // Assuming Textarea component exists, check or use Input as fallback
 import {
-  createContentSchema,
+  ContentLevel,
+  ContentType,
+  CreateContentDTO,
+  useCreateContent,
+} from "@/services/courses";
+import {
   CreateContentInput,
+  createContentSchema,
 } from "@/validators/contentSchema";
 
 interface ContentDialogProps {
@@ -74,17 +80,25 @@ export function ContentDialog({
   open,
   onOpenChange,
   lessonId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   courseId,
 }: ContentDialogProps) {
   const createContent = useCreateContent();
   const [error, setError] = useState<string | null>(null);
 
   // Custom states for file upload management
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedKey, setUploadedKey] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
 
+  // New states for array fields
+  const [tagInput, setTagInput] = useState("");
+  const [linkTitle, setLinkTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+
   const form = useForm<CreateContentInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(createContentSchema) as any,
     defaultValues: {
       title: "",
@@ -95,12 +109,16 @@ export function ContentDialog({
       minWatchPercent: 90,
       videoUrl: "",
       pdfUrl: "",
+      tags: [],
+      description: "",
+      level: ContentLevel.LOW,
+      relatedLinks: [],
     },
   });
 
   const contentType = form.watch("type");
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     form.reset({
       title: "",
       type: ContentType.VIDEO,
@@ -110,28 +128,39 @@ export function ContentDialog({
       minWatchPercent: 90,
       videoUrl: "",
       pdfUrl: "",
+      tags: [],
+      description: "",
+      level: ContentLevel.LOW,
+      relatedLinks: [],
     });
     setUploadedKey(null);
     setDuration(0);
+    setTagInput("");
+    setLinkTitle("");
+    setLinkUrl("");
     setError(null);
-  };
+  }, [form]);
 
   useEffect(() => {
     if (open) {
       resetForm();
     }
-  }, [open]);
+  }, [open, resetForm]);
 
   const onSubmit = async (data: CreateContentInput) => {
     try {
       // Map form data to API DTO
-      const contentData: any = {
+      const contentData = {
         title: data.title.trim(),
         type: data.type,
         marks: data.marks,
         isVisible: true,
         isPreview: data.isPreview,
-      };
+        tags: data.tags,
+        description: data.description,
+        level: data.level,
+        relatedLinks: data.relatedLinks,
+      } as CreateContentDTO;
 
       if (data.type === ContentType.VIDEO) {
         // Video allows optional key on backend, but we can set pending if we want to be explicit
@@ -165,6 +194,45 @@ export function ContentDialog({
       console.error("Create content error:", err);
       setError("Failed to create content. Please try again.");
     }
+  };
+
+  const handleAddTag = () => {
+    const tag = tagInput.trim();
+    if (tag) {
+      const currentTags = form.getValues("tags") || [];
+      if (!currentTags.includes(tag)) {
+        form.setValue("tags", [...currentTags, tag]);
+      }
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    const currentTags = form.getValues("tags") || [];
+    form.setValue(
+      "tags",
+      currentTags.filter((t) => t !== tagToRemove),
+    );
+  };
+
+  const handleAddLink = () => {
+    if (linkTitle.trim() && linkUrl.trim()) {
+      const currentLinks = form.getValues("relatedLinks") || [];
+      form.setValue("relatedLinks", [
+        ...currentLinks,
+        { title: linkTitle.trim(), url: linkUrl.trim() },
+      ]);
+      setLinkTitle("");
+      setLinkUrl("");
+    }
+  };
+
+  const removeLink = (index: number) => {
+    const currentLinks = form.getValues("relatedLinks") || [];
+    form.setValue(
+      "relatedLinks",
+      currentLinks.filter((_, i) => i !== index),
+    );
   };
 
   return (
@@ -281,6 +349,169 @@ export function ContentDialog({
                   )}
                 />
               </div>
+
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter description..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Tags */}
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Add a tag..."
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddTag();
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleAddTag}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {field.value?.map((tag, index) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="px-2 py-1 flex items-center gap-1"
+                            >
+                              {tag}
+                              <X
+                                className="h-3 w-3 cursor-pointer hover:text-destructive"
+                                onClick={() => removeTag(tag)}
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Level */}
+              <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Level</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.values(ContentLevel).map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {level}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Related Links */}
+              <FormField
+                control={form.control}
+                name="relatedLinks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Related Links</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Link Title"
+                            value={linkTitle}
+                            onChange={(e) => setLinkTitle(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Input
+                            placeholder="Link URL"
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleAddLink}
+                            disabled={!linkTitle || !linkUrl}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="space-y-2 mt-2">
+                          {field.value?.map((link, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 border rounded-md text-sm"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {link.title}
+                                </span>
+                                <span className="text-muted-foreground text-xs truncate max-w-50">
+                                  {link.url}
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeLink(index)}
+                                className="text-destructive hover:text-destructive/90"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <Tabs
                 value={contentType}

@@ -12,9 +12,7 @@ export const classroomController = {
      */
     getClassroomData: catchAsync(async (req, res) => {
         const userId = req.user!.id;
-
         const result = await classroomService.getClassroomData(userId);
-
         sendResponse(res, 200, "Classroom data retrieved", result);
     }),
 };

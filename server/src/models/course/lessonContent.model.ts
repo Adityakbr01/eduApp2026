@@ -1,7 +1,7 @@
 // schema/lessonContent.schema.ts
 
 import mongoose from "mongoose";
-import { ContentType } from "src/types/course.type.js";
+import { ContentLevel, ContentType } from "src/types/course.type.js";
 
 const videoSchema = new mongoose.Schema({
     rawKey: { type: String, required: false },          // temp mp4 key
@@ -76,13 +76,25 @@ const lessonContentSchema = new mongoose.Schema({
 
     // VISIBILITY
     isVisible: { type: Boolean, default: true },
-    isPreview: { type: Boolean, default: false }, // Add this too!
+    isPreview: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
+
+    // important fields
+    tags: { type: [String], default: [], required: true },
+    description: { type: String, default: "", required: true },
+    level: {
+        type: String,
+        enum: Object.values(ContentLevel),
+        default: ContentLevel.LOW,
+        required: true
+    },
+    relatedLinks: [{ title: String, url: String }]
 
 }, { timestamps: true });
 
 lessonContentSchema.index({ lessonId: 1, order: 1 });
 lessonContentSchema.index({ lessonId: 1, courseId: 1 });
+lessonContentSchema.index({ courseId: 1 });
 
 export default mongoose.model("LessonContent", lessonContentSchema);

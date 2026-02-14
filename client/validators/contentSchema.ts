@@ -1,4 +1,4 @@
-import { ContentType } from "@/services/courses";
+import { ContentLevel, ContentType } from "@/services/courses";
 import * as z from "zod";
 
 export const editContentSchema = z.object({
@@ -8,7 +8,17 @@ export const editContentSchema = z.object({
     // Video specific
     minWatchPercent: z.number().min(0).max(100).optional(),
     // File upload (optional, if replaced)
+    // File upload (optional, if replaced)
     rawKey: z.string().optional(),
+
+    // important fields
+    tags: z.array(z.string()).min(1, "At least one tag is required").optional().default([]),
+    description: z.string().min(1, "Description is required").optional().default(""),
+    level: z.enum(ContentLevel).default(ContentLevel.LOW),
+    relatedLinks: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+    })).optional().default([]),
 });
 
 // ============================================
@@ -29,6 +39,15 @@ export const createContentSchema = z.object({
     // PDF fields
     pdfUrl: z.string().url().or(z.literal('')).optional(),
     totalPages: z.number().min(1).optional(),
+
+    // important fields
+    tags: z.array(z.string()).min(1, "At least one tag is required").optional().default([]), // Default empty
+    description: z.string().min(1, "Description is required").optional().default(""), // Default empty
+    level: z.enum(ContentLevel).default(ContentLevel.LOW),
+    relatedLinks: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+    })).optional().default([]),
 
     // Quiz/Assignment fields
     quizId: z.string().optional(),
@@ -58,6 +77,14 @@ export const updateContentSchema = z.object({
     pdfUrl: z.string().url().optional(),
     totalPages: z.number().min(1).optional(),
     quizId: z.string().optional(),
+    // important fields
+    tags: z.array(z.string()).min(1, "At least one tag is required").optional(),
+    description: z.string().min(1, "Description is required").optional(),
+    level: z.nativeEnum(ContentLevel).default(ContentLevel.LOW),
+    relatedLinks: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+    })).optional().default([]),
 });
 
 export type EditContentFormValues = z.infer<typeof editContentSchema>;

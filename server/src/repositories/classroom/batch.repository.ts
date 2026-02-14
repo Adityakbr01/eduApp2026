@@ -230,7 +230,10 @@ export const batchRepository = {
      * Helper to find course title (cached?)
      */
     async findCourseTitle(courseId: mongoose.Types.ObjectId) {
-        // Could cache this too
-        return Course.findById(courseId).select("title").lean();
+        const key = `${cacheKeyFactory.course.byId(courseId.toString())}:title`;
+        const { data } = await cacheManager.getOrSet(key, async () => {
+            return Course.findById(courseId).select("title").lean();
+        }, TTL.DATA_TTL);
+        return data;
     }
 };

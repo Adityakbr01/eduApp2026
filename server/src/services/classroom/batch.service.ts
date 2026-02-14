@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
-import AppError from "src/utils/AppError.js";
+import { env } from "src/configs/env.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
-import { env } from "src/configs/env.js";
-import { batchRepository } from "src/repositories/classroom/batch.repository.js";
-import { type AggContent } from "src/types/classroom/batch.type.js";
-import Section from "src/models/course/section.model.js";
+import ContentAttempt from "src/models/course/contentAttempt.model.js";
 import Lesson from "src/models/course/lesson.model.js";
 import LessonContent from "src/models/course/lessonContent.model.js";
-import ContentAttempt from "src/models/course/contentAttempt.model.js";
-import computeLessonMeta from "src/utils/computeLessonMeta.js";
+import Section from "src/models/course/section.model.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 import type { BatchData, BatchDetailResponse, ContentDetailResponse, LessonResult, Module } from "src/types/classroom/batch.type.js";
+import { type AggContent } from "src/types/classroom/batch.type.js";
+import AppError from "src/utils/AppError.js";
+import computeLessonMeta from "src/utils/computeLessonMeta.js";
 
 
 
@@ -27,11 +27,13 @@ export const batchService = {
         const courseOid = new mongoose.Types.ObjectId(courseId);
 
         // Parallel fetch from Redis/DB via Repository
+        console.time("BatchDetail:Fetch");
         const [courseTitle, structureResult, progressResult] = await Promise.all([
             batchRepository.findCourseTitle(courseOid),
             batchRepository.getCourseStructure(courseOid),
             batchRepository.getUserProgress(userOid, courseOid),
         ]);
+        console.timeEnd("BatchDetail:Fetch");
 
         const { structure, isCached: isStructureCached } = structureResult;
         const { progress: userProgress, isCached: isProgressCached } = progressResult;
@@ -54,6 +56,7 @@ export const batchService = {
 
         const sectionCompletionMap: boolean[] = [];
 
+        console.time("BatchDetail:Process");
         // Map cached structure to response format
         const modules: Module[] = structure.map((section, sectionIndex) => {
             const isFirstSection = sectionIndex === 0;
@@ -151,6 +154,7 @@ export const batchService = {
                 lessons: lessonResults,
             };
         });
+        console.timeEnd("BatchDetail:Process");
 
         const progressPercent = totalScore > 0
             ? Math.round((obtainedScore / totalScore) * 100 * 100) / 100

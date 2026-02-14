@@ -16,6 +16,12 @@ export enum CourseLevel {
 }
 
 
+export enum ContentLevel {
+    LOW = "Low",
+    MEDIUM = "Medium",
+    HIGH = "High",
+}
+
 export enum VideoStatusEnum {
     UPLOADED = "UPLOADED",
     PROCESSING = "PROCESSING",
@@ -84,6 +90,12 @@ export interface SocialLink {
 }
 
 
+
+export interface IContentLink {
+    title: string;
+    url: string;
+}
+
 // ==================== INTERFACES ====================
 
 export interface ICoursePricing {
@@ -145,6 +157,12 @@ export interface ILessonContent {
     audio?: IAudioContent;
     pdf?: IPdfContent;
     assessment?: IAssessmentContent;
+
+    // Added fields
+    description?: string;
+    tags?: string[];
+    level?: ContentLevel;
+    relatedLinks?: IContentLink[];
 
     createdAt: string;
     updatedAt: string;
@@ -397,6 +415,10 @@ export interface CreateContentDTO {
         startDate?: string;
         penaltyPercent?: number;
     };
+    description?: string;
+    tags?: string[];
+    level?: ContentLevel;
+    relatedLinks?: IContentLink[];
 }
 
 export type UpdateContentDTO = Partial<CreateContentDTO>;

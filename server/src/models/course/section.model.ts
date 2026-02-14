@@ -19,6 +19,6 @@ const sectionSchema = new mongoose.Schema({
     deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
-sectionSchema.index({ courseId: 1 });
+sectionSchema.index({ courseId: 1, order: 1 });
 
 export default mongoose.model("Section", sectionSchema);

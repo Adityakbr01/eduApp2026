@@ -15,6 +15,12 @@ export enum CourseLevel {
     ADVANCED = "Advanced",
 }
 
+export enum ContentLevel {
+    LOW = "Low",
+    MEDIUM = "Medium",
+    HIGH = "High",
+}
+
 export enum DeliveryMode {
     LIVE = "Live",
     OFFLINE = "Offline",

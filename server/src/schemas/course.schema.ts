@@ -1,4 +1,4 @@
-import { BatchStatus, ContentType, CourseLevel, DeliveryMode, Language, SocialLinkType } from "src/types/course.type.js";
+import { BatchStatus, ContentLevel, ContentType, CourseLevel, DeliveryMode, Language, SocialLinkType } from "src/types/course.type.js";
 import { z } from "zod";
 
 
@@ -164,6 +164,15 @@ export const createContentSchema = z.object({
         duration: z.number().min(0).optional(),
     }).optional(),
 
+    // important fields
+    tags: z.array(z.string()).min(1, "At least one tag is required"),
+    description: z.string().min(1, "Description is required"),
+    level: z.nativeEnum(ContentLevel).default(ContentLevel.LOW),
+    relatedLinks: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+    })).optional(),
+
     // 📝 QUIZ/ASSIGNMENT (nested)
     assessment: z.object({
         refId: z.string().optional(),
@@ -207,6 +216,15 @@ export const updateContentSchema = z.object({
         url: z.string().optional(),
         duration: z.number().min(0).optional(),
     }).optional(),
+
+    // important fields
+    tags: z.array(z.string()).min(1, "At least one tag is required").optional(),
+    description: z.string().min(1, "Description is required").optional(),
+    level: z.nativeEnum(ContentLevel).default(ContentLevel.LOW),
+    relatedLinks: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+    })).optional(),
 
     // 📝 QUIZ/ASSIGNMENT (nested)
     assessment: z.object({
