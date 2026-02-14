@@ -122,94 +122,16 @@ export const reorderSectionsSchema = z.array(z.object({
 // ============================================
 // LESSON SCHEMAS
 // ============================================
-export const createLessonSchema = z.object({
-    title: z.string().min(1, "Lesson title is required").max(200),
-    isVisible: z.boolean().default(true),
-});
 
-export const updateLessonSchema = z.object({
-    title: z.string().min(1).max(200).optional(),
-    isVisible: z.boolean().optional(),
-});
+
+
 
 export const reorderLessonsSchema = z.array(z.object({
     id: z.string().min(1),
     order: z.number().int().min(0),
 })).min(1, "At least one lesson is required");
 
-// ============================================
-// LESSON CONTENT SCHEMAS
-// ============================================
-export const createContentSchema = z.object({
-    title: z.string().min(1, "Content title is required").max(200),
-    type: z.nativeEnum(ContentType).optional(),
-    marks: z.number().min(0, "Marks must be a positive number"),
-    isVisible: z.boolean().default(true),
 
-    // Video fields
-    videoUrl: z.string().url().optional(),
-    duration: z.number().min(0).optional(), // seconds
-    minWatchPercent: z.number().min(0).max(100).default(90),
-
-    // PDF fields
-    pdfUrl: z.string().url().optional(),
-    totalPages: z.number().min(1).optional(),
-
-    // Quiz/Assignment fields
-    quizId: z.string().optional(),
-
-    // Deadline fields
-    deadline: z.object({
-        dueDate: z.string().optional(),
-        startDate: z.string().optional(),
-        penaltyPercent: z.number().min(0).max(100).default(30),
-    }).optional(),
-}).refine((data) => {
-    // Validate video type has videoUrl
-    if (data.type === "video" && !data.videoUrl) {
-        return false;
-    }
-    // Validate pdf type has pdfUrl
-    if (data.type === "pdf" && !data.pdfUrl) {
-        return false;
-    }
-
-    // Validate Dates
-    const now = new Date();
-    if (data.deadline?.startDate) {
-        if (new Date(data.deadline.startDate) <= now) {
-            return false;
-        }
-    }
-    if (data.deadline?.dueDate) {
-        if (new Date(data.deadline.dueDate) <= now) {
-            return false;
-        }
-    }
-
-    if (data.deadline?.startDate && data.deadline?.dueDate) {
-        if (new Date(data.deadline.dueDate) <= new Date(data.deadline.startDate)) {
-            return false;
-        }
-    }
-
-    return true;
-}, {
-    message: "Invalid dates: Start and Due dates must be in the future, and Due Date must be after Start Date",
-});
-
-export const updateContentSchema = z.object({
-    title: z.string().min(1).max(200).optional(),
-    type: z.nativeEnum(ContentType).optional(),
-    marks: z.number().min(0).optional(),
-    isVisible: z.boolean().optional(),
-    videoUrl: z.string().url().optional(),
-    duration: z.number().min(0).optional(),
-    minWatchPercent: z.number().min(0).max(100).optional(),
-    pdfUrl: z.string().url().optional(),
-    totalPages: z.number().min(1).optional(),
-    quizId: z.string().optional(),
-});
 
 export const reorderContentsSchema = z.array(z.object({
     id: z.string().min(1),
@@ -242,8 +164,4 @@ export type CreateCourseInput = z.infer<typeof createCourseSchema>;
 export type UpdateCourseInput = z.infer<typeof updateCourseSchema>;
 export type CreateSectionInput = z.infer<typeof createSectionSchema>;
 export type UpdateSectionInput = z.infer<typeof updateSectionSchema>;
-export type CreateLessonInput = z.infer<typeof createLessonSchema>;
-export type UpdateLessonInput = z.infer<typeof updateLessonSchema>;
-export type CreateContentInput = z.infer<typeof createContentSchema>;
-export type UpdateContentInput = z.infer<typeof updateContentSchema>;
 export type SaveProgressInput = z.infer<typeof saveProgressSchema>

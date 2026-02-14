@@ -72,13 +72,7 @@ const lessonContentSchema = new mongoose.Schema({
     audio: { type: audioSchema, sparse: true },
     draftID: { type: String }, //draftid for ecs worker
 
-    // Deadline & Penalty
-    deadline: {
-        dueDate: { type: Date },                                      // When the content is due
-        startDate: { type: Date },                                    // When content unlocks (before this → "locked")
-        penaltyPercent: { type: Number, default: 30, min: 0, max: 100 }, // Penalty % for late completion
-        defaultPenalty: { type: Number, default: 30 },
-    },
+
 
     // VISIBILITY
     isVisible: { type: Boolean, default: true },

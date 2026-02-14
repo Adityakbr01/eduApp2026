@@ -3,6 +3,7 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { quizRepository, assignmentRepository } from "src/repositories/assessment.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import { lessonRepository } from "src/repositories/lesson.repository.js";
 import AppError from "src/utils/AppError.js";
 import type { IQuizQuestion } from "src/models/course/quiz.model.js";
 import type {
@@ -187,6 +188,11 @@ export const quizService = {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
+        const lesson = await lessonRepository.findById(content.lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
         // Check if question exists
         const question = quiz.questions.find((q) => q._id?.toString() === data.questionId);
         if (!question) {
@@ -242,8 +248,8 @@ export const quizService = {
 
         // ⏰ DEADLINE CHECK & PENALTY
         let penaltyApplied = false;
-        if (content.deadline?.dueDate && new Date() > new Date(content.deadline.dueDate)) {
-            const penaltyPercent = content.deadline.penaltyPercent || 0;
+        if (lesson.deadline?.dueDate && new Date() > new Date(lesson.deadline.dueDate)) {
+            const penaltyPercent = lesson.deadline.penaltyPercent || 0;
             if (penaltyPercent > 0 && earnedMarks > 0) {
                 earnedMarks = Math.floor(earnedMarks * (1 - penaltyPercent / 100));
                 penaltyApplied = true;
@@ -487,6 +493,11 @@ export const assignmentService = {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
+        const lesson = await lessonRepository.findById(content.lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
         // Get or create ContentAttempt
         let attempt = await contentAttemptRepository.findByUserAndContent(userId, assignment.contentId);
         if (!attempt) {
@@ -499,12 +510,12 @@ export const assignmentService = {
 
         // ⏰ DEADLINE CHECK
         const now = new Date();
-        const dueDate = content.deadline?.dueDate ? new Date(content.deadline.dueDate) : null;
+        const dueDate = lesson.deadline?.dueDate ? new Date(lesson.deadline.dueDate) : null;
         const isLate = !!(dueDate && now > dueDate);
 
         let penaltyPercent = 0;
-        if (isLate && content.deadline) {
-            penaltyPercent = content.deadline.penaltyPercent || (content.deadline as any).defaultPenalty || 0;
+        if (isLate && lesson.deadline) {
+            penaltyPercent = lesson.deadline.penaltyPercent || 0;
         }
 
         // Resolve submission content

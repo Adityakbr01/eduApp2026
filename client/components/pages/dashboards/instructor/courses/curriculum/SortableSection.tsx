@@ -186,6 +186,11 @@ export function SortableSection({
   const handleCreateLesson = async (data: {
     title: string;
     description?: string;
+    deadline?: {
+      dueDate?: string;
+      startDate?: string;
+      penaltyPercent?: number;
+    };
   }) => {
     try {
       await createLesson.mutateAsync({
@@ -212,7 +217,7 @@ export function SortableSection({
             </button>
 
             <CollapsibleTrigger asChild>
-              <button className="flex items-center gap-2 flex-1 text-left">
+              <button className="flex items-center cursor-pointer gap-2 flex-1 text-left">
                 {isOpen ? (
                   <ChevronDown className="h-4 w-4" />
                 ) : (
@@ -286,7 +291,7 @@ export function SortableSection({
             </DropdownMenu>
           </div>
 
-          <CollapsibleContent>
+          <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown">
             <div className="p-3 space-y-2">
               {lessons.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">

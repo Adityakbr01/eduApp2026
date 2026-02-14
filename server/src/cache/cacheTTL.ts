@@ -61,6 +61,14 @@ export const TTL = {
     COURSE_ENROLLMENT: 300,     // 5 minutes
 
     // =====================
+    // BATCH
+    // =====================
+    BATCH_STRUCTURE: 86400,     // 24 hours
+    BATCH_PROGRESS: 604800,     // 7 days
+    DATA_TTL: 86400,            // 24 hours
+    USER_TTL: 604800,           // 7 days
+
+    // =====================
     // LOCKS
     // =====================
     LOCK_SHORT: 10,             // 10 seconds

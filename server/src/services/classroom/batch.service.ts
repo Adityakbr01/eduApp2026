@@ -105,12 +105,10 @@ export const batchService = {
                         marks,
                         isCompleted,
                         obtainedMarks: obtained,
-                        dueDate: c.dueDate ? new Date(c.dueDate) : null,
-                        startDate: c.startDate ? new Date(c.startDate) : null,
-                        penaltyPercent: c.penaltyPercent,
-                        videoStatus: c.videoStatus,
-                        assessmentType: c.assessmentType,
                         lastAttemptedAt: lastAttemptedAt,
+                        // We removed these from the query so don't map them
+                        // videoStatus: c.videoStatus,
+                        // assessmentType: c.assessmentType,
                     };
                 });
 
@@ -121,7 +119,16 @@ export const batchService = {
                 prevLessonCompleted = lessonCompleted;
 
                 // Compute Aggregated Meta (Overdue, Deadline, etc.)
-                const meta = computeLessonMeta(hydratedContents, now, lessonIsLocked);
+                const meta = computeLessonMeta(
+                    hydratedContents,
+                    now,
+                    lessonIsLocked,
+                    lesson.deadline ? {
+                        dueDate: lesson.deadline.dueDate ? new Date(lesson.deadline.dueDate) : null, // Convert string to Date
+                        startDate: lesson.deadline.startDate ? new Date(lesson.deadline.startDate) : null, // Convert string to Date
+                        penaltyPercent: lesson.deadline.penaltyPercent
+                    } : undefined
+                );
 
                 lessonResults.push({
                     id: lesson._id.toString(),
@@ -206,10 +213,12 @@ export const batchService = {
 
         const now = new Date();
 
-        // Check if locked by startDate
+        // Check if locked by startDate (Removed as per new logic)
+        /*
         if (content.deadline?.startDate && new Date(content.deadline.startDate) > now) {
             throw new AppError("This content is not yet available", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN);
         }
+        */
 
         // Check if video is not ready
         if ((content.type as string) === "video" && content.video?.status && content.video.status !== "READY") {
@@ -341,16 +350,6 @@ export const batchService = {
             };
         }
 
-        if (content.deadline) {
-            const dl = content.deadline as any;
-            response.deadline = {
-                dueDate: dl.dueDate?.toISOString(),
-                startDate: dl.startDate?.toISOString(),
-                penaltyPercent: dl.penaltyPercent,
-                defaultPenalty: dl.defaultPenalty,
-            };
-        }
-
         return response;
     },
 
@@ -386,7 +385,7 @@ export const batchService = {
             isVisible: { $ne: false }
         })
             .sort({ order: 1 })
-            .select("title type marks deadline video.status video.duration pdf.totalPages audio.duration assessment.type")
+            .select("title type marks video.status video.duration pdf.totalPages audio.duration assessment.type")
             .lean();
 
         // 2. Fetch User Progress for these contents

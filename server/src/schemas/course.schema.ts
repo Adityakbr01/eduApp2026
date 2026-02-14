@@ -114,11 +114,21 @@ export const reorderSectionsSchema = z.array(z.object({
 export const createLessonSchema = z.object({
     title: z.string().min(1, "Lesson title is required").max(200),
     isVisible: z.boolean().default(true),
+    deadline: z.object({
+        dueDate: z.string().optional(),
+        startDate: z.string().optional(),
+        penaltyPercent: z.number().min(0).max(100).default(0),
+    }).optional(),
 });
 
 export const updateLessonSchema = z.object({
     title: z.string().min(1).max(200).optional(),
     isVisible: z.boolean().optional(),
+    deadline: z.object({
+        dueDate: z.string().optional(),
+        startDate: z.string().optional(),
+        penaltyPercent: z.number().min(0).max(100).optional(),
+    }).optional(),
 });
 
 export const reorderLessonsSchema = z.array(z.object({

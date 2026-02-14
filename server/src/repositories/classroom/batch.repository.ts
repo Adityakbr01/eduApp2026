@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import cacheManager from "src/cache/cacheManager.js";
+import { TTL } from "src/cache/cacheTTL.js";
 import ContentAttempt from "src/models/course/contentAttempt.model.js";
 import Course from "src/models/course/course.model.js";
 import Section from "src/models/course/section.model.js";
@@ -11,8 +12,6 @@ import type { CachedSection, UserCourseProgress, UserProgressMap } from "src/typ
 // ============================================
 // REPOSITORY
 // ============================================
-const DATA_TTL = 60 * 60 * 24; // 24 hours (for structure)
-const USER_TTL = 60 * 60 * 24 * 7; // 7 days (for progress)
 
 export const batchRepository = {
     /**
@@ -75,11 +74,11 @@ export const batchRepository = {
                                         {
                                             $project: {
                                                 _id: 1,
-                                                type: 1,
                                                 marks: 1,
-                                                deadline: 1,
-                                                video: { status: 1 },
-                                                assessment: { type: 1 }
+                                                type: 1 // We need type to know if it's video/assignment? Actually service uses type in hydration?
+                                                // Wait, service uses `c.type` in the map: `type: c.type`.
+                                                // If we remove it, `c.type` will be undefined.
+                                                // Let's keep `type` as well, it's small.
                                             }
                                         }
                                     ],
@@ -92,6 +91,7 @@ export const batchRepository = {
                                     title: 1,
                                     order: 1,
                                     isManuallyUnlocked: 1,
+                                    deadline: 1,
                                     contents: {
                                         $map: {
                                             input: "$contents",
@@ -100,11 +100,6 @@ export const batchRepository = {
                                                 _id: "$$c._id",
                                                 type: "$$c.type",
                                                 marks: { $ifNull: ["$$c.marks", 0] },
-                                                dueDate: { $ifNull: ["$$c.deadline.dueDate", null] },
-                                                startDate: { $ifNull: ["$$c.deadline.startDate", null] },
-                                                penaltyPercent: { $ifNull: ["$$c.deadline.penaltyPercent", 0] },
-                                                videoStatus: { $ifNull: ["$$c.video.status", null] },
-                                                assessmentType: { $ifNull: ["$$c.assessment.type", null] },
                                             }
                                         }
                                     }
@@ -126,7 +121,7 @@ export const batchRepository = {
             ]);
 
             return structure as unknown as CachedSection[];
-        }, DATA_TTL);
+        }, TTL.DATA_TTL);
 
         return { structure: data, isCached };
     },
@@ -184,7 +179,7 @@ export const batchRepository = {
             }
 
             return { history: {}, lastVisitedId: undefined };
-        }, USER_TTL);
+        }, TTL.USER_TTL);
 
         return { progress: data, isCached };
 
@@ -227,7 +222,7 @@ export const batchRepository = {
             // But we might need the lessonId passed here too.
             // For now, let's just update the content bit.
 
-            await cacheManager.set(key, progress, USER_TTL);
+            await cacheManager.set(key, progress, TTL.USER_TTL);
         }
     },
 

@@ -86,9 +86,6 @@ export interface AggContent {
     marks: number;
     isCompleted: boolean;
     obtainedMarks: number;
-    dueDate: Date | null;
-    startDate: Date | null;
-    penaltyPercent: number;
     lastAttemptedAt?: Date | null;
     videoStatus?: string | null;
     assessmentType?: string | null;
@@ -103,15 +100,13 @@ export interface AggContent {
 // ============================================
 
 // 1. Structure (Cached)
+// 1. Structure (Cached)
 export interface CachedContentMeta {
     _id: string; // string for redis compatibility
     type: string;
     marks: number;
-    dueDate: string | null; // dates stored as strings in redis
-    startDate: string | null;
-    penaltyPercent: number;
-    videoStatus: string | null;
-    assessmentType: string | null;
+    videoStatus?: string | null;
+    assessmentType?: string | null;
 }
 
 export interface CachedLesson {
@@ -119,6 +114,11 @@ export interface CachedLesson {
     title: string;
     order: number;
     isManuallyUnlocked?: boolean;
+    deadline?: {
+        dueDate?: string;
+        startDate?: string;
+        penaltyPercent?: number;
+    };
     contents: CachedContentMeta[];
 }
 

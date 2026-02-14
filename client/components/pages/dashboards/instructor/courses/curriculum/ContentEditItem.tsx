@@ -30,10 +30,9 @@ import {
 import {
   ContentType,
   ILessonContent,
-  UpdateContentDTO,
   useDeleteContent,
   useUpdateContent,
-  VideoStatusEnum,
+  VideoStatusEnum
 } from "@/services/courses";
 import {
   ClipboardList,
@@ -90,30 +89,7 @@ export function ContentItem({
   const [quizDialogOpen, setQuizDialogOpen] = useState(false);
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
 
-  // Edit states
-  const [editTitle, setEditTitle] = useState(content.title);
-  const [editMarks, setEditMarks] = useState(content.marks);
-  const [editIsPreview, setEditIsPreview] = useState(content.isPreview);
-  const [editDuration, setEditDuration] = useState(
-    content.video?.duration || content.audio?.duration || 0,
-  );
-  const [editMinWatchPercent, setEditMinWatchPercent] = useState(
-    content.video?.minWatchPercent || 90,
-  );
-  // Deadline & Penalty
-  const [editStartDate, setEditStartDate] = useState(
-    content.deadline?.startDate
-      ? new Date(content.deadline.startDate).toISOString().slice(0, 16)
-      : "",
-  );
-  const [editDueDate, setEditDueDate] = useState(
-    content.deadline?.dueDate
-      ? new Date(content.deadline.dueDate).toISOString().slice(0, 16)
-      : "",
-  );
-  const [editPenaltyPercent, setEditPenaltyPercent] = useState(
-    content.deadline?.penaltyPercent ?? 30,
-  );
+  // Edit state removed - managed by Dialog
 
   const updateContent = useUpdateContent();
   const deleteContent = useDeleteContent();
@@ -128,83 +104,10 @@ export function ContentItem({
   );
 
   const handleEditOpen = () => {
-    setEditTitle(content.title);
-    setEditMarks(content.marks);
-    setEditIsPreview(content.isPreview);
-    setEditDuration(content.video?.duration || content.audio?.duration || 0);
-    setEditMinWatchPercent(content.video?.minWatchPercent || 90);
-    setEditStartDate(
-      content.deadline?.startDate
-        ? new Date(content.deadline.startDate).toISOString().slice(0, 16)
-        : "",
-    );
-    setEditDueDate(
-      content.deadline?.dueDate
-        ? new Date(content.deadline.dueDate).toISOString().slice(0, 16)
-        : "",
-    );
-    setEditPenaltyPercent(content.deadline?.penaltyPercent ?? 30);
-    setNewFileKey("");
     setEditDialogOpen(true);
   };
 
-  const handleEditSave = async () => {
-    try {
-      const updateData: UpdateContentDTO = {
-        title: editTitle.trim(),
-        marks: editMarks,
-        isPreview: editIsPreview,
-        deadline: {
-          startDate: editStartDate
-            ? new Date(editStartDate).toISOString()
-            : undefined,
-          dueDate: editDueDate
-            ? new Date(editDueDate).toISOString()
-            : undefined,
-          penaltyPercent: editPenaltyPercent,
-        },
-      };
-      console.log("Video update data:", updateData.video);
-      if (content.type === ContentType.VIDEO) {
-        updateData.video = {
-          duration: editDuration < 10 ? 10 : editDuration,
-          minWatchPercent: editMinWatchPercent,
-          hlsKey: content.video?.hlsKey,
-          status: content.video?.status,
-          rawKey: content.video?.rawKey,
-        };
-        // Only include rawKey if a new file is uploaded
-        if (newFileKey) {
-          updateData.video.rawKey = newFileKey;
-        }
-      }
-
-      if (content.type === ContentType.AUDIO) {
-        updateData.audio = {
-          rawKey: newFileKey || content.audio?.url || "",
-          duration: editDuration < 10 ? 10 : editDuration,
-        };
-      }
-
-      if (content.type === ContentType.PDF) {
-        updateData.pdf = {
-          rawKey: newFileKey || content.pdf?.url || "",
-        };
-      }
-
-      await updateContent.mutateAsync({
-        contentId: content._id,
-        data: updateData,
-        lessonId,
-      });
-
-      // Reset upload state
-      setNewFileKey("");
-      setEditDialogOpen(false);
-    } catch (error) {
-      console.error("Update failed:", error);
-    }
-  };
+  // handleEditSave removed
 
   const handleDelete = async () => {
     try {
@@ -330,28 +233,7 @@ export function ContentItem({
         content={content}
         courseId={courseId}
         lessonId={lessonId}
-        editTitle={editTitle}
-        setEditTitle={setEditTitle}
-        editMarks={editMarks}
-        setEditMarks={setEditMarks}
-        editIsPreview={editIsPreview}
-        setEditIsPreview={setEditIsPreview}
-        editMinWatchPercent={editMinWatchPercent}
-        setEditMinWatchPercent={setEditMinWatchPercent}
-        editStartDate={editStartDate}
-        setEditStartDate={setEditStartDate}
-        editDueDate={editDueDate}
-        setEditDueDate={setEditDueDate}
-        editPenaltyPercent={editPenaltyPercent}
-        setEditPenaltyPercent={setEditPenaltyPercent}
-        isLoading={updateContent?.isPending}
-        isUploading={isUploading}
-        isVideoUploadDisabled={isVideoUploadDisabled}
-        newFileKey={newFileKey}
-        setNewFileKey={setNewFileKey}
         getCurrentFileUrl={() => getCurrentFileUrl({ content })}
-        handleSave={handleEditSave}
-        setIsUploading={setIsUploading}
       />
 
       {/* Delete & Other Dialogs */}

@@ -2,6 +2,7 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import { lessonRepository } from "src/repositories/lesson.repository.js";
 import AppError from "src/utils/AppError.js";
 
 
@@ -52,6 +53,11 @@ export const contentProgressService = {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
+        const lesson = await lessonRepository.findById(content.lessonId);
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
         // Anti-cheat: manual complete caps at 90% of total marks
         const totalMarks = content.marks || 100;
         let finalMarks = obtainedMarks ?? totalMarks;
@@ -62,8 +68,8 @@ export const contentProgressService = {
         }
 
         // ⏰ DEADLINE PENALTY CHECK
-        if (content.deadline?.dueDate && new Date() > new Date(content.deadline.dueDate)) {
-            const penaltyPercent = content.deadline.penaltyPercent || 0;
+        if (lesson.deadline?.dueDate && new Date() > new Date(lesson.deadline.dueDate)) {
+            const penaltyPercent = lesson.deadline.penaltyPercent || 0;
             if (penaltyPercent > 0) {
                 finalMarks = Math.floor(finalMarks * (1 - penaltyPercent / 100));
             }
@@ -91,6 +97,8 @@ export const contentProgressService = {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
+        const lesson = await lessonRepository.findById(content.lessonId);
+
         // Calculate proportional marks if totalDuration is available
         let obtainedMarks = 0;
         if (totalDuration && totalDuration > 0 && content.marks > 0) {
@@ -98,8 +106,8 @@ export const contentProgressService = {
             obtainedMarks = Math.floor(content.marks * percentage);
 
             // ⏰ DEADLINE PENALTY CHECK
-            if (content.deadline?.dueDate && new Date() > new Date(content.deadline.dueDate)) {
-                const penaltyPercent = content.deadline.penaltyPercent || 0;
+            if (lesson?.deadline?.dueDate && new Date() > new Date(lesson.deadline.dueDate)) {
+                const penaltyPercent = lesson.deadline.penaltyPercent || 0;
                 if (penaltyPercent > 0) {
                     obtainedMarks = Math.floor(obtainedMarks * (1 - penaltyPercent / 100));
                 }

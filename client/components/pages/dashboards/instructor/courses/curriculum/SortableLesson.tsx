@@ -176,11 +176,20 @@ export function SortableLesson({
   const handleUpdateLesson = async (data: {
     title: string;
     description?: string;
+    deadline?: {
+      dueDate?: string;
+      startDate?: string;
+      penaltyPercent?: number;
+    };
   }) => {
     try {
       await updateLesson.mutateAsync({
         lessonId: lesson._id,
-        data: { title: data.title, isVisible: lesson.isVisible },
+        data: {
+          title: data.title,
+          isVisible: lesson.isVisible,
+          deadline: data.deadline,
+        },
         sectionId,
       });
       setEditDialogOpen(false);
@@ -222,11 +231,7 @@ export function SortableLesson({
 
   return (
     <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="border rounded-md bg-background"
-      >
+      <div ref={setNodeRef} style={style} className="border rounded-md bg-card">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <div className="flex items-center gap-2 p-2">
             <button
@@ -238,7 +243,7 @@ export function SortableLesson({
             </button>
 
             <CollapsibleTrigger asChild>
-              <button className="flex items-center gap-2 flex-1 text-left text-sm">
+              <button className="flex items-center cursor-pointer gap-2 flex-1 text-left text-sm">
                 {isOpen ? (
                   <ChevronDown className="h-3 w-3" />
                 ) : (
@@ -308,7 +313,7 @@ export function SortableLesson({
             </DropdownMenu>
           </div>
 
-          <CollapsibleContent>
+          <CollapsibleContent className="overflow-hidden transition-all data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown">
             <div className="px-8 pb-2 space-y-1">
               {contents.length === 0 ? (
                 <div className="text-center py-4 text-muted-foreground text-sm">
@@ -356,7 +361,10 @@ export function SortableLesson({
         onOpenChange={setEditDialogOpen}
         onSubmit={handleUpdateLesson}
         isLoading={updateLesson.isPending}
-        initialData={{ title: lesson.title }}
+        initialData={{
+          title: lesson.title,
+          deadline: lesson.deadline,
+        }}
         mode="edit"
       />
 

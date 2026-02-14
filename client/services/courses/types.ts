@@ -145,11 +145,7 @@ export interface ILessonContent {
     audio?: IAudioContent;
     pdf?: IPdfContent;
     assessment?: IAssessmentContent;
-    deadline?: {
-        dueDate?: string;
-        startDate?: string;
-        penaltyPercent?: number;
-    };
+
     createdAt: string;
     updatedAt: string;
     completed?: boolean;
@@ -163,9 +159,12 @@ export interface ILesson {
     isVisible: boolean;
     order: number;
     contents?: ILessonContent[];
-    createdAt: string;
-    updatedAt: string;
-    completed?: boolean;
+    deadline?: {
+        dueDate?: string;
+        startDate?: string;
+        penaltyPercent?: number;
+    };
+
 }
 
 export interface ISection {
@@ -349,11 +348,21 @@ export interface UpdateSectionDTO {
 export interface CreateLessonDTO {
     title: string;
     isVisible?: boolean;
+    deadline?: {
+        dueDate?: string;
+        startDate?: string;
+        penaltyPercent?: number;
+    };
 }
 
 export interface UpdateLessonDTO {
     title?: string;
     isVisible?: boolean;
+    deadline?: {
+        dueDate?: string;
+        startDate?: string;
+        penaltyPercent?: number;
+    };
 }
 
 export interface CreateContentDTO {

@@ -19,6 +19,13 @@ const lessonSchema = new mongoose.Schema({
     isLocked: { type: Boolean, default: true },
     isManuallyUnlocked: { type: Boolean, default: false },
 
+    // Deadline & Penalty
+    deadline: {
+        dueDate: { type: Date },                                      // When the lesson is due
+        startDate: { type: Date },                                    // When lesson unlocks (before this → "locked")
+        penaltyPercent: { type: Number, default: 0, min: 0, max: 100 }, // Penalty % for late completion
+    },
+
     isVisible: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
