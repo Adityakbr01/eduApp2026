@@ -63,7 +63,11 @@ const SectionModules = ({
     if (onContentSelect) {
       onContentSelect(item.id);
     } else {
-      router.push(`/classroom/batch/${batchId}/lessons/${item.id}`);
+      let url = `/classroom/batch/${batchId}/lessons/${item.id}`;
+      if (lastVisitedId) {
+        url += `?lastVisitedId=${lastVisitedId}`;
+      }
+      router.push(url);
     }
   };
 

@@ -21,12 +21,12 @@ const BatchDetailPage = () => {
   // Fetch batch detail from API
   const { data, isLoading, isError } = useGetBatchDetail(batchId);
   const batchData = data?.data?.batchData;
-  console.log("batchData", data?.data.modules);
   const modules = data?.data?.modules || [];
   const lastVisitedId = data?.data?.lastVisitedId;
 
-  // Use state with default "overview"
-  const [activeSidebarView, setActiveSidebarViewState] = useState("overview");
+  // Use state with default "leaderboard"
+  const [activeSidebarView, setActiveSidebarViewState] =
+    useState("leaderboard");
   const [mobileTab, setMobileTabState] = useState("overview");
   const [isClient, setIsClient] = useState(false);
 
@@ -37,10 +37,14 @@ const BatchDetailPage = () => {
     // Load Active View (Tools)
     const savedView = secureLocalStorage.getItem<string>(
       STORAGE_KEYS.BATCH_ACTIVE_VIEW,
-      "overview",
+      "leaderboard",
     );
     if (savedView) {
-      setActiveSidebarViewState(savedView);
+      if (savedView === "overview") {
+        setActiveSidebarViewState("leaderboard");
+      } else {
+        setActiveSidebarViewState(savedView);
+      }
     }
 
     // Load Mobile Tab (Overview vs Other)

@@ -78,6 +78,12 @@ export interface ContentDetailResponse {
         penaltyPercent?: number;
         defaultPenalty?: number;
     };
+
+    isManuallyUnlocked?: boolean;
+    tags?: string[];
+    description?: string;
+    level?: string;
+    relatedLinks?: { title: string, url: string }[];
 }
 
 export interface AggContent {
@@ -91,12 +97,33 @@ export interface AggContent {
     assessmentType?: string | null;
 }
 
+// ============================================
+// LEADERBOARD TYPES
+// ============================================
 
+export interface LeaderboardEntry {
+    userId: string;
+    name: string;
+    avatar?: {
+        url: string;
+        version: number;
+    };
+    points: number;
+    rank?: number; // Optional as it might be computed later
+}
 
+export interface LeaderboardResponse {
+    list: LeaderboardEntry[];
+    currentUser: {
+        rank: number;
+        points: number;
+        percentile: number;
+    } | null;
+}
 
 
 // ============================================
-// TYPES
+// CACHED TYPES
 // ============================================
 
 // 1. Structure (Cached)
@@ -143,4 +170,4 @@ export interface UserProgressMap {
 export interface UserCourseProgress {
     history: UserProgressMap;
     lastVisitedId?: string;
-}
+} 

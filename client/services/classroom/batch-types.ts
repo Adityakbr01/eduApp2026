@@ -52,6 +52,47 @@ export interface BatchData {
     totalScore: number;
 }
 
+export interface LessonRes {
+    id: string;
+    title: string;
+
+    // content type
+    type: ItemContentType;
+
+    // assessment specific (quiz/assignment only)
+    assessmentType?: "quiz" | "assignment";
+
+    // completion
+    isCompleted: boolean;
+
+    // marks
+    marks: number;
+    obtainedMarks: number;
+
+    // video specific
+    videoDuration?: number;
+    videoStatus?: string;
+
+    // optional fields (future ready)
+    isLocked?: boolean;
+    overdue?: boolean;
+    daysLate?: number;
+    penalty?: number;
+    deadline?: string;
+    start?: string;
+}
+
+
+export interface LessonDetailResponse {
+    id: string;
+    title: string;
+    contents: LessonRes[];
+    lastVisitedId?: string;
+    meta: {
+        isProgressCached: boolean;
+    };
+}
+
 export interface BatchDetailResponse {
     batchData: BatchData;
     modules: Module[];
@@ -59,6 +100,56 @@ export interface BatchDetailResponse {
 }
 
 // ==================== CONTENT DETAIL TYPES ====================
+
+export interface QuizQuestion {
+    _id: string;
+    question: string;
+    options: string[];
+    correctAnswerIndex: number;
+    marks: number;
+    explanation?: string;
+}
+
+export interface QuizData {
+    _id: string;
+    courseId: string;
+    lessonId: string;
+    contentId: string;
+    type: "quiz";
+    title: string;
+    description?: string;
+    totalMarks: number;
+    passingMarks?: number;
+    timeLimit?: number;
+    questions: QuizQuestion[];
+    shuffleQuestions: boolean;
+    shuffleOptions: boolean;
+    showCorrectAnswers: boolean;
+    maxAttempts: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AssignmentData {
+    _id: string;
+    courseId: string;
+    lessonId: string;
+    contentId: string;
+    type: "assignment";
+    title: string;
+    description: string;
+    instructions: string[];
+    submission: {
+        type: "file" | "text" | "link" | "code";
+        allowedFormats?: string[];
+        maxFileSizeMB?: number;
+    };
+    totalMarks: number;
+    dueDate?: string;
+    isAutoEvaluated: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
 
 export interface ContentDetailResponse {
     id: string;
@@ -84,11 +175,16 @@ export interface ContentDetailResponse {
     audioUrl?: string;
     audioDuration?: number;
 
-    // Assessment
+    // Meta
+    tags?: string[];
+    description?: string;
+    level?: string;
+    relatedLinks?: { title: string; url: string }[];
+
     // Assessment
     assessment?: {
-        type: string;
-        data: any; // Full populated quiz/assignment object
+        type: "quiz" | "assignment";
+        data: QuizData | AssignmentData;
     };
 
     // Deadline
@@ -101,3 +197,26 @@ export interface ContentDetailResponse {
 }
 
 export type ContentDetail = ContentDetailResponse;
+
+// ==================== LEADERBOARD TYPES ====================
+
+export interface LeaderboardEntry {
+    userId: string;
+    name: string;
+    avatar?: {
+        url: string;
+        version: number;
+        key: string;
+    };
+    points: number;
+    rank?: number;
+}
+
+export interface LeaderboardResponse {
+    list: LeaderboardEntry[];
+    currentUser: {
+        rank: number;
+        points: number;
+        percentile: number;
+    } | null;
+}

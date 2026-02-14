@@ -26,11 +26,25 @@ router.use(authMiddleware);
 router.get("/", classroomController.getClassroomData);
 
 /**
+ * @route   GET /api/classroom/heatmap
+ * @desc    Get student activity heatmap
+ * @access  Private (Authenticated users)
+ */
+router.get("/heatmap", classroomController.getHeatmapData);
+
+/**
  * @route   GET /api/classroom/:courseId/batch
  * @desc    Get batch detail (sections, lessons, contents with progress/deadline/penalty)
  * @access  Private (Enrolled users only)
  */
 router.get("/:courseId/batch", isEnrolled(), batchController.getBatchDetail);
+
+/**
+ * @route   GET /api/classroom/:courseId/leaderboard
+ * @desc    Get leaderboard
+ * @access  Private (Enrolled users only)
+ */
+router.get("/:courseId/leaderboard", isEnrolled(), batchController.getBatchLeaderboard);
 
 /**
  * @route   GET /api/classroom/:courseId/content/:contentId

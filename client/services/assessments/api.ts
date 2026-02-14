@@ -15,11 +15,15 @@ import { ApiResponse } from "../auth";
 // ============================================
 // QUIZ API
 // ============================================
+
+
+const instructorAssesmentBaseURL = "/assessments/instructor"
+
 export const quizApi = {
     // Create a new quiz
     create: async (data: CreateQuizDTO): Promise<ApiResponse<IQuiz>> => {
         const response = await apiClient.post<ApiResponse<IQuiz>>(
-            "/assessments/quiz",
+            `${instructorAssesmentBaseURL}/quiz`,
             data
         );
         return response.data;
@@ -28,7 +32,7 @@ export const quizApi = {
     // Get quiz by ID
     getById: async (quizId: string): Promise<ApiResponse<IQuiz>> => {
         const response = await apiClient.get<ApiResponse<IQuiz>>(
-            `/assessments/quiz/${quizId}`
+            `${instructorAssesmentBaseURL}/quiz/${quizId}`
         );
         return response.data;
     },
@@ -36,7 +40,7 @@ export const quizApi = {
     // Get quiz by content ID
     getByContentId: async (contentId: string): Promise<ApiResponse<IQuiz>> => {
         const response = await apiClient.get<ApiResponse<IQuiz>>(
-            `/assessments/quiz/content/${contentId}`
+            `${instructorAssesmentBaseURL}/quiz/content/${contentId}`
         );
         return response.data;
     },
@@ -44,7 +48,7 @@ export const quizApi = {
     // Get quizzes by lesson
     getByLesson: async (lessonId: string): Promise<ApiResponse<IQuiz[]>> => {
         const response = await apiClient.get<ApiResponse<IQuiz[]>>(
-            `/assessments/quiz/lesson/${lessonId}`
+            `${instructorAssesmentBaseURL}/quiz/lesson/${lessonId}`
         );
         return response.data;
     },
@@ -52,7 +56,7 @@ export const quizApi = {
     // Get quizzes by course
     getByCourse: async (courseId: string): Promise<ApiResponse<IQuiz[]>> => {
         const response = await apiClient.get<ApiResponse<IQuiz[]>>(
-            `/assessments/quiz/course/${courseId}`
+            `${instructorAssesmentBaseURL}/quiz/course/${courseId}`
         );
         return response.data;
     },
@@ -114,16 +118,57 @@ export const quizApi = {
         );
         return response.data;
     },
+    // Submit quiz question
+    submitQuestion: async (
+        quizId: string,
+        data: { questionId: string; selectedOptionIndex: number }
+    ): Promise<ApiResponse<any>> => {
+        const response = await apiClient.post<ApiResponse<any>>(
+            `/assessments/student/quiz/${quizId}/question/submit`,
+            data
+        );
+        return response.data;
+    },
+
+    // Get quiz attempt (results)
+    getAttempt: async (quizId: string): Promise<ApiResponse<any>> => {
+        const response = await apiClient.get<ApiResponse<any>>(
+            `/assessments/student/quiz/${quizId}/attempt`
+        );
+        return response.data;
+    },
 };
 
 // ============================================
 // ASSIGNMENT API
 // ============================================
 export const assignmentApi = {
+    // Submit assignment
+    submit: async (
+        assignmentId: string,
+        data: FormData | any
+    ): Promise<ApiResponse<any>> => {
+        const isFormData = data instanceof FormData;
+        const config = isFormData
+            ? {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+            : undefined;
+
+        const response = await apiClient.post<ApiResponse<any>>(
+            `/assessments/student/assignment/${assignmentId}/submit`,
+            data,
+            config
+        );
+        return response.data;
+    },
+
     // Create a new assignment
     create: async (data: CreateAssignmentDTO): Promise<ApiResponse<IAssignment>> => {
         const response = await apiClient.post<ApiResponse<IAssignment>>(
-            "/assessments/assignment",
+            `${instructorAssesmentBaseURL}/assignment`,
             data
         );
         return response.data;
@@ -132,7 +177,7 @@ export const assignmentApi = {
     // Get assignment by ID
     getById: async (assignmentId: string): Promise<ApiResponse<IAssignment>> => {
         const response = await apiClient.get<ApiResponse<IAssignment>>(
-            `/assessments/assignment/${assignmentId}`
+            `${instructorAssesmentBaseURL}/assignment/${assignmentId}`
         );
         return response.data;
     },
@@ -140,7 +185,7 @@ export const assignmentApi = {
     // Get assignment by content ID
     getByContentId: async (contentId: string): Promise<ApiResponse<IAssignment>> => {
         const response = await apiClient.get<ApiResponse<IAssignment>>(
-            `/assessments/assignment/content/${contentId}`
+            `${instructorAssesmentBaseURL}/assignment/content/${contentId}`
         );
         return response.data;
     },
@@ -148,7 +193,7 @@ export const assignmentApi = {
     // Get assignments by lesson
     getByLesson: async (lessonId: string): Promise<ApiResponse<IAssignment[]>> => {
         const response = await apiClient.get<ApiResponse<IAssignment[]>>(
-            `/assessments/assignment/lesson/${lessonId}`
+            `${instructorAssesmentBaseURL}/assignment/lesson/${lessonId}`
         );
         return response.data;
     },
@@ -156,7 +201,7 @@ export const assignmentApi = {
     // Get assignments by course
     getByCourse: async (courseId: string): Promise<ApiResponse<IAssignment[]>> => {
         const response = await apiClient.get<ApiResponse<IAssignment[]>>(
-            `/assessments/assignment/course/${courseId}`
+            `${instructorAssesmentBaseURL}/assignment/course/${courseId}`
         );
         return response.data;
     },
@@ -164,7 +209,7 @@ export const assignmentApi = {
     // Get upcoming assignments by course
     getUpcoming: async (courseId: string): Promise<ApiResponse<IAssignment[]>> => {
         const response = await apiClient.get<ApiResponse<IAssignment[]>>(
-            `/assessments/assignment/course/${courseId}/upcoming`
+            `${instructorAssesmentBaseURL}/assignment/course/${courseId}/upcoming`
         );
         return response.data;
     },
@@ -175,7 +220,7 @@ export const assignmentApi = {
         data: UpdateAssignmentDTO
     ): Promise<ApiResponse<IAssignment>> => {
         const response = await apiClient.put<ApiResponse<IAssignment>>(
-            `/assessments/assignment/${assignmentId}`,
+            `${instructorAssesmentBaseURL}/assignment/${assignmentId}`,
             data
         );
         return response.data;
@@ -184,7 +229,7 @@ export const assignmentApi = {
     // Delete assignment
     delete: async (assignmentId: string): Promise<ApiResponse<null>> => {
         const response = await apiClient.delete<ApiResponse<null>>(
-            `/assessments/assignment/${assignmentId}`
+            `${instructorAssesmentBaseURL}/assignment/${assignmentId}`
         );
         return response.data;
     },

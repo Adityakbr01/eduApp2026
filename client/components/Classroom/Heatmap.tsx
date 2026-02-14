@@ -1,195 +1,153 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { classroomApi } from "@/services/classroom/api";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 interface Activity {
   date: string;
   count: number;
+  isFuture: boolean;
 }
 
+const TOTAL_DAYS = 140; // approx 20 weeks (fills nicely)
+
 const Heatmap = () => {
-  // Generate last 365 days of data
-  const { activities, weeks, months } = useMemo(() => {
-    const totalDays = 365;
+  const { data, isLoading } = useQuery({
+    queryKey: ["classroom", "heatmap"],
+    queryFn: () => classroomApi.getHeatmapData(),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const apiActivities = data?.data || [];
+
+  const { weeksCount, flattened, total } = useMemo(() => {
     const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - totalDays);
+    const start = new Date(today);
+    start.setDate(today.getDate() - TOTAL_DAYS);
 
-    const data: Activity[] = [];
-    for (let i = 0; i <= totalDays; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
+    const activityMap = new Map<string, number>();
+    apiActivities.forEach((a: any) => activityMap.set(a.date, a.count));
 
-      const dateStr = date.toISOString().split("T")[0];
-      const r = Math.random();
-      let count = 0;
-      if (r > 0.9) count = Math.floor(Math.random() * 4) + 1;
-      else if (r > 0.7) count = Math.floor(Math.random() * 2) + 1;
+    const days: Activity[] = [];
 
-      data.push({ date: dateStr, count });
+    for (let i = 0; i <= TOTAL_DAYS; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+
+      const iso = date.toISOString().split("T")[0];
+      const isFuture = date > today;
+
+      days.push({
+        date: iso,
+        count: isFuture ? 0 : activityMap.get(iso) || 0,
+        isFuture,
+      });
     }
-
-    // Group by weeks
-    const weeksData: Activity[][] = [];
-    let currentWeek: Activity[] = [];
 
     // Align start to Sunday
-    const startDay = new Date(data[0].date).getDay(); // 0 = Sunday
-    for (let i = 0; i < startDay; i++) {
-      currentWeek.push({ date: "", count: -1 }); // Placeholder
+    const firstDay = new Date(days[0].date).getDay();
+    const paddingStart = Array.from({ length: firstDay }).map(() => ({
+      date: "",
+      count: 0,
+      isFuture: false,
+    }));
+
+    const padded = [...paddingStart, ...days];
+
+    // Ensure full week alignment
+    while (padded.length % 7 !== 0) {
+      padded.push({ date: "", count: 0, isFuture: false });
     }
 
-    data.forEach((day, index) => {
-      currentWeek.push(day);
-      if (currentWeek.length === 7) {
-        weeksData.push(currentWeek);
-        currentWeek = [];
-      }
-    });
-    if (currentWeek.length > 0) {
-      weeksData.push(currentWeek); // Last partial week
-    }
+    const weeksCount = padded.length / 7;
 
-    // Generate Month Labels
-    const monthLabels: { name: string; weekIndex: number }[] = [];
-    let lastMonth = -1;
-    weeksData.forEach((week, weekIndex) => {
-      const firstDay = week.find((d) => d.count !== -1);
-      if (firstDay) {
-        const month = new Date(firstDay.date).getMonth();
-        if (month !== lastMonth) {
-          monthLabels.push({
-            name: new Date(firstDay.date).toLocaleString("default", {
-              month: "short",
-            }),
-            weekIndex,
-          });
-          lastMonth = month;
-        }
-      }
-    });
+    const total = days.reduce((a, b) => a + b.count, 0);
 
-    return { activities: data, weeks: weeksData, months: monthLabels };
-  }, []);
+    return {
+      flattened: padded,
+      weeksCount,
+      total,
+    };
+  }, [apiActivities]);
 
-  const getColor = (count: number) => {
-    if (count === -1) return "invisible"; // Placeholder
-    if (count === 0) return "bg-dark-light"; // Empty
-    if (count <= 1) return "bg-[#0e4429]";
-    if (count <= 2) return "bg-[#006d32]";
-    if (count <= 3) return "bg-[#26a641]";
-    return "bg-[#39d353]"; // Brightest green
+  const getColor = (count: number, isFuture: boolean) => {
+    if (isFuture) return "bg-neutral-700/40"; // greyed future
+    if (count === 0) return "bg-[#2A2A2A]";
+    if (count <= 2) return "bg-[#EE9477]";
+    if (count <= 5) return "bg-[#E07B5A]";
+    if (count <= 10) return "bg-[#CF6541]";
+    return "bg-[#9C4323]";
   };
 
-  const totalContributions = activities.reduce(
-    (acc, curr) => acc + (curr.count > 0 ? curr.count : 0),
-    0,
-  );
+  if (isLoading) {
+    return (
+      <div className="h-44 rounded-xl border border-white/5 bg-neutral-900 animate-pulse" />
+    );
+  }
 
   return (
-    <div className="bg-dark-card! rounded-2xl p-6 flex flex-col relative w-full border border-white/5 text-white/80 h-full overflow-hidden">
-      <div className="flex justify-between mb-2 items-center">
-        <h1 className="text-xl px-1 tracking font-medium text-white">
-          {totalContributions} contributions in the last year
-        </h1>
+    <div className="w-full rounded-xl border border-white/5 bg-neutral-900 p-6 text-white">
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-xl font-medium text-(--custom-accentColor)">
+          Crushed {total} activities so far!
+        </h2>
       </div>
 
-      <div className="flex flex-col flex-1 border border-white/5 rounded-xl p-4 bg-dark-light/10 overflow-hidden">
-        <div className="flex-1 w-full overflow-x-auto custom-scrollbar pb-2">
-          <div className="flex flex-col min-w-max">
-            {/* Month Labels */}
-            <div className="flex mb-2 text-xs text-white/40 font-apfel pl-8">
-              {months.map((month, i) => (
+      <div
+        className="grid gap-1 w-full select-none border p-3 rounded-lg border-white/10"
+        style={{
+          gridTemplateRows: "repeat(7, minmax(0, 1fr))",
+          gridTemplateColumns: `repeat(${weeksCount}, minmax(0, 1fr))`,
+          gridAutoFlow: "column",
+        }}
+      >
+        {flattened.map((day, index) => (
+          <TooltipProvider key={index}>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
                 <div
-                  key={i}
-                  style={{
-                    width: `calc(${14 * (months[i + 1]?.weekIndex - month.weekIndex || 4)}px + ${4 * (months[i + 1]?.weekIndex - month.weekIndex || 4)}px)`, // approx width calculation
-                  }}
-                  className="flex-1" // Simplify for now
-                >
-                  {/* Better approach: explicit translation based on week index */}
-                </div>
-              ))}
-              {/* Simple render for now: Just a row of labels spaced loosely? No, let's strictly align them */}
-              {/* Re-rendering months correctly matching grid */}
-            </div>
+                  className={`
+                    relative w-full aspect-square rounded-sm
+                    transition-colors duration-300
+                    text-white
+                    ${getColor(day.count, day.isFuture)}
+                  `}
+                />
+              </TooltipTrigger>
 
-            <div className="relative h-6 w-full mb-2">
-              {months.map((month, i) => (
-                <span
-                  key={i}
-                  className="absolute text-xs text-white/40"
-                  style={{ left: `${month.weekIndex * 15 + 30}px` }} // 14px width + 1px gap approx
-                >
-                  {month.name}
-                </span>
-              ))}
-            </div>
+              {day.date && !day.isFuture && (
+                <TooltipContent className="text-xs text-white bg-neutral-900 border border-white/10">
+                  {day.count === 0 ? "No" : day.count} activities on {day.date}
+                </TooltipContent>
+              )}
 
-            <div className="flex gap-1">
-              {/* Day Labels */}
-              <div className="flex flex-col gap-1 pr-2 pt-0 text-[10px] text-white/30 font-mono leading-[10px]">
-                <div className="h-[10px]"></div> {/* Sun */}
-                <div className="h-[10px] flex items-center">Mon</div>
-                <div className="h-[10px]"></div> {/* Tue */}
-                <div className="h-[10px] flex items-center">Wed</div>
-                <div className="h-[10px]"></div> {/* Thu */}
-                <div className="h-[10px] flex items-center">Fri</div>
-                <div className="h-[10px]"></div>
-              </div>
+              {day.date && day.isFuture && (
+                <TooltipContent className="text-xs text-white bg-neutral-900 border border-white/10">
+                  Future date
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        ))}
+      </div>
 
-              {/* The Grid */}
-              <div className="flex gap-[3px]">
-                {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-[3px]">
-                    {week.map((activity, dayIndex) => (
-                      <TooltipProvider key={`${weekIndex}-${dayIndex}`}>
-                        <Tooltip delayDuration={0}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`w-[10px] h-[10px] rounded-[2px] ${getColor(activity.count)}`}
-                            />
-                          </TooltipTrigger>
-                          {activity.count !== -1 && (
-                            <TooltipContent className="bg-gray-800 border-white/10 text-white text-xs z-50">
-                              <p>
-                                {activity.count === 0 ? "No" : activity.count}{" "}
-                                contributions on {activity.date}
-                              </p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      <div className="flex justify-end items-center gap-2 mt-4 text-xs text-white/40">
+        <span>Less</span>
+        <div className="flex gap-[3px]">
+          <div className="w-3 h-3 rounded bg-[#2A2A2A]" />
+          <div className="w-3 h-3 rounded bg-[#EE9477]" />
+          <div className="w-3 h-3 rounded bg-[#E07B5A]" />
+          <div className="w-3 h-3 rounded bg-[#CF6541]" />
+          <div className="w-3 h-3 rounded bg-[#9C4323]" />
         </div>
-
-        <div className="mt-4 text-white/40 flex items-center justify-between gap-3 px-1 text-xs">
-          <a href="#" className="hover:text-primary transition-colors">
-            Learn how we count contributions
-          </a>
-          <div className="flex items-center gap-2">
-            <span>Less</span>
-            <div className="flex gap-[2px]">
-              <div className="rounded-[2px] w-[10px] h-[10px] bg-dark-light"></div>
-              <div className="rounded-[2px] w-[10px] h-[10px] bg-[#0e4429]"></div>
-              <div className="rounded-[2px] w-[10px] h-[10px] bg-[#006d32]"></div>
-              <div className="rounded-[2px] w-[10px] h-[10px] bg-[#26a641]"></div>
-              <div className="rounded-[2px] w-[10px] h-[10px] bg-[#39d353]"></div>
-            </div>
-            <span>More</span>
-          </div>
-        </div>
+        <span>More</span>
       </div>
     </div>
   );

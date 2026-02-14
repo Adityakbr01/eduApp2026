@@ -87,6 +87,8 @@ export const QUERY_KEYS = {
         DATA: ["classroom", "data"],
         BATCH: (courseId: string) => ["classroom", "batch", courseId],
         CONTENT: (courseId: string, contentId: string) => ["classroom", "content", courseId, contentId],
+        LESSON: (courseId: string, lessonId: string) => ["classroom", "lesson", courseId, lessonId],
+        LEADERBOARD: (courseId: string) => ["classroom", "leaderboard", courseId],
     },
 
     PREFERENCES: ["preferences"],

@@ -4,8 +4,9 @@ import cacheManager from "src/cache/cacheManager.js";
 import { TTL } from "src/cache/cacheTTL.js";
 import ContentAttempt from "src/models/course/contentAttempt.model.js";
 import Course from "src/models/course/course.model.js";
+import Enrollment from "src/models/enrollment.model.js";
 import Section from "src/models/course/section.model.js";
-import type { CachedSection, UserCourseProgress, UserProgressMap } from "src/types/classroom/batch.type.js";
+import type { CachedSection, UserCourseProgress, UserProgressMap, AggContent, LeaderboardEntry } from "src/types/classroom/batch.type.js";
 
 
 
@@ -196,34 +197,13 @@ export const batchRepository = {
     /**
      * Update user progress cache (incremental)
      */
-    async updateUserProgressCache(
-        userId: string,
-        courseId: string,
-        contentId: string,
-        data: { isCompleted: boolean; obtainedMarks: number; lastAttemptedAt: Date }
-    ) {
-        // We can use HSET if we stored it as a hash, but we stored JSON string.
-        // For simplicity and consistency, let's just DEL for now to trigger re-fetch on next read?
-        // Or fetch-modify-set.
-        // User asked for: "Update Redis incrementally (add/update progress values instead of invalidating)"
-
-        const key = cacheKeyFactory.classroom.userProgress(userId.toString(), courseId.toString());
-        const cached = await cacheManager.get<UserCourseProgress>(key);
-
-        if (cached) {
-            const progress = cached;
-            progress.history[contentId] = {
-                isCompleted: data.isCompleted,
-                obtainedMarks: data.obtainedMarks,
-                lastAttemptedAt: data.lastAttemptedAt.toISOString()
-            };
-            // How do we update lastVisited? It's passed or derived?
-            // Usually if they just updated this content, the lesson of this content becomes last visited.
-            // But we might need the lessonId passed here too.
-            // For now, let's just update the content bit.
-
-            await cacheManager.set(key, progress, TTL.USER_TTL);
-        }
+    /**
+     * Invalidate user progress cache
+     * CACHED: user:{userId}:course:{courseId}:progress
+     */
+    async invalidateUserProgress(userId: string, courseId: string) {
+        const key = cacheKeyFactory.classroom.userProgress(userId, courseId);
+        await cacheManager.del(key);
     },
 
     /**
@@ -234,6 +214,107 @@ export const batchRepository = {
         const { data } = await cacheManager.getOrSet(key, async () => {
             return Course.findById(courseId).select("title").lean();
         }, TTL.DATA_TTL);
+        return data;
+    },
+
+    /**
+     * Get top N students by total marks
+     */
+    async getLeaderboard(courseId: mongoose.Types.ObjectId, limit: number = 10): Promise<LeaderboardEntry[]> {
+        // This is expensive to compute, so we should cache it for a short time (e.g. 5-10 mins)
+        // For now, let's implement the aggregation.
+        const key = `course:${courseId.toString()}:leaderboard:${limit}`;
+
+        const { data } = await cacheManager.getOrSet(key, async () => {
+            return ContentAttempt.aggregate([
+                { $match: { courseId } },
+                {
+                    $group: {
+                        _id: "$userId",
+                        totalMarks: { $sum: "$obtainedMarks" }
+                    }
+                },
+                { $sort: { totalMarks: -1 } },
+                { $limit: limit },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "_id",
+                        foreignField: "_id",
+                        as: "user"
+                    }
+                },
+                { $unwind: "$user" },
+                {
+                    $project: {
+                        userId: "$_id",
+                        name: "$user.name",
+                        avatar: "$user.profile.avatar", // Access nested profile.avatar
+                        points: "$totalMarks",
+                        // Rank will be assigned in service or mapped here?
+                        // Aggregation preserves order, so index+1 is rank among these top N.
+                    }
+                }
+            ]);
+        }, 300); // 5 minutes cache
+
+        return data as LeaderboardEntry[];
+    },
+
+    /**
+     * Get a specific student's rank and score
+     */
+    async getStudentRank(courseId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId) {
+        // Calculate total score for the user
+        const result = await ContentAttempt.aggregate([
+            { $match: { courseId, userId } },
+            {
+                $group: {
+                    _id: "$userId",
+                    totalMarks: { $sum: "$obtainedMarks" }
+                }
+            }
+        ]);
+
+        const myScore = result.length > 0 ? result[0].totalMarks : 0;
+
+        // Count how many students have MORE marks than this user
+        // This gives us the rank (count + 1)
+        // We can optimize this by caching a "scores" sorted set in Redis if scale is high.
+        // For now, Mongo aggregation:
+        const rankResult = await ContentAttempt.aggregate([
+            { $match: { courseId } },
+            {
+                $group: {
+                    _id: "$userId",
+                    totalMarks: { $sum: "$obtainedMarks" }
+                }
+            },
+            {
+                $match: {
+                    totalMarks: { $gt: myScore }
+                }
+            },
+            {
+                $count: "rank"
+            }
+        ]);
+
+        const rank = (rankResult.length > 0 ? rankResult[0].rank : 0) + 1;
+
+        return { rank, points: myScore };
+    },
+
+    /**
+     * Get total enrolled count for percentile calculation
+     */
+    async getTotalEnrolledCount(courseId: mongoose.Types.ObjectId): Promise<number> {
+        const key = `course:${courseId.toString()}:enrollmentCount`;
+
+        const { data } = await cacheManager.getOrSet(key, async () => {
+            return Enrollment.countDocuments({ courseId, status: "active" });
+        }, 3600); // Cache for 1 hour
+
         return data;
     }
 };

@@ -44,4 +44,17 @@ export const batchController = {
 
         sendResponse(res, 200, "Lesson details retrieved", result);
     }),
+
+    /**
+     * Get leaderboard for the batch
+     * GET /api/classroom/:courseId/leaderboard
+     */
+    getBatchLeaderboard: catchAsync(async (req, res) => {
+        const userId = req.user!.id;
+        const { courseId } = req.params;
+
+        const result = await batchService.getLeaderboard(userId, courseId);
+
+        sendResponse(res, 200, "Leaderboard retrieved", result);
+    }),
 };

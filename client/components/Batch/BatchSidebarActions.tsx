@@ -29,16 +29,6 @@ interface BatchSidebarActionsProps {
 
 const SIDEBAR_ACTIONS = [
   {
-    id: "overview",
-    title: "Overview",
-    icon: <BookOpen className="w-5 h-5" />,
-    color: "group-hover:text-blue-400",
-    activeColor: "text-blue-400",
-    bg: "hover:bg-blue-400/10",
-    activeBg: "bg-blue-400/20",
-    mobileOnly: true,
-  },
-  {
     id: "leaderboard",
     title: "Leaderboard",
     icon: <Trophy className="w-5 h-5" />,
@@ -152,8 +142,6 @@ const BatchSidebarActions = ({
           const visibilityClass = (action as any).mobileOnly
             ? "flex xl:hidden"
             : "flex";
-
-          if (action.id === "overview") return null;
 
           // Base Button Component
           const button = (

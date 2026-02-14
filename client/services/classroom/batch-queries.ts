@@ -17,6 +17,18 @@ export const useGetBatchDetail = (courseId: string) => {
 };
 
 /**
+ * Get lesson detail (video URL, PDF, audio, assessment info)
+ */
+export const useGetLessonDetail = (courseId: string, lessonId: string) => {
+    return useQuery({
+        queryKey: QUERY_KEYS.CLASSROOM.LESSON(courseId, lessonId),
+        queryFn: () => batchApi.getLessonDetail(courseId, lessonId),
+        enabled: !!courseId && !!lessonId,
+        staleTime: 1000 * 60 * 2,
+    });
+};
+
+/**
  * Get content detail (video URL, PDF, audio, assessment info)
  */
 export const useGetContentDetail = (courseId: string, contentId: string) => {
@@ -27,3 +39,18 @@ export const useGetContentDetail = (courseId: string, contentId: string) => {
         staleTime: 1000 * 60 * 2,
     });
 };
+
+
+/**
+ * Get leaderboard
+ */
+export const useGetBatchLeaderboard = (courseId: string) => {
+    return useQuery({
+        queryKey: QUERY_KEYS.CLASSROOM.LEADERBOARD(courseId),
+        queryFn: () => batchApi.getBatchLeaderboard(courseId),
+        enabled: !!courseId,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+};
+
+// 

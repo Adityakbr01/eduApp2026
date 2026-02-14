@@ -8,7 +8,7 @@ import LessonContent from "src/models/course/lessonContent.model.js";
 import Section from "src/models/course/section.model.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 import type { BatchData, BatchDetailResponse, ContentDetailResponse, LessonResult, Module } from "src/types/classroom/batch.type.js";
-import { type AggContent } from "src/types/classroom/batch.type.js";
+import { type AggContent, type LeaderboardResponse } from "src/types/classroom/batch.type.js";
 import AppError from "src/utils/AppError.js";
 import computeLessonMeta from "src/utils/computeLessonMeta.js";
 
@@ -183,8 +183,103 @@ export const batchService = {
     },
 
     /**
-     * Get content detail for a specific lesson content
+     * Get details for a specific lesson (Lazy Loading)
+     * Returns: Lesson title, order, and list of contents with user progress.
      */
+    getLessonDetails: async (
+        userId: string,
+        courseId: string,
+        lessonId: string
+    ) => {
+        const userOid = new mongoose.Types.ObjectId(userId);
+        const courseOid = new mongoose.Types.ObjectId(courseId);
+        const lessonOid = new mongoose.Types.ObjectId(lessonId);
+
+        // 1. Fetch Lesson & Contents
+        const lesson = await Lesson.findOne({
+            _id: lessonOid,
+            courseId: courseOid,
+            isDeleted: { $ne: true },
+            isVisible: { $ne: false }
+        }).select("title order sectionId").lean();
+
+        if (!lesson) {
+            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const contents = await LessonContent.find({
+            lessonId: lessonOid,
+            courseId: courseOid,
+            isDeleted: { $ne: true },
+            isVisible: { $ne: false }
+        })
+            .sort({ order: 1 })
+            .select("title type marks video.status video.duration pdf.totalPages audio.duration assessment.type assessment.refId")
+            .populate("assessment.refId")
+            .lean();
+
+        // 2. Fetch User Progress for these contents
+        const { progress: userProgress, isCached: isProgressCached } = await batchRepository.getUserProgress(userOid, courseOid);
+        const { history } = userProgress;
+
+        // 3. Map contents with progress
+        const contentDetails = contents.map(c => {
+            const progress = history[c._id.toString()];
+            const isCompleted = progress?.isCompleted || false;
+            const obtainedMarks = progress?.obtainedMarks || 0;
+
+            const baseContent: any = {
+                id: c._id.toString(),
+                title: c.title,
+                type: c.type,
+                marks: c.marks || 0,
+                isCompleted,
+                obtainedMarks,
+                // Add other lightweight meta needed for list view
+                videoStatus: c.video?.status,
+                videoDuration: c.video?.duration,
+                totalPages: c.pdf?.totalPages,
+                audioDuration: c.audio?.duration,
+                assessmentType: c.assessment?.type
+            };
+
+            // If assessment data is populated, include it
+            if (c.assessment?.refId) {
+                baseContent.assessment = {
+                    type: c.assessment.type,
+                    data: c.assessment.refId
+                };
+            }
+
+            return baseContent;
+        });
+
+        // 4. Determine lastVisitedId for this lesson
+        // Check if the user's global lastVisitedId (if any) is within THIS lesson's contents
+        // This helps the UI auto-select the correct content if coming from "Continue Learning"
+        let lastVisitedIdInLesson: string | undefined;
+
+        if (userProgress.lastVisitedId) {
+            const isLastVisitedInLesson = contents.some(c => c._id.toString() === userProgress.lastVisitedId);
+            if (isLastVisitedInLesson) {
+                lastVisitedIdInLesson = userProgress.lastVisitedId;
+            }
+        }
+
+        return {
+            id: lesson._id.toString(),
+            title: lesson.title,
+            contents: contentDetails,
+            lastVisitedId: lastVisitedIdInLesson,
+            meta: {
+                isProgressCached
+            }
+        };
+    },
+
+    /**
+ * Get content detail for a specific lesson content
+ */
     getContentDetail: async (
         userId: string,
         courseId: string,
@@ -326,6 +421,13 @@ export const batchService = {
             resumeAt: attemptObj?.resumeAt || 0,
             totalDuration: attemptObj?.totalDuration || 0,
             obtainedMarks: attemptObj?.obtainedMarks || 0,
+            tags: content.tags,
+            description: content.description,
+            level: content.level,
+            relatedLinks: content.relatedLinks?.map((l: any) => ({
+                title: l.title || "",
+                url: l.url || ""
+            })) || [],
         };
 
         if (ctype === "video" && content.video) {
@@ -342,15 +444,10 @@ export const batchService = {
             response.totalPages = content.pdf.totalPages;
         }
 
-        if (ctype === "audio" && content.audio) {
-            response.audioUrl = content.audio.url;
-            response.audioDuration = content.audio.duration;
-        }
-
-        if ((ctype === "assignment" || ctype === "quiz") && content.assessment) {
+        if ((ctype === "assignment" || ctype === "quiz") && contentObj.assessment?.data) {
             response.assessment = {
-                type: content.assessment.type,
-                data: content.assessment.refId,
+                type: contentObj.assessment.type,
+                data: contentObj.assessment.data, // This was already populated and mapped in lines 308-309
             };
         }
 
@@ -358,72 +455,46 @@ export const batchService = {
     },
 
     /**
-     * Get details for a specific lesson (Lazy Loading)
-     * Returns: Lesson title, order, and list of contents with user progress.
+     * Get leaderboard for a course
      */
-    getLessonDetails: async (
-        userId: string,
-        courseId: string,
-        lessonId: string
-    ) => {
+    getLeaderboard: async (userId: string, courseId: string): Promise<LeaderboardResponse> => {
         const userOid = new mongoose.Types.ObjectId(userId);
         const courseOid = new mongoose.Types.ObjectId(courseId);
-        const lessonOid = new mongoose.Types.ObjectId(lessonId);
 
-        // 1. Fetch Lesson & Contents
-        const lesson = await Lesson.findOne({
-            _id: lessonOid,
-            courseId: courseOid,
-            isDeleted: { $ne: true },
-            isVisible: { $ne: false }
-        }).select("title order sectionId").lean();
+        // Parallel fetch: Top 10 list, Current User Rank, Total Enrolled (for percentile)
+        const [topList, myRankData, totalEnrolled] = await Promise.all([
+            batchRepository.getLeaderboard(courseOid, 10),
+            batchRepository.getStudentRank(courseOid, userOid),
+            batchRepository.getTotalEnrolledCount(courseOid)
+        ]);
 
-        if (!lesson) {
-            throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        // Calculate percentile
+        // Percentile = ((Total - Rank) / Total) * 100
+        // If rank is 1 (top), percentile should be 100? Or near 100?
+        // Usually ((N - R) / N) * 100. If N=100, R=1, (99/100)*100 = 99%.
+        // If N=1, R=1, (0/1)*100 = 0%.
+        // Let's use standard formula: ( (N - rank) / N ) * 100
+        // Ensure N > 0
+
+        let percentile = 0;
+        if (totalEnrolled > 0) {
+            percentile = ((totalEnrolled - myRankData.rank) / totalEnrolled) * 100;
+            if (percentile < 0) percentile = 0;
         }
 
-        const contents = await LessonContent.find({
-            lessonId: lessonOid,
-            courseId: courseOid,
-            isDeleted: { $ne: true },
-            isVisible: { $ne: false }
-        })
-            .sort({ order: 1 })
-            .select("title type marks video.status video.duration pdf.totalPages audio.duration assessment.type")
-            .lean();
-
-        // 2. Fetch User Progress for these contents
-        const { progress: userProgress, isCached: isProgressCached } = await batchRepository.getUserProgress(userOid, courseOid);
-        const { history } = userProgress;
-
-        // 3. Map contents with progress
-        const contentDetails = contents.map(c => {
-            const progress = history[c._id.toString()];
-            const isCompleted = progress?.isCompleted || false;
-            const obtainedMarks = progress?.obtainedMarks || 0;
-
-            return {
-                id: c._id.toString(),
-                title: c.title,
-                type: c.type,
-                marks: c.marks || 0,
-                isCompleted,
-                obtainedMarks,
-                // Add other lightweight meta needed for list view
-                videoStatus: c.video?.status,
-                videoDuration: c.video?.duration,
-                totalPages: c.pdf?.totalPages,
-                audioDuration: c.audio?.duration,
-                assessmentType: c.assessment?.type
-            };
-        });
+        // Add ranks to topList (1-based index)
+        const rankedList = topList.map((entry, index) => ({
+            ...entry,
+            rank: index + 1
+        }));
 
         return {
-            id: lesson._id.toString(),
-            title: lesson.title, contents: contentDetails,
-            meta: {
-                isProgressCached
+            list: rankedList,
+            currentUser: {
+                rank: myRankData.rank,
+                points: myRankData.points,
+                percentile: Math.round(percentile * 100) / 100 // Round to 2 decimals
             }
         };
-    }
+    },
 };

@@ -1,24 +1,26 @@
 import { Types } from "mongoose";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
-import { quizRepository, assignmentRepository } from "src/repositories/assessment.repository.js";
-import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
-import { lessonRepository } from "src/repositories/lesson.repository.js";
-import AppError from "src/utils/AppError.js";
-import type { IQuizQuestion } from "src/models/course/quiz.model.js";
-import type {
-    CreateQuizInput,
-    UpdateQuizInput,
-    CreateAssignmentInput,
-    UpdateAssignmentInput,
-    SubmitQuizAttemptInput,
-    SubmitAssignmentInput,
-    GradeAssignmentInput,
-} from "src/schemas/assessment.schema.js";
-import { QuizAttempt, AssignmentSubmission } from "src/models/assessment/index.js";
-import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
+import { AssignmentSubmission, QuizAttempt } from "src/models/assessment/index.js";
 import { Course } from "src/models/course/index.js";
+import type { IQuizQuestion } from "src/models/course/quiz.model.js";
+import { assignmentRepository, quizRepository } from "src/repositories/assessment.repository.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
+import { lessonRepository } from "src/repositories/lesson.repository.js";
+import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import type {
+    CreateAssignmentInput,
+    CreateQuizInput,
+    SubmitAssignmentInput,
+    UpdateAssignmentInput,
+    UpdateQuizInput
+} from "src/schemas/assessment.schema.js";
+import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
+
+
+
 
 
 // ============================================
@@ -284,6 +286,8 @@ export const quizService = {
             obtainedMarks: quizAttempt.score,
             isCompleted: allAnswered,
         });
+
+        await batchRepository.invalidateUserProgress(userId, quiz.courseId.toString());
 
         return {
             isCorrect,
@@ -553,6 +557,8 @@ export const assignmentService = {
             isCompleted: true,
         });
 
+        await batchRepository.invalidateUserProgress(userId, assignment.courseId.toString());
+
         return {
             submissionId: submission._id,
             submittedAt: submission.submittedAt,
@@ -807,6 +813,9 @@ export const assignmentService = {
                 { $set: { obtainedMarks: finalMarks } },
             );
         }
+
+        // INVALIDATE CACHE
+        await batchRepository.invalidateUserProgress(submission.userId.toString(), assignment.courseId.toString());
 
         return {
             submissionId: submission._id,

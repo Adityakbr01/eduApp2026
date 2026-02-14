@@ -15,4 +15,14 @@ export const classroomController = {
         const result = await classroomService.getClassroomData(userId);
         sendResponse(res, 200, "Classroom data retrieved", result);
     }),
+
+    /**
+     * Get student heatmap data
+     * GET /api/classroom/heatmap
+     */
+    getHeatmapData: catchAsync(async (req, res) => {
+        const userId = req.user!.id;
+        const result = await classroomService.getStudentActivity(userId);
+        sendResponse(res, 200, "Heatmap data retrieved", result);
+    }),
 };

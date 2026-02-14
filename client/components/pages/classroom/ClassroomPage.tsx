@@ -137,13 +137,13 @@ const ClassroomPage = () => {
           <div className="flex items-center gap-2 pe-12 w-full shadow-md shadow-black/5 h-16 shrink-0 px-6 text-xl text-white/80 bg-dark-extra-light mb-3 border-b border-white/10">
             All Notifications
           </div>
-          <div className="flex flex-col gap-0 p-0 h-full w-full overflow-hidden">
+          <div className="flex flex-1 flex-col gap-0 p-0 h-full w-full overflow-hidden">
             <Notifications />
           </div>
         </div>
 
         {/* Heatmap */}
-        <div className="rounded-2xl flex flex-col relative flex-1 bg-dark-card! text-white/80 platform border border-white/5 p-0!">
+        <div className="rounded-2xl flex flex-col relative bg-dark-card! text-white/80 platform border border-white/5 p-0!">
           <Heatmap />
         </div>
       </div>

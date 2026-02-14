@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React from "react";
 
 interface LessonDetailFooterProps {
   onPrevious?: () => void;
@@ -26,9 +25,9 @@ const LessonDetailFooter = ({
       <Button
         onClick={onPrevious}
         disabled={!hasPrevious}
-        className="group flex items-center justify-center w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 transition-all border border-white/10 text-white/90 shadow-lg backdrop-blur-lg"
+        className="group flex cursor-pointer items-center justify-center w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 transition-all border border-white/10 text-(--custom-accentColor) shadow-lg backdrop-blur-lg"
       >
-        <ChevronLeft className="w-5 h-5 text-primary group-hover:-translate-x-0.5 group-disabled:translate-x-0 transition-transform" />
+        <ChevronLeft className="w-5 h-5 text-(--custom-accentColor) group-hover:-translate-x-0.5 group-disabled:translate-x-0 transition-transform" />
       </Button>
 
       <div className="group flex items-center justify-center gap-2 py-2 px-6 rounded-lg bg-white/5 border border-white/10 text-white/70 shadow-lg backdrop-blur-lg text-sm font-medium min-w-[120px]">
@@ -36,11 +35,14 @@ const LessonDetailFooter = ({
       </div>
 
       <Button
-        onClick={onNext}
-        disabled={!hasNext}
-        className="group flex items-center justify-center w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 transition-all border border-white/10 text-white/90 shadow-lg backdrop-blur-lg"
+        onClick={() => {
+          console.log("Next button clicked!");
+          onNext?.();
+        }}
+        disabled={false /* Forced Open for Debugging */}
+        className="group flex items-center justify-center w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 transition-all border border-white/10 text-(--custom-accentColor) shadow-lg backdrop-blur-lg"
       >
-        <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-0.5 group-disabled:translate-x-0 transition-transform" />
+        <ChevronRight className="w-5 h-5 text-(--custom-accentColor) group-hover:translate-x-0.5 group-disabled:translate-x-0 transition-transform" />
       </Button>
     </div>
   );

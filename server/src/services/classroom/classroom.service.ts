@@ -217,4 +217,39 @@ export const classroomService = {
 
         return { courses };
     },
+
+    /**
+     * Get student activity heatmap data (daily contribution counts)
+     */
+    getStudentActivity: async (userId: string): Promise<{ date: string; count: number }[]> => {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        const activity = await ContentAttempt.aggregate([
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(userId),
+                    updatedAt: { $gte: oneYearAgo },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$updatedAt" },
+                    },
+                    count: { $sum: 1 },
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    date: "$_id",
+                    count: "$count",
+                },
+            },
+            { $sort: { date: 1 } },
+        ]);
+
+        return activity;
+    },
 };

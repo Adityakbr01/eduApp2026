@@ -20,6 +20,14 @@ export const classroomApi = {
         console.log("batchData", response.data);
         return response.data;
     },
+
+    /**
+     * Get heatmap data
+     */
+    getHeatmapData: async (): Promise<ApiResponse<{ date: string; count: number }[]>> => {
+        const response = await apiClient.get("/classroom/heatmap");
+        return response.data;
+    },
 };
 
 export default classroomApi;
