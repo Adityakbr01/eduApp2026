@@ -7,6 +7,7 @@ let io: SocketIOServer | null = null;
 
 import { createAdapter } from "@socket.io/redis-adapter";
 import { redis } from "../configs/redis.js";
+import SOCKET_KEYS from "src/constants/SOCKET_KEYS.js";
 
 export const initSocket = async (httpServer: HttpServer) => {
     io = new SocketIOServer(httpServer, {
@@ -37,10 +38,35 @@ export const initSocket = async (httpServer: HttpServer) => {
     io.adapter(createAdapter(pubClient, subClient));
 
     io.on("connection", (socket) => {
-        logger.info(`🔌 Socket connected: ${socket.id}`);
+        logger.info(`🔌 Socket connected: ${socket.id} | Origin: ${socket.handshake.headers.origin}`);
 
-        socket.on("disconnect", () => {
-            logger.info(`❌ Socket disconnected: ${socket.id}`);
+        socket.on("disconnect", (reason) => {
+            logger.info(`❌ Socket disconnected: ${socket.id} | Reason: ${reason}`);
+        });
+
+        socket.on("error", (err) => {
+            logger.error(`⚠️ Socket error: ${socket.id}`, err);
+        });
+
+
+        // Use a consistent naming convention for rooms: course:{courseId}
+        socket.on(SOCKET_KEYS.LEADERBOARD_UPDATE.JOIN, (courseId: string) => {
+            // Leave previous course rooms if needed? 
+            // Socket.IO supports multiple rooms. 
+            // Ideally client sends this when entering the page.
+            if (courseId) {
+                const roomName = `course:${courseId}`;
+                socket.join(roomName);
+                logger.debug(`Socket ${socket.id} joined room ${roomName}`);
+            }
+        });
+
+        socket.on(SOCKET_KEYS.LEADERBOARD_UPDATE.LEAVE, (courseId: string) => {
+            if (courseId) {
+                const roomName = `course:${courseId}`;
+                socket.leave(roomName);
+                logger.debug(`Socket ${socket.id} left room ${roomName}`);
+            }
         });
     });
 
@@ -59,5 +85,20 @@ export const getIO = () => {
 export const emitLog = (log: any) => {
     if (io) {
         io.emit("new-log", log);
+    }
+};
+
+/**
+ * Emit leaderboard update to a specific course room.
+ * This triggers clients to refetch the leaderboard.
+ */
+export const emitLeaderboardUpdate = (courseId: string, data?: any) => {
+    if (io) {
+        // Emit to the specific course room
+        io.to(`course:${courseId}`).emit(SOCKET_KEYS.LEADERBOARD_UPDATE.UPDATE, {
+            courseId,
+            timestamp: new Date(),
+            ...data
+        });
     }
 };

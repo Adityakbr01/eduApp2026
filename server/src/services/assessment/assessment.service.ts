@@ -9,6 +9,7 @@ import { batchRepository } from "src/repositories/classroom/batch.repository.js"
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import { emitLeaderboardUpdate } from "src/Socket/socket.js";
 import type {
     CreateAssignmentInput,
     CreateQuizInput,
@@ -288,6 +289,8 @@ export const quizService = {
         });
 
         await batchRepository.invalidateUserProgress(userId, quiz.courseId.toString());
+        await batchRepository.invalidateLeaderboard(quiz.courseId.toString());
+        emitLeaderboardUpdate(quiz.courseId.toString());
 
         return {
             isCorrect,
@@ -558,6 +561,8 @@ export const assignmentService = {
         });
 
         await batchRepository.invalidateUserProgress(userId, assignment.courseId.toString());
+        await batchRepository.invalidateLeaderboard(assignment.courseId.toString());
+        emitLeaderboardUpdate(assignment.courseId.toString());
 
         return {
             submissionId: submission._id,

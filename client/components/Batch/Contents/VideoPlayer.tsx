@@ -2,6 +2,7 @@
 
 import { QUERY_KEYS } from "@/config/query-keys";
 import { contentProgressApi } from "@/services/classroom/content-progress-api";
+import { useMarkContentCompleted } from "@/services/classroom/mutations";
 import { useQueryClient } from "@tanstack/react-query";
 import Hls from "hls.js";
 import {
@@ -54,6 +55,11 @@ function VideoPlayer({
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const resumeSaverRef = useRef<NodeJS.Timeout | null>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
+
+  const { mutateAsync: markCompleted } = useMarkContentCompleted(
+    courseId,
+    contentId,
+  );
 
   // State
   const [playing, setPlaying] = useState(false);
@@ -232,20 +238,10 @@ function VideoPlayer({
       // Auto-complete
       if (pct >= minWatchPercent && !autoCompleted) {
         setAutoCompleted(true);
-        contentProgressApi
-          .markCompleted(contentId, {
-            obtainedMarks: marks,
-            completionMethod: "auto",
-          })
-          .then(() => {
-            queryClient.invalidateQueries({
-              queryKey: QUERY_KEYS.CLASSROOM.CONTENT(courseId, contentId),
-            });
-            queryClient.invalidateQueries({
-              queryKey: QUERY_KEYS.CLASSROOM.BATCH(courseId),
-            });
-          })
-          .catch(() => {});
+        markCompleted({
+          obtainedMarks: marks,
+          completionMethod: "auto",
+        }).catch(() => {});
       }
     }
   }, [minWatchPercent, autoCompleted, contentId, courseId, marks, queryClient]);

@@ -1,11 +1,12 @@
 "use client";
 
+import links from "@/constants/links";
+import { useLogout } from "@/services/auth/mutations";
+import { useAuthStore } from "@/store/auth";
+import { Loader2, LogOut } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
-import { LogOut, Loader2 } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
-import { useLogout } from "@/services/auth/mutations";
 import { authButtonVariants } from "./variants";
 
 interface MobileNavAuthProps {
@@ -68,7 +69,7 @@ export default function MobileNavAuth({ onClose }: MobileNavAuthProps) {
               Sign In
             </motion.button>
           </Link>
-          <Link href="/signup" onClick={onClose}>
+          <Link href={links.AUTH.REGISTER_NEW_STUDENT} onClick={onClose}>
             <motion.button
               className="w-full px-4 py-3 bg-[#e8602e] text-white rounded-lg hover:bg-[#ff733e] transition text-sm font-medium"
               whileHover={{ scale: 1.02 }}

@@ -15,10 +15,6 @@ import type { CachedSection, UserCourseProgress, UserProgressMap, AggContent, Le
 // ============================================
 
 export const batchRepository = {
-    /**
-     * Get course structure (Sections -> Lessons -> Content Meta).
-     * CACHED: course:{id}:structure
-     */
     async getCourseStructure(courseId: mongoose.Types.ObjectId): Promise<{ structure: CachedSection[]; isCached: boolean }> {
         const key = cacheKeyFactory.course.structure(courseId.toString());
 
@@ -225,7 +221,8 @@ export const batchRepository = {
         // For now, let's implement the aggregation.
         const key = `course:${courseId.toString()}:leaderboard:${limit}`;
 
-        const { data } = await cacheManager.getOrSet(key, async () => {
+        const { data, isCached } = await cacheManager.getOrSet(key, async () => {
+            console.log(`[BatchRepository] Calculating leaderboard for course ${courseId} (Cache MISS)`);
             return ContentAttempt.aggregate([
                 { $match: { courseId } },
                 {
@@ -258,7 +255,24 @@ export const batchRepository = {
             ]);
         }, 300); // 5 minutes cache
 
+        if (isCached) {
+            console.log(`[BatchRepository] Returning cached leaderboard for course ${courseId}`);
+        }
+
         return data as LeaderboardEntry[];
+    },
+
+    /**
+     * Invalidate leaderboard cache
+     */
+    async invalidateLeaderboard(courseId: string) {
+        // We need to invalidate for all limits? 
+        // Current implementation uses limit in key. 
+        // Ideally we should use a pattern match or just invalidate common limits (10, 20, 50).
+        // Since we only use default 10 right now:
+        const key = `course:${courseId}:leaderboard:10`;
+        await cacheManager.del(key);
+        console.log(`[BatchRepository] Invalidated leaderboard cache for course ${courseId}`);
     },
 
     /**

@@ -2,7 +2,7 @@
 
 import { AssignmentData } from "@/services/classroom/batch-types";
 import { useState, useRef } from "react";
-import { assignmentApi } from "@/services/assessments/api";
+import { useSubmitAssignment } from "@/services/classroom/mutations";
 import { CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,11 @@ export default function AssignmentPlayer({
   const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
   const [obtainedMarks, setObtainedMarks] = useState(initialObtainedMarks);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { mutateAsync: submitAssignment } = useSubmitAssignment(
+    courseId,
+    contentId,
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -60,7 +65,10 @@ export default function AssignmentPlayer({
         linkUrl:
           "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       };
-      await assignmentApi.submit(assignmentData._id, payload);
+      await submitAssignment({
+        assignmentId: assignmentData._id,
+        data: payload,
+      });
 
       setIsCompleted(true);
       // Optional: fetch updated details if needed, but for now we settle for success state

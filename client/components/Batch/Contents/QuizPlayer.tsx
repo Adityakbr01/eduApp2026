@@ -4,7 +4,10 @@ import { QuizData } from "@/services/classroom/batch-types";
 import { useState } from "react";
 import { CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { quizApi } from "@/services/assessments/api"; // Assuming cn is available, otherwise replace with classNames logic
+import {
+  useSubmitQuizQuestion,
+  useSubmitQuizFinal,
+} from "@/services/classroom/mutations";
 
 interface QuizPlayerProps {
   contentId: string;
@@ -30,6 +33,10 @@ export default function QuizPlayer({
   const [obtainedMarks, setObtainedMarks] = useState(initialObtainedMarks);
   const [completed, setCompleted] = useState(initialisCompleted);
 
+  const { mutateAsync: submitQuestion } = useSubmitQuizQuestion(quizData._id);
+  const { mutateAsync: submitFinal, isPending: isFinalSubmitting } =
+    useSubmitQuizFinal(courseId, contentId);
+
   const currentQuestion = quizData.questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === quizData.questions.length - 1;
 
@@ -47,7 +54,7 @@ export default function QuizPlayer({
 
     try {
       setIsSubmitting(true);
-      await quizApi.submitQuestion(quizData._id, {
+      await submitQuestion({
         questionId: currentQuestion._id,
         selectedOptionIndex: selectedOption,
       });
@@ -71,8 +78,8 @@ export default function QuizPlayer({
       // Final submit
       try {
         setIsSubmitting(true);
-        // Fetch final results
-        const attempt = await quizApi.getAttempt(quizData._id);
+        // Fetch final results and invalidate cache
+        const attempt = await submitFinal(quizData._id);
         if (attempt && attempt.data) {
           setObtainedMarks(attempt.data.obtainedMarks);
         }

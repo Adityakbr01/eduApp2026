@@ -62,7 +62,7 @@ function EnrollmentCard({
   const { initiatePayment, isLoading: isPaymentLoading } = useRazorpayPayment({
     onSuccess: () => {
       toast.success(PAYMENT_MESSAGES.success.title);
-      router.push(`/classroom/batch/${course.slug || course._id}`);
+      router.push(`/classroom/batch/${course._id}`);
     },
     onError: (error) => {
       toast.error(error.message || PAYMENT_MESSAGES.failed.description);
@@ -91,7 +91,7 @@ function EnrollmentCard({
         // Direct enrollment for free courses
         await enrollInFreeCourse.mutateAsync(course._id);
         toast.success("🎉 Successfully enrolled! Start learning now.");
-        router.push(`/classroom/batch/${course.slug || course._id}`);
+        router.push(`/classroom/batch/${course._id}`);
       } else {
         // Initiate Razorpay payment for paid courses
         await initiatePayment(course._id, {
@@ -107,7 +107,7 @@ function EnrollmentCard({
 
   // Handle continue learning
   const handleContinueLearning = () => {
-    router.push(`/classroom/batch/${course.slug || course._id}`);
+    router.push(`/classroom/batch/${course._id}`);
   };
 
   // Loading states

@@ -1,8 +1,10 @@
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import { lessonRepository } from "src/repositories/lesson.repository.js";
+import { emitLeaderboardUpdate } from "src/Socket/socket.js";
 import AppError from "src/utils/AppError.js";
 
 
@@ -33,7 +35,15 @@ export const contentProgressService = {
             totalMarks: content.marks,
         };
 
-        return contentAttemptRepository.upsert(userId, contentId, progressData);
+        const result = await contentAttemptRepository.upsert(userId, contentId, progressData);
+
+        if (data.isCompleted) {
+            await batchRepository.invalidateUserProgress(userId, content.courseId.toString());
+            await batchRepository.invalidateLeaderboard(content.courseId.toString());
+            emitLeaderboardUpdate(content.courseId.toString());
+        }
+
+        return result;
     },
 
     // -------------------- GET PROGRESS --------------------
@@ -75,7 +85,7 @@ export const contentProgressService = {
             }
         }
 
-        return contentAttemptRepository.markCompleted(
+        const result = await contentAttemptRepository.markCompleted(
             userId,
             contentId,
             content.courseId,
@@ -83,6 +93,12 @@ export const contentProgressService = {
             finalMarks,
             completionMethod
         );
+
+        await batchRepository.invalidateUserProgress(userId, content.courseId.toString());
+        await batchRepository.invalidateLeaderboard(content.courseId.toString());
+        emitLeaderboardUpdate(content.courseId.toString());
+
+        return result;
     },
 
     // -------------------- UPDATE RESUME POSITION --------------------

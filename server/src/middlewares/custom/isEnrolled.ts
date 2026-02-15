@@ -81,7 +81,7 @@ export const isEnrolled = (options: IsEnrolledOptions = {}) => {
             }
 
             // Fetch the course to check if it's free or if user is instructor
-            const course = await courseRepository.findById(courseId);
+            const course = await courseRepository.findPublishedById(courseId);
 
             if (!course) {
                 throw new AppError(
@@ -93,7 +93,7 @@ export const isEnrolled = (options: IsEnrolledOptions = {}) => {
 
             // Check if user is the instructor (allow full access)
             if (allowInstructor) {
-                const isOwner = await courseRepository.isOwner(courseId, userId);
+                const isOwner = await courseRepository.isOwner(course._id, userId);
                 if (isOwner) {
                     logger.debug("Instructor access granted", { userId, courseId });
                     return next();
@@ -107,7 +107,7 @@ export const isEnrolled = (options: IsEnrolledOptions = {}) => {
             }
 
             // Check if user is enrolled
-            const isEnrolledUser = await enrollmentRepository.isEnrolled(userId, courseId);
+            const isEnrolledUser = await enrollmentRepository.isEnrolled(userId, course._id);
 
             if (!isEnrolledUser) {
                 throw new AppError(
@@ -166,7 +166,7 @@ export const isPreviewOrEnrolled = async (
         }
 
         // Fetch the course
-        const course = await courseRepository.findById(courseId);
+        const course = await courseRepository.findPublishedById(courseId);
 
         if (!course) {
             throw new AppError(
@@ -177,7 +177,7 @@ export const isPreviewOrEnrolled = async (
         }
 
         // Check if user is the instructor
-        const isOwner = await courseRepository.isOwner(courseId, userId);
+        const isOwner = await courseRepository.isOwner(course._id, userId);
         if (isOwner) {
             return next();
         }
@@ -188,7 +188,7 @@ export const isPreviewOrEnrolled = async (
         }
 
         // Check if user is enrolled
-        const isEnrolledUser = await enrollmentRepository.isEnrolled(userId, courseId);
+        const isEnrolledUser = await enrollmentRepository.isEnrolled(userId, course._id);
         if (isEnrolledUser) {
             return next();
         }

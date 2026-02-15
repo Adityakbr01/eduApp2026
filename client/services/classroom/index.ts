@@ -17,6 +17,9 @@ export type {
     ClassroomDataResponse,
 } from "./types";
 
+// Mutation hooks
+export * from "./mutations";
+
 // Batch Types
 export type {
     ItemContentType,
