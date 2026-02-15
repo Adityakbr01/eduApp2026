@@ -1,6 +1,7 @@
 "use client";
 
 import { QUERY_KEYS } from "@/config/query-keys";
+import { SOCKET_KEYS, socketUrl } from "@/constants/SOCKET_IO";
 import { useGetBatchLeaderboard } from "@/services/classroom/batch-queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
@@ -21,17 +22,6 @@ const BatchLeaderboard = () => {
   useEffect(() => {
     if (!courseId) return;
 
-    const getSocketUrl = () => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      try {
-        return new URL(apiUrl).origin;
-      } catch (e) {
-        console.error("Invalid API URL for socket:", apiUrl);
-        return "http://localhost:3001";
-      }
-    };
-
-    const socketUrl = getSocketUrl();
     const socket = io(socketUrl, {
       path: "/socket.io",
       withCredentials: true,
@@ -40,14 +30,14 @@ const BatchLeaderboard = () => {
 
     socket.on("connect", () => {
       console.log(`✅ Connected to socket: ${socket.id}`);
-      socket.emit("join-course-room", courseId);
+      socket.emit(SOCKET_KEYS.LEADERBOARD_UPDATE.JOIN, courseId);
     });
 
     socket.on("connect_error", (err) => {
       console.error("❌ Socket connection error:", err);
     });
 
-    socket.on("leaderboard:update", (data: any) => {
+    socket.on(SOCKET_KEYS.LEADERBOARD_UPDATE.UPDATE, (data: any) => {
       console.log("Leaderboard update received:", data);
       if (data.courseId === courseId) {
         queryClient.invalidateQueries({
@@ -57,8 +47,8 @@ const BatchLeaderboard = () => {
     });
 
     return () => {
-      socket.off("leaderboard:update");
-      socket.emit("leave-course-room", courseId);
+      socket.off(SOCKET_KEYS.LEADERBOARD_UPDATE.UPDATE);
+      socket.emit(SOCKET_KEYS.LEADERBOARD_UPDATE.LEAVE, courseId);
       socket.disconnect();
     };
   }, [courseId, queryClient]);

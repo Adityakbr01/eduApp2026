@@ -6,6 +6,7 @@ import {
     getMonitoringLogs,
     getSystemStats,
 } from "../services/monitoringService";
+import { socketUrl } from "@/constants/SOCKET_IO";
 
 export const useMonitoring = () => {
     const [stats, setStats] = useState({
@@ -56,10 +57,7 @@ export const useMonitoring = () => {
     useEffect(() => {
         fetchData(true);
 
-        const socketUrl =
-            process.env.NODE_ENV === "production"
-                ? "https://app.edulaunch.shop"
-                : "http://localhost:3001";
+
 
         console.log("[SOCKET] Initializing socket", {
             socketUrl,
