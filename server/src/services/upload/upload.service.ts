@@ -127,7 +127,7 @@ export class UploadService {
   // ------------------- GET RESUME SIGNED URL (for viewing) -------------------
   static async getResumeViewUrl(userId: string) {
     const user = await UserModel.findById(userId).select("profile.resume").lean();
-    
+
     if (!user?.profile?.resume?.key) {
       throw new Error("No resume found");
     }
@@ -149,7 +149,7 @@ export class UploadService {
   // ------------------- DELETE USER RESUME -------------------
   static async deleteUserResume(userId: string) {
     const user = await UserModel.findById(userId).select("profile.resume").lean();
-    
+
     if (!user?.profile?.resume?.key) {
       throw new Error("No resume found to delete");
     }
@@ -179,7 +179,7 @@ export class UploadService {
     originalFilename?: string
   ) {
     const updateField = type === "avatar" ? "profile.avatar" : "profile.resume";
-    
+
     const updateData: any = {
       [updateField]: {
         key,
@@ -275,6 +275,9 @@ export class UploadService {
     // 1️⃣ Fetch current version from DB
     const lessonContent = await LessonContent.findById(lessonContentId);
     const version = (lessonContent?.video?.version ?? 0) + 1;
+    lessonContent.video.status = "UPLOADED"
+    lessonContent.video.isEmailSent = false
+    await lessonContent.save()
 
     // 2️⃣ Build RAW KEY (single source of truth)
     const ext = fileName.split(".").pop() ?? "mp4";

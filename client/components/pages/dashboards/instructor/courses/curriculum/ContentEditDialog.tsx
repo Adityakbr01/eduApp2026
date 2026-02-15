@@ -19,7 +19,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -96,6 +96,10 @@ export function EditContentDialog({
         marks: content.marks,
         isPreview: content.isPreview,
         minWatchPercent: content.video?.minWatchPercent || 90,
+        duration:
+          content.video?.duration != null
+            ? Number(content.video.duration.toFixed(0))
+            : 0,
         rawKey: "",
         tags: content.tags || [],
         description: content.description || "",
@@ -137,8 +141,11 @@ export function EditContentDialog({
 
           minWatchPercent: data.minWatchPercent,
           hlsKey: content.video?.hlsKey,
-          status: content.video?.status,
           rawKey: content.video?.rawKey,
+          duration:
+            content.video?.duration != null
+              ? Number(content.video.duration.toFixed(0))
+              : data.duration,
         };
 
         if (data.rawKey) {
@@ -503,25 +510,46 @@ export function EditContentDialog({
 
             {/* Video specific */}
             {content.type === ContentType.VIDEO && (
-              <FormField
-                control={form.control}
-                name="minWatchPercent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Min Watch %</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        {...field}
-                        onChange={(e) => field.onChange(+e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex gap-4">
+                <FormField
+                  control={form.control}
+                  name="minWatchPercent"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Min Watch %</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          {...field}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Duration (seconds)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             )}
 
             <DialogFooter>

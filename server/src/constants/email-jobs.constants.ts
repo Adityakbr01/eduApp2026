@@ -5,6 +5,7 @@ export const EMAIL_JOB_NAMES = {
     ACCOUNT_BAN: "account-ban",
     LOGIN_ALERT: "login-alert",
     LOGIN_OTP: "login-otp",
+    VIDEO_READY: "video-ready",
 } as const;
 
 export type EmailJobName =

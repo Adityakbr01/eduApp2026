@@ -28,11 +28,12 @@ body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
 :root {
   --brand-primary: ${brandPrimary};
   --brand-secondary: ${brandSecondary};
-  --bg-light: #f4f4f7;
+  --bg-light: #fafafa;
   --bg-card: #ffffff;
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
-  --border-soft: rgba(0,0,0,0.06);
+  --text-main: #171717;
+  --text-muted: #737373;
+  --border-soft: #e5e5e5;
+  --accent-bg: #f5f5f5;
 }
 
 /* ------------------------ BASE STYLES ------------------------ */
@@ -47,105 +48,124 @@ body {
   width: 600px;
   max-width: 100%;
   background-color: var(--bg-card);
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
   overflow: hidden;
 }
 
 .header {
-  padding: 52px 40px 32px;
+  padding: 48px 40px 28px;
   text-align: center;
 }
 
 h1 {
-  margin: 0 0 16px;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text-main);
 }
 
 p {
   margin: 0 0 16px;
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text-muted);
 }
 
 .divider {
-  width: 64px;
-  height: 4px;
-  margin: 28px auto;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+  width: 48px;
+  height: 2px;
+  margin: 24px auto;
+  border-radius: 2px;
+  background: var(--border-soft);
 }
 
 .box {
-  margin: 36px 0;
-  padding: 32px;
-  border-radius: 14px;
+  margin: 32px 40px;
+  padding: 24px;
+  border-radius: 6px;
   text-align: center;
-  border-left: 5px solid var(--brand-primary);
-  background-color: rgba(59,130,246,0.08);
+  border: 1px solid var(--border-soft);
+  background-color: var(--accent-bg);
 }
 
 .otp {
-  font-size: 38px;
-  font-weight: 900;
-  letter-spacing: 10px;
-  color: var(--brand-secondary);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
 }
 
 .note {
   font-size: 13px;
   margin-top: 12px;
+  color: var(--text-muted);
 }
 
 .footer {
-  padding: 26px;
-  background-color: #f9fafb;
+  padding: 24px;
+  background-color: var(--accent-bg);
   text-align: center;
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-soft);
 }
 
 /* ------------------------ DARK MODE ------------------------ */
 @media (prefers-color-scheme: dark) {
+  :root {
+    --bg-light: #0a0a0a !important;
+    --bg-card: #171717 !important;
+    --text-main: #fafafa !important;
+    --text-muted: #a3a3a3 !important;
+    --border-soft: #262626 !important;
+    --accent-bg: #1c1c1c !important;
+  }
+
   body {
-    background-color: #0f172a !important;
-    color: #e5e7eb !important;
+    background-color: var(--bg-light) !important;
+    color: var(--text-main) !important;
   }
 
   .container {
-    background-color: #020617 !important;
-    box-shadow: none !important;
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-soft) !important;
   }
 
   p {
-    color: #cbd5f5 !important;
+    color: var(--text-muted) !important;
   }
 
   .footer {
-    background-color: #020617 !important;
-    color: #94a3b8 !important;
+    background-color: var(--accent-bg) !important;
+    color: var(--text-muted) !important;
   }
 
   .box {
-    background-color: rgba(59,130,246,0.15) !important;
+    background-color: var(--accent-bg) !important;
+    border-color: var(--border-soft) !important;
   }
 }
 
 /* ------------------------ MOBILE ------------------------ */
 @media (max-width: 600px) {
   .header {
-    padding: 36px 22px;
+    padding: 36px 24px 24px;
   }
 
   h1 {
-    font-size: 26px;
+    font-size: 22px;
+  }
+
+  .box {
+    margin: 24px 20px;
+    padding: 20px;
   }
 
   .otp {
-    font-size: 32px;
+    font-size: 28px;
     letter-spacing: 6px;
   }
 }
@@ -155,7 +175,7 @@ p {
 <body>
 <table width="100%" role="presentation">
 <tr>
-<td align="center" style="padding:40px 0;">
+<td align="center" style="padding:40px 16px;">
 <table class="container" role="presentation">
 ${content}
 <tr>
@@ -350,6 +370,34 @@ export const templates: Record<EmailType, any> = {
             <div class="note">Expires in 5 minutes</div>
           </div>
           <p>If you didn’t try to login, please secure your account.</p>
+        </td>
+      </tr>
+    `),
+  }),
+
+  [EMAIL_TYPES.VIDEO_READY]: (data: { instructorName: string; videoTitle: string; courseName: string; videoLink: string }) => ({
+    subject: "Video Processing Complete 🎬",
+    text: `Your video "${data.videoTitle}" in course "${data.courseName}" is now ready.`,
+    html: emailTheme(`
+      <tr>
+        <td class="header">
+          <h1>Video Ready for Action! 🚀</h1>
+          <div class="divider"></div>
+          <p>Hello <strong>${data.instructorName}</strong>,</p>
+          <p>Great news! Your video has successfully finished processing and is now live for your students.</p>
+          
+          <div class="box">
+            <h2 style="margin: 0 0 10px; font-size: 18px; color: #1f2937;">${data.videoTitle}</h2>
+            <p style="margin: 0; font-size: 14px; color: #6b7280;">${data.courseName}</p>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${data.videoLink}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);">
+              View Video Content
+            </a>
+          </div>
+          
+          <p style="margin-top: 30px; font-size: 14px;">Students enrolled in this course can now access this content immediately.</p>
         </td>
       </tr>
     `),

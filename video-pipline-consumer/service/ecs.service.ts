@@ -41,9 +41,9 @@ export async function runVideoTask({
           environment: [
             { name: "VIDEO_KEY", value: key },
             { name: "SQS_RECEIPT_HANDLE", value: receiptHandle },
-            {name: "SQS_QUEUE_URL", value: process.env.SQS_QUEUE_URL},
-            {name:"AWS_ACCESS_KEY_ID", value: process.env.AWS_ACCESS_KEY_ID},
-            {name:"AWS_SECRET_ACCESS_KEY", value: process.env.AWS_SECRET_ACCESS_KEY},
+            { name: "SQS_QUEUE_URL", value: process.env.SQS_QUEUE_URL },
+            { name: "AWS_ACCESS_KEY_ID", value: process.env.AWS_ACCESS_KEY_ID },
+            { name: "AWS_SECRET_ACCESS_KEY", value: process.env.AWS_SECRET_ACCESS_KEY },
 
             { name: "VIDEO_BUCKET_TEMP", value: process.env.VIDEO_BUCKET_TEMP },
             { name: "VIDEO_BUCKET_PROD", value: process.env.VIDEO_BUCKET_PROD },

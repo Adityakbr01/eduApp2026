@@ -11,13 +11,15 @@ logger.info("Environment:", process.env.NODE_ENV), isProd;
 const envSchema = z.object({
     NODE_ENV: z.enum(["development", "production", "test", "staging", ""]).default("development"),
     PORT: z.coerce.number().default(3001),
-  
+
     // Mongo
     MONGO_URI: z.string().url(),
+    DB_NAME: z.string().min(3),
 
     // Client
     CLIENT_URL: z.string().url(),
     CLIENT_ORIGIN: z.string().default("http://localhost:3000"),
+    PRODUCTION_CLIENT_URL: z.string().url(),
 
     // JWT
     JWT_ACCESS_TOKEN_SECRET: z.string().min(10),

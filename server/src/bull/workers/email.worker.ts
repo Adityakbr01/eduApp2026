@@ -12,6 +12,7 @@ import marketingEmailProcessor from "../processors/email/marketingEmailProcessor
 import processCampaignProcessor from "../processors/email/processCampaignProcessor.js";
 import loginOtpProcessor from "../jobs/email/loginOtp.job.js";
 import loginAlertProcessor from "../jobs/email/loginAlert.job.js";
+import videoReadyProcessor from "../processors/email/videoReadyProcessor.js";
 import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 import { EMAIL_JOB_NAMES, type EmailJobName } from "src/constants/email-jobs.constants.js";
 
@@ -52,6 +53,7 @@ export const emailWorker = new Worker(
             [EMAIL_JOB_NAMES.LOGIN_ALERT]: loginAlertProcessor,
             "send-marketing-email": marketingEmailProcessor,
             "process-campaign": processCampaignProcessor,
+            [EMAIL_JOB_NAMES.VIDEO_READY]: videoReadyProcessor,
         };
 
         const processor = processors[job.name];

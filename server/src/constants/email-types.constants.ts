@@ -8,6 +8,7 @@ export const EMAIL_TYPES = {
     HIGH_ERROR_RATE_ALERT: "HIGH_ERROR_RATE_ALERT",
     LOGIN_ALERT: "LOGIN_ALERT",
     TWO_FACTOR_OTP: "TWO_FACTOR_OTP",
+    VIDEO_READY: "VIDEO_READY",
 } as const;
 
 export type EmailType =

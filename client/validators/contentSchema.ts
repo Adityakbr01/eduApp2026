@@ -7,7 +7,7 @@ export const editContentSchema = z.object({
     isPreview: z.boolean().default(false),
     // Video specific
     minWatchPercent: z.number().min(0).max(100).optional(),
-    // File upload (optional, if replaced)
+    duration: z.number().min(0).optional(), // seconds
     // File upload (optional, if replaced)
     rawKey: z.string().optional(),
 

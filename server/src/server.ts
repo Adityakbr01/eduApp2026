@@ -8,6 +8,7 @@ import { startAggregationWorker } from "./workers/aggregationWorker.js";
 import { initSocket } from "./Socket/socket.js";
 import { registerEventHandlers } from "./events/eventHandlers.js";
 import { startWorkers } from "./bull/index.js";
+import { initStreams } from "./stream/index.js";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ const startServer = async () => {
 
         startAggregationWorker();
         startWorkers();
+        initStreams();
         registerEventHandlers();
 
     } catch (error) {
