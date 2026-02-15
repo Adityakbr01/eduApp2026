@@ -8,6 +8,7 @@ import {
     addQuestionSchema,
     createAssignmentSchema,
     createQuizSchema,
+    gradeAllSubmissionsSchema,
     gradeAssignmentSchema,
     updateAssignmentSchema,
     updateQuestionSchema,
@@ -55,6 +56,7 @@ instructorRouter.delete("/assignment/:assignmentId", assignmentController.delete
 instructorRouter.get("/assignments", assignmentController.getAssignmentsWithSubmissions);
 instructorRouter.get("/assignment/:assignmentId/submissions", assignmentController.getSubmissions);
 instructorRouter.put("/assignment/submission/:submissionId/grade", validateRequest(gradeAssignmentSchema), assignmentController.gradeAssignment);
+instructorRouter.put("/assignment/:assignmentId/grade-all", validateRequest(gradeAllSubmissionsSchema), assignmentController.gradeAllSubmissions);
 
 export default instructorRouter;
 

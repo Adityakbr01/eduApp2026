@@ -10,104 +10,28 @@ import {
   Send,
   ChevronDown,
   ChevronUp,
-  ChevronRight,
   ArrowLeft,
   ExternalLink,
   FileText,
   Code,
   Link2,
   Loader2,
-  ClipboardList,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
-// =============================================
-// ASSIGNMENT LIST VIEW
-// =============================================
-function AssignmentList({ onSelect }: { onSelect: (id: string) => void }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["instructor-assignments-grading"],
-    queryFn: () => assessmentApi.getAssignmentsForGrading(),
-  });
-
-  const assignments = data?.data || [];
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-5 h-5 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (!assignments.length) {
-    return (
-      <div className="text-center py-20 text-white/30">
-        <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-40" />
-        <p className="text-sm">No submitted assignments yet</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      {assignments.map((a: any) => {
-        const allGraded = a.gradedCount === a.totalSubmissions;
-        const pendingCount = a.totalSubmissions - a.gradedCount;
-
-        return (
-          <button
-            key={a.id}
-            onClick={() => onSelect(a.id)}
-            className="flex items-center justify-between p-4 bg-dark-card border border-white/5 rounded-xl hover:border-white/10 transition-all text-left group"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white/90 truncate">
-                {a.title}
-              </p>
-              <p className="text-[11px] text-white/30 mt-0.5">
-                {a.courseTitle} · {a.totalMarks} marks
-                {a.dueDate && (
-                  <> · Due {new Date(a.dueDate).toLocaleDateString()}</>
-                )}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 ml-4 shrink-0">
-              {allGraded ? (
-                <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  All graded
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs text-amber-400 font-medium">
-                  <Clock className="w-3.5 h-3.5" />
-                  {pendingCount} pending
-                </span>
-              )}
-
-              <span className="text-[10px] text-white/25">
-                {a.gradedCount}/{a.totalSubmissions}
-              </span>
-
-              <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// =============================================
-// SUBMISSIONS VIEW (GRADING)
-// =============================================
-function SubmissionsView({
-  assignmentId,
-  onBack,
-}: {
+interface SubmissionsViewProps {
   assignmentId: string;
   onBack: () => void;
-}) {
+}
+
+export function SubmissionsView({
+  assignmentId,
+  onBack,
+}: SubmissionsViewProps) {
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [gradeInputs, setGradeInputs] = useState<
@@ -142,6 +66,49 @@ function SubmissionsView({
       });
     },
   });
+
+  const gradeAllMutation = useMutation({
+    mutationFn: ({ marks, feedback }: { marks: number; feedback?: string }) =>
+      assessmentApi.gradeAllSubmissions(assignmentId, {
+        marks,
+        feedback,
+      }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["instructor-submissions", assignmentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["instructor-assignments-grading"],
+      });
+      alert(data.message || "All pending submissions graded successfully");
+      setShowGradeAll(false);
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.message || "Failed to grade all");
+    },
+  });
+
+  // Grade All State
+  const [showGradeAll, setShowGradeAll] = useState(false);
+  const [gradeAllInput, setGradeAllInput] = useState({
+    marks: "",
+    feedback: "",
+  });
+
+  const handleGradeAll = () => {
+    if (!gradeAllInput.marks) return;
+    if (
+      !confirm(
+        "Are you sure you want to grade ALL pending submissions with these marks? This cannot be undone.",
+      )
+    )
+      return;
+
+    gradeAllMutation.mutate({
+      marks: Number(gradeAllInput.marks),
+      feedback: gradeAllInput.feedback || undefined,
+    });
+  };
 
   const handleGrade = (submissionId: string) => {
     const input = gradeInputs[submissionId];
@@ -209,6 +176,84 @@ function SubmissionsView({
         </div>
       </div>
 
+      {/* Grade All Pending Section */}
+      {submissions.some((s: any) => !s.isGraded) && (
+        <div className="mb-6 bg-primary/5 border border-primary/20 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-white">Bulk Grading</h3>
+              <p className="text-xs text-white/40">
+                Grade all {submissions.filter((s: any) => !s.isGraded).length}{" "}
+                pending submissions at once.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowGradeAll(!showGradeAll)}
+              className="text-xs text-primary hover:underline"
+            >
+              {showGradeAll ? "Cancel" : "Grade All Pending"}
+            </button>
+          </div>
+
+          {showGradeAll && (
+            <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-white/25 font-medium mb-1 block">
+                  Marks (out of {assignment.totalMarks})
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max={assignment.totalMarks}
+                  value={gradeAllInput.marks}
+                  onChange={(e) =>
+                    setGradeAllInput((prev) => ({
+                      ...prev,
+                      marks: e.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-primary/40 placeholder:text-white/20"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-white/25 font-medium mb-1 block">
+                  Common Feedback (optional)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={gradeAllInput.feedback}
+                    onChange={(e) =>
+                      setGradeAllInput((prev) => ({
+                        ...prev,
+                        feedback: e.target.value,
+                      }))
+                    }
+                    placeholder="Good job! / Needs improvement..."
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-primary/40 placeholder:text-white/20"
+                  />
+                  <button
+                    onClick={handleGradeAll}
+                    disabled={
+                      !gradeAllInput.marks || gradeAllMutation.isPending
+                    }
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {gradeAllMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-3.5 h-3.5" />
+                    )}
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Submissions List */}
       {submissions.length === 0 ? (
         <div className="text-center py-16 text-white/30 text-sm">
@@ -225,58 +270,59 @@ function SubmissionsView({
             };
 
             return (
-              <div
+              <Collapsible
                 key={sub.id}
+                open={isExpanded}
+                onOpenChange={(open) => setExpandedId(open ? sub.id : null)}
                 className="bg-dark-card border border-white/5 rounded-xl overflow-hidden"
               >
                 {/* Submission Header */}
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : sub.id)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/2 transition-colors text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/10 grid place-items-center text-xs font-bold text-white/60 uppercase">
-                      {sub.student?.name?.[0] || "?"}
+                <CollapsibleTrigger asChild>
+                  <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/2 transition-colors text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-white/10 grid place-items-center text-xs font-bold text-white/60 uppercase">
+                        {sub.student?.name?.[0] || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white/90">
+                          {sub.student?.name || "Unknown"}
+                        </p>
+                        <p className="text-[10px] text-white/25">
+                          {sub.student?.email}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-white/90">
-                        {sub.student?.name || "Unknown"}
-                      </p>
-                      <p className="text-[10px] text-white/25">
-                        {sub.student?.email}
-                      </p>
+
+                    <div className="flex items-center gap-2">
+                      {isGraded ? (
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
+                          <CheckCircle className="w-3 h-3" />
+                          {sub.grade.obtainedMarks}/{assignment.totalMarks}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-amber-400">
+                          <Clock className="w-3 h-3" />
+                          Pending
+                        </span>
+                      )}
+
+                      {sub.isLate && (
+                        <span className="text-[9px] text-red-400 font-semibold px-1.5 py-0.5 bg-red-500/10 rounded">
+                          LATE
+                        </span>
+                      )}
+
+                      {isExpanded ? (
+                        <ChevronUp className="w-3.5 h-3.5 text-white/25" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-white/25" />
+                      )}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {isGraded ? (
-                      <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
-                        <CheckCircle className="w-3 h-3" />
-                        {sub.grade.obtainedMarks}/{assignment.totalMarks}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[11px] font-medium text-amber-400">
-                        <Clock className="w-3 h-3" />
-                        Pending
-                      </span>
-                    )}
-
-                    {sub.isLate && (
-                      <span className="text-[9px] text-red-400 font-semibold px-1.5 py-0.5 bg-red-500/10 rounded">
-                        LATE
-                      </span>
-                    )}
-
-                    {isExpanded ? (
-                      <ChevronUp className="w-3.5 h-3.5 text-white/25" />
-                    ) : (
-                      <ChevronDown className="w-3.5 h-3.5 text-white/25" />
-                    )}
-                  </div>
-                </button>
+                  </button>
+                </CollapsibleTrigger>
 
                 {/* Expanded */}
-                {isExpanded && (
+                <CollapsibleContent className="data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown">
                   <div className="px-4 pb-4 border-t border-white/5">
                     <div className="py-3 space-y-2">
                       <div className="flex items-center gap-2 text-[10px] text-white/30">
@@ -420,41 +466,11 @@ function SubmissionsView({
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             );
           })}
         </div>
-      )}
-    </div>
-  );
-}
-
-// =============================================
-// MAIN GRADING PAGE
-// =============================================
-export default function GradingPage() {
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
-    string | null
-  >(null);
-
-  return (
-    <div className="max-w-3xl mx-auto">
-      {!selectedAssignmentId ? (
-        <>
-          <div className="mb-6">
-            <h1 className="text-xl font-bold text-white">Assignment Grading</h1>
-            <p className="text-xs text-white/30 mt-1">
-              Assignments with student submissions
-            </p>
-          </div>
-          <AssignmentList onSelect={setSelectedAssignmentId} />
-        </>
-      ) : (
-        <SubmissionsView
-          assignmentId={selectedAssignmentId}
-          onBack={() => setSelectedAssignmentId(null)}
-        />
       )}
     </div>
   );

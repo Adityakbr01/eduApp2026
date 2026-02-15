@@ -12,6 +12,7 @@ import {
     createAssignmentSchema,
     updateAssignmentSchema,
     gradeAssignmentSchema,
+    gradeAllSubmissionsSchema,
 } from "src/schemas/assessment.schema.js";
 
 // ============================================
@@ -335,6 +336,23 @@ export const assignmentController = {
         const validatedData = gradeAssignmentSchema.parse(req.body);
         const result = await assignmentService.gradeAssignment(
             submissionId,
+            req.user.id,
+            validatedData,
+        );
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
+
+    /**
+     * @desc    Grade all pending submissions for an assignment
+     * @route   PUT /api/v1/assessments/instructor/assignment/:assignmentId/grade-all
+     * @access  Private (Instructor)
+     */
+    gradeAllSubmissions: catchAsync(async (req: Request, res: Response) => {
+        const { assignmentId } = req.params;
+        const validatedData = gradeAllSubmissionsSchema.parse(req.body);
+        const result = await assignmentService.gradeAllSubmissions(
+            assignmentId,
             req.user.id,
             validatedData,
         );

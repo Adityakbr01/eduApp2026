@@ -134,6 +134,11 @@ export const gradeAssignmentSchema = z.object({
     feedback: z.string().max(2000).optional(),
 });
 
+export const gradeAllSubmissionsSchema = z.object({
+    marks: z.number().min(0),
+    feedback: z.string().max(2000).optional(),
+});
+
 // ============================================
 // TYPE EXPORTS
 // ============================================
@@ -145,3 +150,4 @@ export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;
 export type SubmitQuizAttemptInput = z.infer<typeof submitQuizAttemptSchema>;
 export type SubmitAssignmentInput = z.infer<typeof submitAssignmentSchema>;
 export type GradeAssignmentInput = z.infer<typeof gradeAssignmentSchema>;
+export type GradeAllSubmissionsInput = z.infer<typeof gradeAllSubmissionsSchema>;

@@ -849,6 +849,24 @@ export const assignmentService = {
 
         // INVALIDATE CACHE
         await batchRepository.invalidateUserProgress(submission.userId.toString(), assignment.courseId.toString());
+        await batchRepository.invalidateLeaderboard(assignment.courseId.toString());
+        await courseProgressRepository.recalculate(submission.userId.toString(), assignment.courseId.toString());
+
+        // Async jobs for leaderboard and logging
+        await addProgressJob.updateLeaderboardScore({ userId: submission.userId.toString(), courseId: assignment.courseId.toString() });
+        await addProgressJob.logActivity({
+            userId: submission.userId.toString(),
+            courseId: assignment.courseId.toString(),
+            contentId: assignment.contentId.toString(),
+            action: "GRADE",
+            metadata: {
+                assignmentId: assignment._id.toString(),
+                submissionId: submission._id.toString(),
+                obtainedMarks: finalMarks
+            }
+        });
+
+        emitLeaderboardUpdate(assignment.courseId.toString());
 
         return {
             submissionId: submission._id,
@@ -856,6 +874,109 @@ export const assignmentService = {
             penaltyApplied: submission.isLate && !!submission.penalty?.percent,
             originalMarks: data.obtainedMarks,
             gradedAt: submission.grade.gradedAt,
+        };
+    },
+
+    // -------------------- GRADE ALL SUBMISSIONS (INSTRUCTOR) --------------------
+    async gradeAllSubmissions(
+        assignmentId: string,
+        gradedBy: string,
+        data: { marks: number; feedback?: string },
+    ) {
+        const assignment = await assignmentRepository.findById(assignmentId);
+        if (!assignment) {
+            throw new AppError(
+                "Assignment not found",
+                STATUSCODE.NOT_FOUND,
+                ERROR_CODE.NOT_FOUND,
+            );
+        }
+
+        if (data.marks > assignment.totalMarks) {
+            throw new AppError(
+                `Marks cannot exceed total marks (${assignment.totalMarks})`,
+                STATUSCODE.BAD_REQUEST,
+                ERROR_CODE.INVALID_INPUT,
+            );
+        }
+
+        // 1. Find all PENDING (ungraded) submissions
+        // querying where grade.gradedAt is missing or null
+        const submissions = await AssignmentSubmission.find({
+            assignmentId,
+            "grade.gradedAt": { $exists: false },
+        });
+
+        if (submissions.length === 0) {
+            return {
+                updatedCount: 0,
+                message: "No pending submissions to grade.",
+            };
+        }
+
+        // 2. Prepare bulk updates
+        const now = new Date();
+        const graderId = new Types.ObjectId(gradedBy);
+        const userIdsToUpdate = new Set<string>();
+
+        // Using a loop for now to handle individual logic (late penalty, etc.)
+        // Optimization: Could use bulkWrite if logic permits, but detailed activity logging logic makes loop safer/easier
+        for (const submission of submissions) {
+            // Calculate marks with penalty
+            let finalMarks = data.marks;
+            if (submission.isLate && submission.penalty?.percent) {
+                const penaltyDeduction = (data.marks * submission.penalty.percent) / 100;
+                finalMarks = Math.round(data.marks - penaltyDeduction);
+            }
+
+            submission.grade = {
+                obtainedMarks: finalMarks,
+                feedback: data.feedback,
+                gradedBy: graderId,
+                gradedAt: now,
+            };
+            await submission.save();
+
+            // Update ContentAttempt
+            if (submission.contentAttemptId) {
+                const { ContentAttempt } = await import("src/models/course/index.js");
+                await ContentAttempt.findByIdAndUpdate(
+                    submission.contentAttemptId,
+                    { $set: { obtainedMarks: finalMarks } },
+                );
+            }
+
+            userIdsToUpdate.add(submission.userId.toString());
+
+            // Side Effects (Per User)
+            // Invalidating user progress cache
+            await batchRepository.invalidateUserProgress(submission.userId.toString(), assignment.courseId.toString());
+            // Recalculate course progress
+            await courseProgressRepository.recalculate(submission.userId.toString(), assignment.courseId.toString());
+
+            // Async jobs
+            await addProgressJob.updateLeaderboardScore({ userId: submission.userId.toString(), courseId: assignment.courseId.toString() });
+            await addProgressJob.logActivity({
+                userId: submission.userId.toString(),
+                courseId: assignment.courseId.toString(),
+                contentId: assignment.contentId.toString(),
+                action: "GRADE",
+                metadata: {
+                    assignmentId: assignment._id.toString(),
+                    submissionId: submission._id.toString(),
+                    obtainedMarks: finalMarks,
+                    bulk: true
+                }
+            });
+        }
+
+        // 3. Batch Level Side Effects (Once per course)
+        await batchRepository.invalidateLeaderboard(assignment.courseId.toString());
+        emitLeaderboardUpdate(assignment.courseId.toString());
+
+        return {
+            updatedCount: submissions.length,
+            message: `Successfully graded ${submissions.length} submissions.`,
         };
     },
 };

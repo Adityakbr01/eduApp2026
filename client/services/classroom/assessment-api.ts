@@ -111,4 +111,15 @@ export const assessmentApi = {
         );
         return response.data;
     },
+
+    gradeAllSubmissions: async (
+        assignmentId: string,
+        data: { marks: number; feedback?: string }
+    ) => {
+        const response = await apiClient.put(
+            `/assessments/instructor/assignment/${assignmentId}/grade-all`,
+            data
+        );
+        return response.data;
+    },
 };

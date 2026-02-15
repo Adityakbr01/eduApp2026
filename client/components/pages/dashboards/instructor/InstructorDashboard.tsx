@@ -22,7 +22,7 @@ import {
   instructorSidebarItems,
   InstructorSidebarValue,
 } from "./utils";
-import GradingPage from "@/app/(routes)/dashboard/Instructor/grading/page";
+import GradingPage from "@/components/pages/dashboards/instructor/grading/page";
 
 export function InstructorDashboard() {
   const logout = useLogout();
