@@ -124,4 +124,25 @@ export const cacheKeyFactory = {
     classroom: {
         userProgress: (userId: string, courseId: string) => `user:${userId}:course:${courseId}:progress`,
     },
+
+    // =====================
+    // LEADERBOARD KEYS
+    // =====================
+    leaderboard: {
+        sortedSet: (courseId: string) => `course:${courseId}:leaderboard`,
+    },
+
+    // =====================
+    // COURSE PROGRESS KEYS
+    // =====================
+    progress: {
+        course: (userId: string, courseId: string) => `user:${userId}:course:${courseId}:courseProgress`,
+    },
+
+    // =====================
+    // ANALYTICS KEYS
+    // =====================
+    analytics: {
+        heatmap: (userId: string, courseId: string) => `user:${userId}:course:${courseId}:heatmap`,
+    },
 };

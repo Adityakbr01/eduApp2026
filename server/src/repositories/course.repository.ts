@@ -285,6 +285,22 @@ export const courseRepository = {
 
         return result.length > 0 ? result[0] : null;
     },
+
+    // Find basic course details (lightweight)
+    findBasicDetails: async (idOrSlug: string | Types.ObjectId) => {
+        const isObjectId = Types.ObjectId.isValid(idOrSlug) &&
+            (typeof idOrSlug === 'string' ? idOrSlug.length === 24 : true);
+
+        const query = isObjectId
+            ? { _id: new Types.ObjectId(idOrSlug as string) }
+            : { slug: idOrSlug };
+
+        return Course.findOne({
+            ...query,
+            isPublished: true,
+            "Deleted.isDeleted": { $ne: true }
+        }).select("pricing instructor coInstructors isPublished");
+    },
     // Create
     create: async (data: any) => {
         console.log("Creating course with data:", data);

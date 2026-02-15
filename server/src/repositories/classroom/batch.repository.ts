@@ -7,7 +7,7 @@ import Course from "src/models/course/course.model.js";
 import Enrollment from "src/models/enrollment.model.js";
 import Section from "src/models/course/section.model.js";
 import type { CachedSection, UserCourseProgress, UserProgressMap, AggContent, LeaderboardEntry } from "src/types/classroom/batch.type.js";
-
+import { leaderboardRepository } from "./leaderboard.repository.js";
 
 
 // ============================================
@@ -214,120 +214,47 @@ export const batchRepository = {
     },
 
     /**
-     * Get top N students by total marks
+     * Get top N students by total marks (Redis Sorted Set)
+     * O(log N + M) instead of O(N) Mongo aggregation
      */
-    async getLeaderboard(courseId: mongoose.Types.ObjectId, limit: number = 10): Promise<LeaderboardEntry[]> {
-        // This is expensive to compute, so we should cache it for a short time (e.g. 5-10 mins)
-        // For now, let's implement the aggregation.
-        const key = `course:${courseId.toString()}:leaderboard:${limit}`;
-
-        const { data, isCached } = await cacheManager.getOrSet(key, async () => {
-            console.log(`[BatchRepository] Calculating leaderboard for course ${courseId} (Cache MISS)`);
-            return ContentAttempt.aggregate([
-                { $match: { courseId } },
-                {
-                    $group: {
-                        _id: "$userId",
-                        totalMarks: { $sum: "$obtainedMarks" }
-                    }
-                },
-                { $sort: { totalMarks: -1 } },
-                { $limit: limit },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "user"
-                    }
-                },
-                { $unwind: "$user" },
-                {
-                    $project: {
-                        userId: "$_id",
-                        name: "$user.name",
-                        avatar: "$user.profile.avatar", // Access nested profile.avatar
-                        points: "$totalMarks",
-                        // Rank will be assigned in service or mapped here?
-                        // Aggregation preserves order, so index+1 is rank among these top N.
-                    }
-                }
-            ]);
-        }, 300); // 5 minutes cache
-
-        if (isCached) {
-            console.log(`[BatchRepository] Returning cached leaderboard for course ${courseId}`);
-        }
-
-        return data as LeaderboardEntry[];
+    async getLeaderboard(courseId: mongoose.Types.ObjectId, limit: number = 10): Promise<{ entries: LeaderboardEntry[]; isFromRedis: boolean }> {
+        const { entries, isFromRedis } = await leaderboardRepository.getTopN(courseId.toString(), limit);
+        return { entries, isFromRedis };
     },
 
     /**
      * Invalidate leaderboard cache
+     * With Redis sorted sets, the leaderboard is always up to date.
+     * This is kept as a no-op for backward compatibility.
      */
     async invalidateLeaderboard(courseId: string) {
-        // We need to invalidate for all limits? 
-        // Current implementation uses limit in key. 
-        // Ideally we should use a pattern match or just invalidate common limits (10, 20, 50).
-        // Since we only use default 10 right now:
-        const key = `course:${courseId}:leaderboard:10`;
-        await cacheManager.del(key);
-        console.log(`[BatchRepository] Invalidated leaderboard cache for course ${courseId}`);
+        // No-op: Redis sorted set is updated at write time
+        // Kept for backward compatibility with existing callers
+        console.log(`[BatchRepository] Leaderboard invalidation is now a no-op (Redis sorted set is always current)`);
     },
 
     /**
-     * Get a specific student's rank and score
+     * Get a specific student's rank and score (Redis Sorted Set)
+     * O(log N) instead of 2x O(N) Mongo aggregation
      */
     async getStudentRank(courseId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId) {
-        // Calculate total score for the user
-        const result = await ContentAttempt.aggregate([
-            { $match: { courseId, userId } },
-            {
-                $group: {
-                    _id: "$userId",
-                    totalMarks: { $sum: "$obtainedMarks" }
-                }
-            }
-        ]);
-
-        const myScore = result.length > 0 ? result[0].totalMarks : 0;
-
-        // Count how many students have MORE marks than this user
-        // This gives us the rank (count + 1)
-        // We can optimize this by caching a "scores" sorted set in Redis if scale is high.
-        // For now, Mongo aggregation:
-        const rankResult = await ContentAttempt.aggregate([
-            { $match: { courseId } },
-            {
-                $group: {
-                    _id: "$userId",
-                    totalMarks: { $sum: "$obtainedMarks" }
-                }
-            },
-            {
-                $match: {
-                    totalMarks: { $gt: myScore }
-                }
-            },
-            {
-                $count: "rank"
-            }
-        ]);
-
-        const rank = (rankResult.length > 0 ? rankResult[0].rank : 0) + 1;
-
-        return { rank, points: myScore };
+        return leaderboardRepository.getUserRank(courseId.toString(), userId.toString());
     },
 
     /**
      * Get total enrolled count for percentile calculation
+     * Uses Redis sorted set member count + enrollment count
      */
     async getTotalEnrolledCount(courseId: mongoose.Types.ObjectId): Promise<number> {
-        const key = `course:${courseId.toString()}:enrollmentCount`;
+        // First try Redis sorted set member count (fast)
+        const redisCount = await leaderboardRepository.getTotalPlayers(courseId.toString());
+        if (redisCount > 0) return redisCount;
 
+        // Fall back to enrollment count
+        const key = `course:${courseId.toString()}:enrollmentCount`;
         const { data } = await cacheManager.getOrSet(key, async () => {
             return Enrollment.countDocuments({ courseId, status: "active" });
-        }, 3600); // Cache for 1 hour
+        }, 3600);
 
         return data;
     }

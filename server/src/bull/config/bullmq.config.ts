@@ -5,6 +5,7 @@
 
 export const QUEUE_NAMES = {
     EMAIL: "email-queue",
+    PROGRESS: "progress-queue",
 } as const;
 
 export const JOB_NAMES = {
@@ -15,6 +16,12 @@ export const JOB_NAMES = {
         ACCOUNT_BAN: "account-ban",
         SEND_MARKETING_EMAIL: "send-marketing-email",
         PROCESS_CAMPAIGN: "process-campaign",
+    },
+    PROGRESS: {
+        RECALCULATE_COURSE: "recalculate-course-progress",
+        UPDATE_LEADERBOARD: "update-leaderboard-score",
+        REBUILD_LEADERBOARD: "rebuild-leaderboard",
+        LOG_ACTIVITY: "log-activity",
     },
 } as const;
 

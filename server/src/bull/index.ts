@@ -1,11 +1,14 @@
 import logger from "src/utils/logger.js";
 import { emailWorker } from "./workers/email.worker.js";
+import { progressWorker } from "./workers/progress.worker.js";
 
-const ALL_WORKERS = [emailWorker];
+const ALL_WORKERS = [emailWorker, progressWorker];
 
 export function startWorkers() {
     logger.info("⚙️ Starting BullMQ workers...");
-    ALL_WORKERS.forEach(() => { });
+    ALL_WORKERS.forEach((worker) => {
+        logger.info(`  ✅ ${worker.name} worker registered`);
+    });
     logger.info("✅ Workers started");
 }
 

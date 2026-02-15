@@ -81,7 +81,7 @@ export const isEnrolled = (options: IsEnrolledOptions = {}) => {
             }
 
             // Fetch the course to check if it's free or if user is instructor
-            const course = await courseRepository.findPublishedById(courseId);
+            const course = await courseRepository.findBasicDetails(courseId);
 
             if (!course) {
                 throw new AppError(
@@ -93,7 +93,9 @@ export const isEnrolled = (options: IsEnrolledOptions = {}) => {
 
             // Check if user is the instructor (allow full access)
             if (allowInstructor) {
-                const isOwner = await courseRepository.isOwner(course._id, userId);
+                const isOwner = course.instructor.toString() === userId ||
+                    (course.coInstructors && course.coInstructors.some(id => id.toString() === userId));
+
                 if (isOwner) {
                     logger.debug("Instructor access granted", { userId, courseId });
                     return next();

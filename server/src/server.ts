@@ -6,6 +6,8 @@ import logger from "./utils/logger.js";
 import { isProd } from "./configs/env.js";
 import { startAggregationWorker } from "./workers/aggregationWorker.js";
 import { initSocket } from "./Socket/socket.js";
+import { registerEventHandlers } from "./events/eventHandlers.js";
+import { startWorkers } from "./bull/index.js";
 
 dotenv.config();
 
@@ -40,6 +42,8 @@ const startServer = async () => {
         });
 
         startAggregationWorker();
+        startWorkers();
+        registerEventHandlers();
 
     } catch (error) {
         logger.error("❌ Server failed to start", error);

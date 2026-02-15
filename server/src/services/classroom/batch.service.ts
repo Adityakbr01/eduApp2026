@@ -5,12 +5,13 @@ import { STATUSCODE } from "src/constants/statusCodes.js";
 import ContentAttempt from "src/models/course/contentAttempt.model.js";
 import Lesson from "src/models/course/lesson.model.js";
 import LessonContent from "src/models/course/lessonContent.model.js";
-import Section from "src/models/course/section.model.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 import type { BatchData, BatchDetailResponse, ContentDetailResponse, LessonResult, Module } from "src/types/classroom/batch.type.js";
 import { type AggContent, type LeaderboardResponse } from "src/types/classroom/batch.type.js";
 import AppError from "src/utils/AppError.js";
 import computeLessonMeta from "src/utils/computeLessonMeta.js";
+import logger from "src/utils/logger.js";
 
 
 
@@ -27,13 +28,11 @@ export const batchService = {
         const courseOid = new mongoose.Types.ObjectId(courseId);
 
         // Parallel fetch from Redis/DB via Repository
-        console.time("BatchDetail:Fetch");
         const [courseTitle, structureResult, progressResult] = await Promise.all([
             batchRepository.findCourseTitle(courseOid),
             batchRepository.getCourseStructure(courseOid),
             batchRepository.getUserProgress(userOid, courseOid),
         ]);
-        console.timeEnd("BatchDetail:Fetch");
 
         const { structure, isCached: isStructureCached } = structureResult;
         const { progress: userProgress, isCached: isProgressCached } = progressResult;
@@ -324,70 +323,25 @@ export const batchService = {
             throw new AppError(`Video is ${content.video.status.toLowerCase()}. Please try again later.`, STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN);
         }
 
-        // === SEQUENTIAL LOCK CHECK ===
-        const lesson = await Lesson.findById(content.lessonId).lean();
-        const section = lesson ? await Section.findById(lesson.sectionId).lean() : null;
+        // === OPTIMIZED SEQUENTIAL LOCK CHECK ===
+        // Instead of 5+ DB queries, use pre-computed CourseProgress
+        const courseProgress = await courseProgressRepository.getProgress(userId, courseId);
 
-        if (section && lesson) {
-            // Check section lock
-            const allSectionsForCourse = await Section.find({
-                courseId: courseOid, isDeleted: { $ne: true }, isVisible: { $ne: false },
-            }).sort({ order: 1 }).lean();
+        if (courseProgress) {
+            const lessonId = content.lessonId.toString();
+            const unlockedLessons = (courseProgress.unlockedLessonIds || []).map((id: any) => id.toString());
 
-            const sectionIndex = allSectionsForCourse.findIndex(
-                (s) => s._id.toString() === section._id.toString()
-            );
-
-            if (sectionIndex > 0 && !(section as any).isManuallyUnlocked) {
-                const prevSection = allSectionsForCourse[sectionIndex - 1];
-                const prevLessons = await Lesson.find({
-                    courseId: courseOid, sectionId: prevSection._id, isDeleted: { $ne: true },
-                }).lean();
-                const prevContents = await LessonContent.find({
-                    courseId: courseOid, lessonId: { $in: prevLessons.map((l) => l._id) }, isDeleted: { $ne: true },
-                }).lean();
-
-                const prevAttempts = await ContentAttempt.find({
-                    userId: userOid, contentId: { $in: prevContents.map((c) => c._id) },
-                }).lean();
-
-                const prevAttemptMap = new Map(prevAttempts.map((a) => [a.contentId.toString(), a]));
-                const allPrevCompleted = prevContents.every((c) => prevAttemptMap.get(c._id.toString())?.isCompleted);
-
-                if (!allPrevCompleted && prevContents.length > 0) {
-                    throw new AppError("Complete the previous section first", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN);
-                }
-            }
-
-            // Check lesson lock within section
-            const allLessonsForSection = await Lesson.find({
-                courseId: courseOid, sectionId: section._id, isDeleted: { $ne: true }, isVisible: { $ne: false },
-            }).sort({ order: 1 }).lean();
-
-            const lessonIndex = allLessonsForSection.findIndex(
-                (l) => l._id.toString() === lesson._id.toString()
-            );
-
-            if (lessonIndex > 0 && !(lesson as any).isManuallyUnlocked) {
-                const prevLesson = allLessonsForSection[lessonIndex - 1];
-                const prevLessonContents = await LessonContent.find({
-                    courseId: courseOid, lessonId: prevLesson._id, isDeleted: { $ne: true },
-                }).lean();
-
-                const prevLessonAttempts = await ContentAttempt.find({
-                    userId: userOid, contentId: { $in: prevLessonContents.map((c) => c._id) },
-                }).lean();
-
-                const prevLessonAttemptMap = new Map(prevLessonAttempts.map((a) => [a.contentId.toString(), a]));
-                const allPrevLessonCompleted = prevLessonContents.every(
-                    (c) => prevLessonAttemptMap.get(c._id.toString())?.isCompleted
-                );
-
-                if (!allPrevLessonCompleted && prevLessonContents.length > 0) {
+            // If we have unlock data and this lesson is not in the unlocked list
+            if (unlockedLessons.length > 0 && !unlockedLessons.includes(lessonId)) {
+                // Check if this lesson needs a manual unlock check
+                const lesson = await Lesson.findById(content.lessonId).select("isManuallyUnlocked").lean();
+                if (!(lesson as any)?.isManuallyUnlocked) {
                     throw new AppError("Complete the previous lesson first", STATUSCODE.FORBIDDEN, ERROR_CODE.FORBIDDEN);
                 }
             }
         }
+        // If no CourseProgress exists yet (first-time user / pre-migration),
+        // fall through and allow access — the old behavior.
 
         // Fetch user's attempt
         let attempt = await ContentAttempt.findOne({ userId: userOid, contentId: content._id });
@@ -483,10 +437,16 @@ export const batchService = {
         }
 
         // Add ranks to topList (1-based index)
-        const rankedList = topList.map((entry, index) => ({
+        const rankedList = topList.entries.map((entry, index) => ({
             ...entry,
             rank: index + 1
         }));
+
+        if (topList.isFromRedis) {
+            logger.info("📊 Leaderboard data from Redis sorted set");
+        } else {
+            logger.info("⚠️ Leaderboard data rebuilt from Mongo");
+        }
 
         return {
             list: rankedList,
@@ -494,6 +454,9 @@ export const batchService = {
                 rank: myRankData.rank,
                 points: myRankData.points,
                 percentile: Math.round(percentile * 100) / 100 // Round to 2 decimals
+            },
+            meta: {
+                isLeaderboardCached: topList.isFromRedis
             }
         };
     },

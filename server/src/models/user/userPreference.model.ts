@@ -171,7 +171,6 @@ const userPreferenceSchema = new Schema<IUserPreference>(
             ref: "User",
             required: true,
             unique: true,
-            index: true,
         },
         email: {
             type: emailPreferencesSchema,
@@ -209,8 +208,6 @@ const userPreferenceSchema = new Schema<IUserPreference>(
     }
 );
 
-// Create indexes for performance
-userPreferenceSchema.index({ userId: 1 });
 
 const UserPreferenceModel = model<IUserPreference>("UserPreference", userPreferenceSchema);
 

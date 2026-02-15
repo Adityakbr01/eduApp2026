@@ -329,6 +329,100 @@ class CacheManager {
     }
 
     // =====================
+    // SORTED SET OPERATIONS
+    // =====================
+
+    /**
+     * Add a member with score to a sorted set
+     */
+    async zadd(key: string, score: number, member: string): Promise<number> {
+        try {
+            return await redisClient.zadd(key, score, member);
+        } catch (err) {
+            logger.error(`❌ Cache ZADD error | key=${key}`, err);
+            return 0;
+        }
+    }
+
+    /**
+     * Increment a member's score in a sorted set
+     */
+    async zincrby(key: string, increment: number, member: string): Promise<string> {
+        try {
+            return await redisClient.zincrby(key, increment, member);
+        } catch (err) {
+            logger.error(`❌ Cache ZINCRBY error | key=${key}`, err);
+            return "0";
+        }
+    }
+
+    /**
+     * Get members from sorted set in reverse order (highest score first)
+     */
+    async zrevrangeWithScores(key: string, start: number, stop: number): Promise<{ member: string; score: number }[]> {
+        try {
+            const results = await redisClient.zrevrange(key, start, stop, "WITHSCORES");
+            const entries: { member: string; score: number }[] = [];
+            for (let i = 0; i < results.length; i += 2) {
+                entries.push({ member: results[i], score: parseFloat(results[i + 1]) });
+            }
+            return entries;
+        } catch (err) {
+            logger.error(`❌ Cache ZREVRANGE error | key=${key}`, err);
+            return [];
+        }
+    }
+
+    /**
+     * Get a member's rank in reverse order (0 = highest score)
+     */
+    async zrevrank(key: string, member: string): Promise<number | null> {
+        try {
+            return await redisClient.zrevrank(key, member);
+        } catch (err) {
+            logger.error(`❌ Cache ZREVRANK error | key=${key}`, err);
+            return null;
+        }
+    }
+
+    /**
+     * Get a member's score in a sorted set
+     */
+    async zscore(key: string, member: string): Promise<number | null> {
+        try {
+            const score = await redisClient.zscore(key, member);
+            return score !== null ? parseFloat(score) : null;
+        } catch (err) {
+            logger.error(`❌ Cache ZSCORE error | key=${key}`, err);
+            return null;
+        }
+    }
+
+    /**
+     * Get the number of members in a sorted set
+     */
+    async zcard(key: string): Promise<number> {
+        try {
+            return await redisClient.zcard(key);
+        } catch (err) {
+            logger.error(`❌ Cache ZCARD error | key=${key}`, err);
+            return 0;
+        }
+    }
+
+    /**
+     * Remove a member from a sorted set
+     */
+    async zrem(key: string, member: string): Promise<number> {
+        try {
+            return await redisClient.zrem(key, member);
+        } catch (err) {
+            logger.error(`❌ Cache ZREM error | key=${key}`, err);
+            return 0;
+        }
+    }
+
+    // =====================
     // HEALTH & MONITORING
     // =====================
 

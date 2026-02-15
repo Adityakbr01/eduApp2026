@@ -119,6 +119,9 @@ export interface LeaderboardResponse {
         points: number;
         percentile: number;
     } | null;
+    meta?: {
+        isLeaderboardCached: boolean;
+    };
 }
 
 

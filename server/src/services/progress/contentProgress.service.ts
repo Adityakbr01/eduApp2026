@@ -4,7 +4,7 @@ import { batchRepository } from "src/repositories/classroom/batch.repository.js"
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import { lessonRepository } from "src/repositories/lesson.repository.js";
-import { emitLeaderboardUpdate } from "src/Socket/socket.js";
+import { domainEvents, DOMAIN_EVENTS } from "src/events/domainEvents.js";
 import AppError from "src/utils/AppError.js";
 
 
@@ -39,8 +39,15 @@ export const contentProgressService = {
 
         if (data.isCompleted) {
             await batchRepository.invalidateUserProgress(userId, content.courseId.toString());
-            await batchRepository.invalidateLeaderboard(content.courseId.toString());
-            emitLeaderboardUpdate(content.courseId.toString());
+            // Emit domain event instead of direct invalidation
+            domainEvents.emit(DOMAIN_EVENTS.CONTENT_COMPLETED, {
+                userId,
+                courseId: content.courseId.toString(),
+                lessonId: content.lessonId.toString(),
+                contentId,
+                obtainedMarks: data.obtainedMarks || 0,
+                totalMarks: content.marks || 0,
+            });
         }
 
         return result;
@@ -95,8 +102,15 @@ export const contentProgressService = {
         );
 
         await batchRepository.invalidateUserProgress(userId, content.courseId.toString());
-        await batchRepository.invalidateLeaderboard(content.courseId.toString());
-        emitLeaderboardUpdate(content.courseId.toString());
+        // Emit domain event for async processing
+        domainEvents.emit(DOMAIN_EVENTS.CONTENT_COMPLETED, {
+            userId,
+            courseId: content.courseId.toString(),
+            lessonId: content.lessonId.toString(),
+            contentId,
+            obtainedMarks: finalMarks,
+            totalMarks: content.marks || 0,
+        });
 
         return result;
     },
