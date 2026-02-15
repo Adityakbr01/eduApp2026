@@ -19,7 +19,7 @@ export const createQuizSchema = z.object({
     title: z.string().min(1, "Quiz title is required").max(200),
     description: z.string().max(1000).optional(),
     passingMarks: z.number().min(0).optional(),
-    timeLimit: z.number().min(1).optional(), // in minutes
+    timeLimit: z.number().min(0).optional(), // in minutes
     questions: z.array(quizQuestionSchema).min(1, "At least one question is required"),
     shuffleQuestions: z.boolean().default(false),
     shuffleOptions: z.boolean().default(false),

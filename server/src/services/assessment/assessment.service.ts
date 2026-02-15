@@ -7,6 +7,7 @@ import type { IQuizQuestion } from "src/models/course/quiz.model.js";
 import { assignmentRepository, quizRepository } from "src/repositories/assessment.repository.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
+import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
 import { emitLeaderboardUpdate } from "src/Socket/socket.js";
@@ -17,8 +18,11 @@ import type {
     UpdateAssignmentInput,
     UpdateQuizInput
 } from "src/schemas/assessment.schema.js";
+import { addProgressJob } from "src/bull/jobs/progress.jobs.js";
 import AppError from "src/utils/AppError.js";
 import logger from "src/utils/logger.js";
+
+
 
 
 
@@ -290,6 +294,18 @@ export const quizService = {
 
         await batchRepository.invalidateUserProgress(userId, quiz.courseId.toString());
         await batchRepository.invalidateLeaderboard(quiz.courseId.toString());
+        await courseProgressRepository.recalculate(userId, quiz.courseId.toString());
+
+        // Async jobs for leaderboard and logging
+        await addProgressJob.updateLeaderboardScore({ userId, courseId: quiz.courseId.toString() });
+        await addProgressJob.logActivity({
+            userId,
+            courseId: quiz.courseId.toString(),
+            contentId: quiz.contentId.toString(),
+            action: "SUBMIT",
+            metadata: { quizId, score: quizAttempt.score }
+        });
+
         emitLeaderboardUpdate(quiz.courseId.toString());
 
         return {
@@ -562,6 +578,18 @@ export const assignmentService = {
 
         await batchRepository.invalidateUserProgress(userId, assignment.courseId.toString());
         await batchRepository.invalidateLeaderboard(assignment.courseId.toString());
+        await courseProgressRepository.recalculate(userId, assignment.courseId.toString());
+
+        // Async jobs for leaderboard and logging
+        await addProgressJob.updateLeaderboardScore({ userId, courseId: assignment.courseId.toString() });
+        await addProgressJob.logActivity({
+            userId,
+            courseId: assignment.courseId.toString(),
+            contentId: assignment.contentId.toString(),
+            action: "SUBMIT",
+            metadata: { assignmentId, submissionType: data.submissionType }
+        });
+
         emitLeaderboardUpdate(assignment.courseId.toString());
 
         return {

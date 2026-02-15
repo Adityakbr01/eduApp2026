@@ -32,7 +32,7 @@ import {
   ILessonContent,
   useDeleteContent,
   useUpdateContent,
-  VideoStatusEnum
+  VideoStatusEnum,
 } from "@/services/courses";
 import {
   ClipboardList,
@@ -266,6 +266,7 @@ export function ContentItem({
           lessonId={lessonId}
           contentId={content._id}
           existingQuiz={existingQuiz}
+          totalMarks={content.marks}
         />
       )}
       {content.type === ContentType.ASSIGNMENT && (

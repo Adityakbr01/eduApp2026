@@ -55,7 +55,6 @@ export const batchService = {
 
         const sectionCompletionMap: boolean[] = [];
 
-        console.time("BatchDetail:Process");
         // Map cached structure to response format
         const modules: Module[] = structure.map((section, sectionIndex) => {
             const isFirstSection = sectionIndex === 0;
@@ -153,7 +152,6 @@ export const batchService = {
                 lessons: lessonResults,
             };
         });
-        console.timeEnd("BatchDetail:Process");
 
         const progressPercent = totalScore > 0
             ? Math.round((obtainedScore / totalScore) * 100 * 100) / 100
