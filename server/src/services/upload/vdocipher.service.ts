@@ -79,3 +79,30 @@ export const createVdoVideo = async (
         return response.data;
     });
 };
+
+export const getVideoOTP = async (
+    videoId: string,
+    email: string
+): Promise<any> => {
+    return retryRequest(async () => {
+        const watermark = [
+            {
+                type: "rtext",
+                text: email || "EduLaunch",
+                alpha: "0.45",
+                x: "10",
+                y: "10",
+                color: "0xFFFFFF",
+                size: "8",
+                interval: "5000",
+            },
+        ];
+
+        const response = await vdoClient.post(`/videos/${videoId}/otp`, {
+            ttl: 300,
+            annotate: JSON.stringify(watermark), // ✅ MUST be string
+        });
+
+        return response.data;
+    });
+};

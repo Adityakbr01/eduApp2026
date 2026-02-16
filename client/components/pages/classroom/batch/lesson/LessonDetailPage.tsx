@@ -1,21 +1,21 @@
 "use client";
 
-import {
-  useGetLessonDetail,
-  useGetContentDetail,
-} from "@/services/classroom/batch-queries";
-import LessonSidebar from "@/components/Batch/Contents/LessonSidebar";
-import VideoPlayer from "@/components/Batch/Contents/VideoPlayer";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import {
-  LessonRes,
-  QuizData,
-  AssignmentData,
-} from "@/services/classroom/batch-types";
-import QuizPlayer from "@/components/Batch/Contents/QuizPlayer";
 import AssignmentPlayer from "@/components/Batch/Contents/AssignmentPlayer";
 import LessonDetailFooter from "@/components/Batch/Contents/LessonDetailFooter";
+import LessonSidebar from "@/components/Batch/Contents/LessonSidebar";
+import QuizPlayer from "@/components/Batch/Contents/QuizPlayer";
+import VdoCipherPlayer from "@/components/Batch/Contents/VdoCipherPlayer";
+import {
+  useGetContentDetail,
+  useGetLessonDetail,
+} from "@/services/classroom/batch-queries";
+import {
+  AssignmentData,
+  LessonRes,
+  QuizData,
+} from "@/services/classroom/batch-types";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface LessonDetailPageProps {
   batchId: string;
@@ -188,7 +188,7 @@ function LessonDetailPage({ batchId, lessonId }: LessonDetailPageProps) {
       {/* Right - Content Player */}
       <div className="right flex-1 bg-black/20 flex flex-col relative overflow-hidden">
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-          <div className="max-w-5xl mx-auto w-full">
+          <div className="mx-auto w-full">
             {activeContentId ? (
               <div className="flex flex-col gap-6">
                 <div>
@@ -203,21 +203,13 @@ function LessonDetailPage({ batchId, lessonId }: LessonDetailPageProps) {
                   </div>
                 ) : activeContentDetail ? (
                   <>
-                    {activeContentDetail.contentType === "video" &&
-                      activeContentDetail.videoUrl && (
-                        <VideoPlayer
-                          src={activeContentDetail.videoUrl}
-                          contentId={activeContentDetail.id}
-                          courseId={batchId}
-                          resumeAt={activeContentDetail.resumeAt}
-                          minWatchPercent={
-                            activeContentDetail.minWatchPercent || 90
-                          }
-                          marks={activeContentDetail.marks}
-                          obtainedMarks={activeContentDetail.obtainedMarks}
-                          isCompleted={activeContentDetail.isCompleted}
-                        />
-                      )}
+                    {activeContentDetail.contentType === "video" && (
+                      <VdoCipherPlayer
+                        batchId={batchId}
+                        lessonContent={activeContentDetail}
+                        lessonContentId={activeContentDetail.id}
+                      />
+                    )}
 
                     {activeContentDetail.contentType === "pdf" &&
                       activeContentDetail.pdfUrl && (
