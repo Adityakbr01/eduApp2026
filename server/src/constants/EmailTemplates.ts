@@ -26,15 +26,35 @@ body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
 
 /* ------------------------ CSS VARIABLES ------------------------ */
 :root {
+  /* Brand (unchanged as requested) */
   --brand-primary: ${brandPrimary};
   --brand-secondary: ${brandSecondary};
-  --bg-light: #fafafa;
+
+  /* Backgrounds (modern cool tone) */
+  --bg-light: #f8fafc;          /* subtle blue tint */
   --bg-card: #ffffff;
-  --text-main: #171717;
-  --text-muted: #737373;
-  --border-soft: #e5e5e5;
-  --accent-bg: #f5f5f5;
+
+  /* Text hierarchy */
+  --text-main: #0f172a;         /* deeper slate */
+  --text-muted: #64748b;        /* refined muted */
+  
+  /* Borders */
+  --border-soft: #e2e8f0;       /* modern soft gray */
+
+  /* Accent background */
+  --accent-bg: #f1f5f9;         /* hover / subtle section bg */
+
+  /* Optional advanced additions (SaaS polish) */
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-medium: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --transition-fast: 150ms ease;
+  --transition-smooth: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 
 /* ------------------------ BASE STYLES ------------------------ */
 body {
@@ -392,7 +412,7 @@ export const templates: Record<EmailType, any> = {
           </div>
 
           <div style="text-align: center; margin-top: 30px;">
-            <a href="${data.videoLink}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);">
+            <a href="${data.videoLink}" style="display: inline-block; padding: 14px 32px; background-color: ${app_info.primaryColor}; color: ${app_info.secondaryColor}; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);">
               View Video Content
             </a>
           </div>

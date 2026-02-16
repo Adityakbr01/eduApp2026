@@ -40,8 +40,28 @@ export const initSocket = async (httpServer: HttpServer) => {
     io.on("connection", (socket) => {
         logger.info(`🔌 Socket connected: ${socket.id} | Origin: ${socket.handshake.headers.origin}`);
 
+        // Join User Room
+        const userId = socket.handshake.query.userId as string;
+        if (userId) {
+            socket.join(`user:${userId}`);
+            logger.debug(`Socket ${socket.id} joined room user:${userId}`);
+
+            // Set online status
+            redis.set(`online:${userId}`, "true", "EX", 60); // 60s TTL
+        }
+
+        // Heartbeat for online status
+        socket.on("heartbeat", (uid: string) => {
+            if (uid) {
+                redis.set(`online:${uid}`, "true", "EX", 60);
+            }
+        });
+
         socket.on("disconnect", (reason) => {
             logger.info(`❌ Socket disconnected: ${socket.id} | Reason: ${reason}`);
+            if (userId) {
+                redis.del(`online:${userId}`);
+            }
         });
 
         socket.on("error", (err) => {

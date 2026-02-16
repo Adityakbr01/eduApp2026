@@ -9,8 +9,8 @@ const app_info = {
     author: "EduApp Team",
     license: "MIT",
 
-    primaryColor: "#EF3F4F4",
-    secondaryColor: "#36656B",
+    primaryColor: "#e8602e",
+    secondaryColor: "#1e1e1e",
 
     features: [
         "User authentication & authorization",

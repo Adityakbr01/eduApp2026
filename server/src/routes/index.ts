@@ -15,6 +15,7 @@ import communicationRouter from "./communication/index.js";
 import systemRouter from "./system/index.js";
 import userPreferenceRouter from "./preferences/index.js";
 import classroomRouter from "./classroom/index.js";
+import notificationRouter from "./notification/index.js";
 
 const router = express.Router();
 
@@ -62,5 +63,8 @@ router.use(`${API_PREFIX}`, systemRouter);
 
 // Classroom
 router.use(`${API_PREFIX}/classroom`, classroomRouter);
+
+// Notifications
+router.use(`${API_PREFIX}/notifications`, notificationRouter);
 
 export default router;

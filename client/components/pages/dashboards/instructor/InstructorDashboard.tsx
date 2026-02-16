@@ -23,6 +23,7 @@ import {
   InstructorSidebarValue,
 } from "./utils";
 import GradingPage from "@/components/pages/dashboards/instructor/grading/page";
+import { NotificationsSection } from "./NotificationsSection";
 
 export function InstructorDashboard() {
   const logout = useLogout();
@@ -154,6 +155,10 @@ export function InstructorDashboard() {
           )}
 
           {activeSection === "grading" && <GradingPage />}
+
+          {activeSection === "notifications" && (
+            <NotificationsSection courses={courses} />
+          )}
         </div>
       </main>
     </div>
