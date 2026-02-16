@@ -1,8 +1,9 @@
 import express from "express";
 
-import { uploadController } from "src/controllers/upload/upload.controller.js";
+import { uploadController, uploadLessonVideo } from "src/controllers/upload/upload.controller.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import { uploadRateLimiter } from "src/middlewares/system/rateLimit.middleware.js";
+import { uploadVdoVideoDisk } from "../../utils/upload.js";
 
 const router = express.Router();
 
@@ -58,6 +59,13 @@ router.post(
 router.post(
   "/course/lesson/presigned-url/video",
   uploadController.getLessonVideoPresignedUrl
+);
+
+// Lesson Video Upload with Vdocipher
+router.post(
+  "/course/lesson/video",
+  uploadVdoVideoDisk.single("file"),
+  uploadLessonVideo
 );
 
 // Multipart Upload for Large Files

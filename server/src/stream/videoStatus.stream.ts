@@ -14,14 +14,8 @@ export function initVideoStatusStream() {
      * DEBUG PIPELINE:
      * Watch ALL updates to debug why READY isn't triggering
      */
-    const pipeline = [
-        {
-            $match: {
-                operationType: "update",
-                // "updateDescription.updatedFields.video.status": "READY" 
-            }
-        }
-    ];
+    // Watch ALL events for debugging
+    const pipeline: any[] = [];
 
     const changeStream = LessonContent.watch(pipeline, {
         fullDocument: "updateLookup"
@@ -29,20 +23,24 @@ export function initVideoStatusStream() {
 
     changeStream.on("change", async (change) => {
         try {
+            logger.info("⚡ Stream Event Received", {
+                type: change.operationType,
+                id: (change as any).documentKey?._id
+            });
+
             // DEBUG LOGGING
             if (change.operationType === "update") {
                 const updatedFields = change.updateDescription?.updatedFields;
-                logger.info(`🔍 LessonContent Update Detected: ${change.documentKey._id}`, updatedFields);
+                logger.info(`🔍 LessonContent Update Detected: ${(change as any).documentKey._id}`, updatedFields);
             }
 
             // logger.info("🔥 Video READY status update detected");
 
-            // Extra safety: confirm updated field really READY
-            const updatedStatus =
-                change.updateDescription?.updatedFields?.["video.status"];
+            // RELAXED CHECK: Check full document status instead of just updatedFields
+            // This ensures we catch the state even if the update structure varies
+            const currentStatus = change.fullDocument?.video?.status;
 
-            if (updatedStatus !== "READY") {
-                // logger.info("⛔ Status not READY, skipping...");
+            if (currentStatus !== "READY") {
                 return;
             }
 
@@ -54,7 +52,7 @@ export function initVideoStatusStream() {
 
             // Safety validations
             if (lessonContent.type !== "video") {
-                logger.info("⛔ Not video type, skipping...");
+                // logger.info("⛔ Not video type, skipping...");
                 return;
             }
 

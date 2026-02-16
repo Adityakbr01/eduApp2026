@@ -19,6 +19,7 @@ export const editContentSchema = z.object({
         title: z.string(),
         url: z.string(),
     })).optional().default([]),
+    videoId: z.string().optional(),
 });
 
 // ============================================
@@ -35,6 +36,7 @@ export const createContentSchema = z.object({
     videoUrl: z.string().url().or(z.literal('')).optional(),
     duration: z.number().min(0).optional(), // seconds
     minWatchPercent: z.number().min(0).max(100).default(90),
+    videoId: z.string().optional(),
 
     // PDF fields
     pdfUrl: z.string().url().or(z.literal('')).optional(),
@@ -72,6 +74,7 @@ export const updateContentSchema = z.object({
     marks: z.number().min(0).optional(),
     isVisible: z.boolean().optional(),
     videoUrl: z.string().url().optional(),
+    videoId: z.string().optional(),
     duration: z.number().min(0).optional(),
     minWatchPercent: z.number().min(0).max(100).optional(),
     pdfUrl: z.string().url().optional(),

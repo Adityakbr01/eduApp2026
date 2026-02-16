@@ -128,6 +128,7 @@ export interface IVideoContent {
     status?: VideoStatusEnum;
     isEmailSent?: boolean;
     _id?: string;
+    videoId?: string;
 }
 
 export interface IAudioContent {
@@ -395,6 +396,7 @@ export interface CreateContentDTO {
         minWatchPercent?: number;
         hlsKey?: string;
         status?: string;
+        videoId?: string;
     };
     audio?: {
         rawKey?: string;

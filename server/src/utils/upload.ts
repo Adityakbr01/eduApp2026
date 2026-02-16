@@ -1,3 +1,4 @@
+import os from "node:os";
 import multer from "multer";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
@@ -139,6 +140,24 @@ export const uploadLessonContent = multer({
     storage,
     fileFilter: lessonContentFilter,
     limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
+});
+
+// ==================== DISK STORAGE FOR VDOCIPHER ====================
+
+const diskStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, os.tmpdir());
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(null, file.fieldname + "-" + uniqueSuffix + "-" + file.originalname);
+    },
+});
+
+export const uploadVdoVideoDisk = multer({
+    storage: diskStorage,
+    fileFilter: videoFilter,
+    limits: { fileSize: 3 * 1024 * 1024 * 1024 }, // 3GB
 });
 
 // ==================== CLOUDINARY UPLOAD HELPERS ====================

@@ -21,44 +21,44 @@ export type PresignedUploadResponse =
 // ==================== UPLOAD API ====================
 
 export const uploadApi = {
-   getCourseImagePresignedUrl: async (
-  filename: string,
-  size: number,
-  mimeType: string, // ✅ REAL MIME
-  courseId: string
-): Promise<PresignedUploadResponse> => {
-  const res = await apiClient.post(
-    "/upload/course/presigned-url/image",
-    {
-      filename,
-      size,
-      type: mimeType, // backend expects this
-      courseId,
-    }
-  );
-  return res.data.data;
-},
+    getCourseImagePresignedUrl: async (
+        filename: string,
+        size: number,
+        mimeType: string, // ✅ REAL MIME
+        courseId: string
+    ): Promise<PresignedUploadResponse> => {
+        const res = await apiClient.post(
+            "/upload/course/presigned-url/image",
+            {
+                filename,
+                size,
+                type: mimeType, // backend expects this
+                courseId,
+            }
+        );
+        return res.data.data;
+    },
 
 
-getLessonVideoPresignedUrl: async (
-  file: File,
-  courseId: string,
-  lessonId: string,
-lessonContentId: string
-): Promise<PresignedUploadResponse> => {
-  const res = await apiClient.post(
-    "/upload/course/lesson/presigned-url/video",
-    {
-      filename: file.name,
-      size: file.size,
-      mimeType: file.type,
-      courseId,
-      lessonId,
-    lessonContentId,
-    }
-  );
-  return res.data.data;
-},
+    getLessonVideoPresignedUrl: async (
+        file: File,
+        courseId: string,
+        lessonId: string,
+        lessonContentId: string
+    ): Promise<PresignedUploadResponse> => {
+        const res = await apiClient.post(
+            "/upload/course/lesson/presigned-url/video",
+            {
+                filename: file.name,
+                size: file.size,
+                mimeType: file.type,
+                courseId,
+                lessonId,
+                lessonContentId,
+            }
+        );
+        return res.data.data;
+    },
 
 
 
@@ -128,6 +128,44 @@ lessonContentId: string
         );
         return response.data;
     },
+
+
+    // ==================== VIDEO UPLOAD with VDOCipher ====================
+
+    uploadVideoWithVdocipher: async (
+        file: File,
+        courseId: string,
+        lessonId: string,
+        lessonContentId: string,
+        onProgress?: (percent: number) => void
+    ): Promise<{ videoId: string }> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("courseId", courseId);
+        formData.append("lessonId", lessonId);
+        formData.append("lessonContentId", lessonContentId);
+
+        const response = await apiClient.post(
+            "/upload/course/lesson/video",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                onUploadProgress: (progressEvent) => {
+                    if (onProgress) {
+                        const percentCompleted = Math.round(
+                            (progressEvent.loaded * 100) / (progressEvent.total || file.size)
+                        );
+                        onProgress(percentCompleted);
+                    }
+                },
+                timeout: 1000000, // 1000 seconds
+            }
+        );
+        return response.data.data;
+    },
+
 };
 
 export default uploadApi;

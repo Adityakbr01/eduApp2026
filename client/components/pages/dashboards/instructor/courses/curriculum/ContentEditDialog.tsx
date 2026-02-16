@@ -43,6 +43,7 @@ import {
   EditContentFormValues,
   editContentSchema,
 } from "@/validators/contentSchema";
+import VdoCipherVideoUpload from "./VdoCipherVideoUpload";
 
 type EditContentDialogProps = {
   open: boolean;
@@ -64,6 +65,7 @@ export function EditContentDialog({
   const updateContent = useUpdateContent();
   const [isUploading, setIsUploading] = useState(false);
   const [newFileKey, setNewFileKey] = useState<string | null>(null);
+  const [videoId, setVideoId] = useState<string | null>(null);
 
   // New states for array fields
   const [tagInput, setTagInput] = useState("");
@@ -91,6 +93,7 @@ export function EditContentDialog({
     if (open && content) {
       // eslint-disable-next-line react-hooks/exhaustive-deps
       setNewFileKey(null);
+      setVideoId(content.video?.videoId || null); // Initialize videoId state
       form.reset({
         title: content.title,
         marks: content.marks,
@@ -101,6 +104,7 @@ export function EditContentDialog({
             ? Number(content.video.duration.toFixed(0))
             : 0,
         rawKey: "",
+        // videoId: content.video?.videoId || null, // Not needed in form if we use state, but consistent
         tags: content.tags || [],
         description: content.description || "",
         level: content.level || ContentLevel.LOW,
@@ -146,6 +150,7 @@ export function EditContentDialog({
             content.video?.duration != null
               ? Number(content.video.duration.toFixed(0))
               : data.duration,
+          videoId: videoId || undefined,
         };
 
         if (data.rawKey) {
@@ -474,15 +479,20 @@ export function EditContentDialog({
                 <FormLabel>Replace File</FormLabel>
 
                 {content.type === ContentType.VIDEO && (
-                  <LessonVideoUpload
+                  <VdoCipherVideoUpload
                     courseId={courseId}
                     lessonId={lessonId}
                     lessonContentId={content._id}
-                    disabled={isVideoUploadDisabled} // TODO: verify status logic
+                    disabled={isVideoUploadDisabled}
                     onUploadStateChange={setIsUploading}
-                    onUploaded={(key) => {
-                      setNewFileKey(key);
-                      form.setValue("rawKey", key);
+                    onUploaded={(videoId) => {
+                      if (videoId) {
+                        setNewFileKey(videoId);
+                        setVideoId(videoId);
+                      } else {
+                        setNewFileKey("processed-by-vdo");
+                        setVideoId(null);
+                      }
                     }}
                   />
                 )}

@@ -74,6 +74,10 @@ const envSchema = z.object({
     ADMIN_EMAIL: z.string().email(),
     ADMIN_PASSWORD: z.string().min(6),
 
+    //VDO_CIPHER
+    VDO_CIPHER_API_KEY: z.string().min(10),
+    VDO_WEBHOOK_SECRET: z.string().min(10),
+
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

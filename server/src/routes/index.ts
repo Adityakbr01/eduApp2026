@@ -16,11 +16,16 @@ import systemRouter from "./system/index.js";
 import userPreferenceRouter from "./preferences/index.js";
 import classroomRouter from "./classroom/index.js";
 import notificationRouter from "./notification/index.js";
+import webhookRouter from "./webHook/webhook.route.js";
 
 const router = express.Router();
 
 // Root
 router.use(`${API_PREFIX}/`, rootRouter);
+
+// Webhooks
+router.use(`${API_PREFIX}/webhooks`, webhookRouter);
+
 
 // Auth
 router.use(`${API_PREFIX}/auth`, authRouter);
@@ -66,5 +71,6 @@ router.use(`${API_PREFIX}/classroom`, classroomRouter);
 
 // Notifications
 router.use(`${API_PREFIX}/notifications`, notificationRouter);
+
 
 export default router;
