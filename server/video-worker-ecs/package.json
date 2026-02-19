@@ -8,10 +8,10 @@
     "deploy": "ts-node deploy.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.967.0",
-    "@aws-sdk/client-ecs": "^3.965.0",
-    "@aws-sdk/client-s3": "^3.540.0",
-    "@aws-sdk/client-sqs": "^3.967.0",
+    "@aws-sdk/client-dynamodb": "^3.993.0",
+    "@aws-sdk/client-ecs": "^3.993.0",
+    "@aws-sdk/client-s3": "^3.993.0",
+    "@aws-sdk/client-sqs": "^3.993.0",
     "@aws-sdk/types": "^3.965.0",
     "dotenv": "^17.2.3",
     "mongoose": "^9.1.3"
