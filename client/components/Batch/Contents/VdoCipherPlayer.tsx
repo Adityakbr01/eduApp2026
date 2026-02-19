@@ -88,10 +88,17 @@ export default function VdoCipherPlayer({
       try {
         setLoading(true);
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}videos/${lessonContentId}/play`,
-          { credentials: "include" },
-        );
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
+        // 🔥 Production-safe URL builder
+        const apiUrl =
+          process.env.NODE_ENV === "production"
+            ? `${baseUrl.replace(/\/$/, "")}/videos/${lessonContentId}/play`
+            : `${baseUrl}videos/${lessonContentId}/play`;
+
+        const res = await fetch(apiUrl, {
+          credentials: "include",
+        });
 
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -113,7 +120,9 @@ export default function VdoCipherPlayer({
       }
     };
 
-    loadVideo();
+    if (lessonContentId) {
+      loadVideo();
+    }
   }, [lessonContentId]);
 
   // ===============================
