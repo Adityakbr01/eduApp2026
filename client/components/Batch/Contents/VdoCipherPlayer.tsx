@@ -387,20 +387,20 @@ export default function VdoCipherPlayer({
   }, [apiReady, iframeSrc, lessonContentId, lessonContent, markCompleted]);
 
   return (
-    <div className="w-full max-w-5xl">
-      <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black">
+    <div className="w-full h-full">
+      <div className="relative w-full h-full min-h-[200px] overflow-hidden bg-black">
         {iframeSrc && (
           <iframe
             ref={iframeRef}
             src={iframeSrc}
-            allow="encrypted-media; autoplay"
+            allow="encrypted-media; autoplay; fullscreen"
             allowFullScreen
-            className="absolute top-0 left-0 w-full h-full border-0"
+            className="absolute inset-0 w-full h-full border-0"
           />
         )}
 
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
             <div className="animate-spin h-10 w-10 border-4 border-white border-t-transparent rounded-full" />
           </div>
         )}

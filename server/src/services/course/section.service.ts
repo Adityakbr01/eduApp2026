@@ -8,6 +8,7 @@ import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { sectionRepository } from "src/repositories/section.repository.js";
 import AppError from "src/utils/AppError.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 
 
 
@@ -38,6 +39,7 @@ export const sectionService = {
 
         const section = await sectionRepository.create(sectionData);
         await batchRepository.invalidateCourseStructure(courseId);
+        await courseProgressRepository.invalidateAll(courseId);
         return section;
     },
 
@@ -73,6 +75,7 @@ export const sectionService = {
 
         const updated = await sectionRepository.updateById(sectionId, data);
         await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        await courseProgressRepository.invalidateAll(section.courseId.toString());
         return updated;
     },
 
@@ -103,6 +106,7 @@ export const sectionService = {
 
         await sectionRepository.deleteById(sectionId);
         await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        await courseProgressRepository.invalidateAll(section.courseId.toString());
 
         return { message: "Section deleted successfully" };
     },
@@ -125,6 +129,7 @@ export const sectionService = {
         await sectionRepository.bulkReorder(sections);
         const result = await sectionRepository.findByCourse(courseId);
         await batchRepository.invalidateCourseStructure(courseId);
+        await courseProgressRepository.invalidateAll(courseId);
         return result;
     },
 
@@ -146,6 +151,7 @@ export const sectionService = {
 
         const result = await sectionRepository.toggleVisibility(sectionId);
         await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        await courseProgressRepository.invalidateAll(section.courseId.toString());
         return result;
     },
 };

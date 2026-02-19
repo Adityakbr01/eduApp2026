@@ -143,6 +143,7 @@ export const batchRepository = {
 
             // Find last visited (latest updatedAt)
             let lastVisitedId: string | undefined;
+            let lastVisitedLessonId: string | undefined;
             if (attempts.length > 0) {
                 // We need to query separately or sort in JS. 
                 // Since this is infrequent (cache miss), querying DB is cleaner for "last visited lesson".
@@ -167,15 +168,16 @@ export const batchRepository = {
                 // Let's do a fast query for last visited lesson.
                 const lastAttempt = await ContentAttempt.findOne({ userId, courseId })
                     .sort({ lastAccessedAt: -1 })
-                    .select("lessonId")
+                    .select("contentId lessonId")
                     .lean();
 
-                lastVisitedId = lastAttempt?.lessonId?.toString();
+                lastVisitedId = lastAttempt?.contentId?.toString();
+                const lastVisitedLessonId = lastAttempt?.lessonId?.toString();
 
-                return { history: map, lastVisitedId };
+                return { history: map, lastVisitedId, lastVisitedLessonId };
             }
 
-            return { history: {}, lastVisitedId: undefined };
+            return { history: {}, lastVisitedId: undefined, lastVisitedLessonId: undefined };
         }, TTL.USER_TTL);
 
         return { progress: data, isCached };

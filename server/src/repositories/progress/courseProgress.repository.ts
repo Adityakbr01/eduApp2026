@@ -185,4 +185,27 @@ export const courseProgressRepository = {
         const key = cacheKeyFactory.progress.course(userId, courseId);
         await cacheManager.del(key);
     },
+
+    /**
+     * Invalidate ALL progress for a course (when structure changes)
+     * 1. Delete all CourseProgress docs for this course in Mongo
+     * 2. Delete all Redis keys for this course
+     */
+    async invalidateAll(courseId: string): Promise<void> {
+        const courseOid = new mongoose.Types.ObjectId(courseId);
+
+        // 1. Delete from Mongo
+        await CourseProgress.deleteMany({ courseId: courseOid });
+
+        // 2. Delete from Redis
+        const pattern = cacheKeyFactory.progress.coursePattern(courseId);
+        await cacheManager.delPattern(pattern);
+
+        // 3. Invalidate ALL classroom dashboards (expensive but necessary for structure changes)
+        // If we don't do this, students will see old progress or old structure metadata if cached there.
+        // But mainly for progress % to update if total marks changed.
+        await cacheManager.delPattern(cacheKeyFactory.classroom.allUsersPattern);
+
+        logger.info(`[CourseProgress] Invalidated all progress for course=${courseId} due to structure change`);
+    },
 };

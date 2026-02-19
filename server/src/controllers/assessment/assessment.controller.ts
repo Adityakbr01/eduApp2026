@@ -177,6 +177,17 @@ export const quizController = {
 
         sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
     }),
+    /**
+     * @desc    Submit quiz (finish attempt)
+     * @route   POST /api/v1/assessments/student/quiz/:quizId/submit
+     * @access  Private (Student)
+     */
+    submitQuiz: catchAsync(async (req: Request, res: Response) => {
+        const { quizId } = req.params;
+        const result = await quizService.submitQuiz(req.user.id, quizId);
+
+        sendResponse(res, STATUSCODE.OK, SUCCESS_CODE.SUCCESS, result);
+    }),
 };
 
 // ============================================

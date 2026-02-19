@@ -85,6 +85,7 @@ export function ContentDialog({
 }: ContentDialogProps) {
   const createContent = useCreateContent();
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Custom states for file upload management
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -139,6 +140,7 @@ export function ContentDialog({
     setLinkTitle("");
     setLinkUrl("");
     setError(null);
+    setValidationErrors([]);
   }, [form]);
 
   useEffect(() => {
@@ -254,13 +256,43 @@ export function ContentDialog({
 
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit, (errors) => {
-                console.error("Form Validation Errors:", errors);
-                // Optional: Set a general error message state if you want it to appear in the generic Alert
-                // setError("Please fix the highlighted errors.");
-              })}
+              onSubmit={form.handleSubmit(
+                (data) => {
+                  setValidationErrors([]);
+                  onSubmit(data);
+                },
+                (errors) => {
+                  console.error("Form Validation Errors:", errors);
+                  const messages: string[] = [];
+                  Object.entries(errors).forEach(([key, value]) => {
+                    if (value?.message) {
+                      messages.push(`${key}: ${value.message}`);
+                    } else if (value?.root?.message) {
+                      messages.push(`${key}: ${value.root.message}`);
+                    }
+                  });
+                  setValidationErrors(messages);
+                  setError(
+                    messages.length > 0
+                      ? "Please fix the form errors below."
+                      : "Validation failed.",
+                  );
+                },
+              )}
               className="space-y-6 py-4"
             >
+              {/* Validation Errors */}
+              {validationErrors.length > 0 && (
+                <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 text-sm text-destructive">
+                  <p className="font-medium mb-1">Form Errors:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {validationErrors.map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Content Type */}
               <FormField
                 control={form.control}

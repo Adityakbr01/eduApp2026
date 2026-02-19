@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { Lesson } from "@/services/classroom/batch-types";
+import StatusIcon from "./StatusIcon";
 
 interface LessonRowProps {
   item: Lesson;
@@ -21,52 +22,7 @@ const LessonRow = ({ item, isLastVisited, onClick }: LessonRowProps) => {
     >
       {/* Status Icon */}
       <div className="shrink-0 mt-[5px]">
-        {item.completed ? (
-          <svg
-            className="shrink-0 fill-emerald-500/10 transition-transform duration-200 stroke-emerald-400"
-            width="18"
-            height="18"
-            viewBox="0 0 19 19"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M5.78125 9.49969L8.2575 11.9759L13.2188 7.02344M9.5 18.25C14.3125 18.25 18.25 14.3125 18.25 9.5C18.25 4.6875 14.3125 0.75 9.5 0.75C4.6875 0.75 0.75 4.6875 0.75 9.5C0.75 14.3125 4.6875 18.25 9.5 18.25Z"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : item.isLocked ? (
-          <svg
-            className="shrink-0 fill-emerald-500/10 stroke-white/30"
-            width="18"
-            height="18"
-            viewBox="0 0 19 19"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M5 14L14 5M14 5H5M14 5V14"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : (
-          <svg
-            className="shrink-0 fill-(--custom-accentColor) group-hover:rotate-45 transition-transform duration-200 stroke-(--custom-accentColor)"
-            width="18"
-            height="18"
-            viewBox="0 0 19 19"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M5 14L14 5M14 5H5M14 5V14"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
+        <StatusIcon completed={item.completed} isLocked={item.isLocked} />
       </div>
 
       {/* Title + Meta */}

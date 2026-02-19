@@ -1,16 +1,15 @@
 "use client";
 
-import React from "react";
+import { Button } from "@/components/ui/button";
+import getStatusBadge from "@/lib/utils/getStatusBadge";
 import type {
   Lesson,
-  Module,
-  ModuleItem,
+  Module
 } from "@/services/classroom/batch-types";
-import { Button } from "@/components/ui/button";
 import { ChevronDown, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import React from "react";
 import LessonRow from "./LessonRow";
-import getStatusBadge from "@/lib/utils/getStatusBadge";
 
 interface SectionAccordionProps {
   section: Module;

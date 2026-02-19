@@ -11,16 +11,31 @@ export const toDateTimeLocal = (dateString?: string) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-// Helper: Get Today at 12:00 PM
-export const getTodayNoon = () => {
-    const date = new Date();
-    date.setHours(12, 0, 0, 0);
-    return date;
+// Helper: Get Tomorrow at 12:00 PM (Server Local Time)
+export const getTomorrowNoon = () => {
+    const now = new Date();
+
+    const tomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1, // +1 day
+        12, 0, 0, 0        // 12:00 PM
+    );
+
+    return tomorrow;
 };
 
-// Helper: Get Tomorrow at 12:00 PM
-export const getTomorrowNoon = () => {
-    const date = getTodayNoon();
-    date.setDate(date.getDate() + 1);
-    return date;
+
+export const getFutureDate = (days: number) => {
+    const now = new Date();
+
+    const futureDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + days, // +1 day
+        12, 0, 0, 0        // 12:00 PM
+    );
+
+    return futureDate;
 };
+

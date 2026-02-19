@@ -10,6 +10,7 @@ import { contentAttemptRepository } from "src/repositories/contentAttempt.reposi
 import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { lessonContentRepository } from "src/repositories/lessonContent.repository.js";
+import { classroomService } from "src/services/classroom/classroom.service.js";
 import { emitLeaderboardUpdate } from "src/Socket/socket.js";
 import type {
     CreateAssignmentInput,
@@ -295,6 +296,7 @@ export const quizService = {
         await batchRepository.invalidateUserProgress(userId, quiz.courseId.toString());
         await batchRepository.invalidateLeaderboard(quiz.courseId.toString());
         await courseProgressRepository.recalculate(userId, quiz.courseId.toString());
+        await classroomService.invalidateClassroomCache(userId);
 
         // Async jobs for leaderboard and logging
         await addProgressJob.updateLeaderboardScore({ userId, courseId: quiz.courseId.toString() });
@@ -382,6 +384,53 @@ export const quizService = {
                 timeLimit: quiz.timeLimit,
             },
         };
+    },
+    // -------------------- SUBMIT QUIZ (FINISH ATTEMPT) --------------------
+    submitQuiz: async (userId: string, quizId: string) => {
+        const quiz = await quizRepository.findById(quizId);
+        if (!quiz) {
+            throw new AppError("Quiz not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        const quizAttempt = await QuizAttempt.findOne({ userId, quizId });
+        if (!quizAttempt) {
+            throw new AppError("Quiz attempt not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
+        }
+
+        if (quizAttempt.isCompleted) {
+            return { message: "Quiz already completed", results: quizAttempt };
+        }
+
+        // Mark as completed
+        quizAttempt.isCompleted = true;
+        quizAttempt.completedAt = new Date();
+        await quizAttempt.save();
+
+        // Sync with ContentAttempt
+        await contentAttemptRepository.upsert(userId, quiz.contentId, {
+            obtainedMarks: quizAttempt.score,
+            isCompleted: true,
+        });
+
+        // Invalidate caches
+        await batchRepository.invalidateUserProgress(userId, quiz.courseId.toString());
+        await batchRepository.invalidateLeaderboard(quiz.courseId.toString());
+        await courseProgressRepository.recalculate(userId, quiz.courseId.toString());
+        await classroomService.invalidateClassroomCache(userId);
+
+        // Emit events
+        await addProgressJob.updateLeaderboardScore({ userId, courseId: quiz.courseId.toString() });
+        await addProgressJob.logActivity({
+            userId,
+            courseId: quiz.courseId.toString(),
+            contentId: quiz.contentId.toString(),
+            action: "SUBMIT",
+            metadata: { quizId, score: quizAttempt.score, type: "quiz_finish" }
+        });
+
+        emitLeaderboardUpdate(quiz.courseId.toString());
+
+        return quizAttempt;
     },
 };
 
@@ -579,6 +628,7 @@ export const assignmentService = {
         await batchRepository.invalidateUserProgress(userId, assignment.courseId.toString());
         await batchRepository.invalidateLeaderboard(assignment.courseId.toString());
         await courseProgressRepository.recalculate(userId, assignment.courseId.toString());
+        await classroomService.invalidateClassroomCache(userId);
 
         // Async jobs for leaderboard and logging
         await addProgressJob.updateLeaderboardScore({ userId, courseId: assignment.courseId.toString() });
@@ -850,6 +900,7 @@ export const assignmentService = {
         // INVALIDATE CACHE
         await batchRepository.invalidateUserProgress(submission.userId.toString(), assignment.courseId.toString());
         await batchRepository.invalidateLeaderboard(assignment.courseId.toString());
+        await classroomService.invalidateClassroomCache(submission.userId.toString());
         await courseProgressRepository.recalculate(submission.userId.toString(), assignment.courseId.toString());
 
         // Async jobs for leaderboard and logging
@@ -951,6 +1002,7 @@ export const assignmentService = {
             // Side Effects (Per User)
             // Invalidating user progress cache
             await batchRepository.invalidateUserProgress(submission.userId.toString(), assignment.courseId.toString());
+            await classroomService.invalidateClassroomCache(submission.userId.toString());
             // Recalculate course progress
             await courseProgressRepository.recalculate(submission.userId.toString(), assignment.courseId.toString());
 

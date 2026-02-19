@@ -123,6 +123,8 @@ export const cacheKeyFactory = {
     // =====================
     classroom: {
         userProgress: (userId: string, courseId: string) => `user:${userId}:course:${courseId}:progress`,
+        data: (userId: string) => `classroom:data:${userId}`, // Cache for getClassroomData
+        allUsersPattern: "classroom:data:*", // Pattern to invalidate ALL classroom dashboards
     },
 
     // =====================
@@ -137,6 +139,7 @@ export const cacheKeyFactory = {
     // =====================
     progress: {
         course: (userId: string, courseId: string) => `user:${userId}:course:${courseId}:courseProgress`,
+        coursePattern: (courseId: string) => `user:*:course:${courseId}:courseProgress`,
     },
 
     // =====================

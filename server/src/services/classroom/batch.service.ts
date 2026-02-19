@@ -24,10 +24,10 @@ export const batchService = {
      * Uses independent cached calls for Structure and Progress, merging them in-memory.
      */
     getBatchDetail: async (userId: string, courseId: string): Promise<BatchDetailResponse> => {
+
         const userOid = new mongoose.Types.ObjectId(userId);
         const courseOid = new mongoose.Types.ObjectId(courseId);
 
-        // Parallel fetch from Redis/DB via Repository
         const [courseTitle, structureResult, progressResult] = await Promise.all([
             batchRepository.findCourseTitle(courseOid),
             batchRepository.getCourseStructure(courseOid),
@@ -41,11 +41,8 @@ export const batchService = {
             throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
-        // ========================================
-        // IN-MEMORY MERGE & LOCKING LOGIC
-        // ========================================
         const now = new Date();
-        const { history, lastVisitedId } = userProgress;
+        const { history, lastVisitedId, lastVisitedLessonId } = userProgress;
 
         let completedSections = 0;
         let completedLessons = 0;
@@ -55,47 +52,49 @@ export const batchService = {
 
         const sectionCompletionMap: boolean[] = [];
 
-        // Map cached structure to response format
         const modules: Module[] = structure.map((section, sectionIndex) => {
+
             const isFirstSection = sectionIndex === 0;
             const isManuallyUnlocked = section.isManuallyUnlocked === true;
             const prevSectionCompleted = sectionIndex > 0 ? sectionCompletionMap[sectionIndex - 1] : true;
-            // Auto-lock logic: if not first, not manually unlocked, and previous not done => LOCKED
-            const sectionIsLocked = !isFirstSection && !isManuallyUnlocked && !prevSectionCompleted;
+
+            const sectionIsLocked =
+                !isFirstSection &&
+                !isManuallyUnlocked &&
+                !prevSectionCompleted;
 
             const lessonResults: LessonResult[] = [];
             let allItemsCompleted = true;
             let sectionHasItems = false;
-            let prevLessonCompleted = true; // First lesson in section is unlocked by default (if section unlocked)
+            let prevLessonCompleted = true;
 
             for (let i = 0; i < section.lessons.length; i++) {
+
                 const lesson = section.lessons[i];
                 totalLessons++;
 
                 const isFirstLesson = i === 0;
                 const lessonManuallyUnlocked = lesson.isManuallyUnlocked === true;
-                // Lesson lock logic
-                const lessonIsLocked = sectionIsLocked || (!isFirstLesson && !lessonManuallyUnlocked && !prevLessonCompleted);
 
-                // Check content progress
+                const lessonIsLocked =
+                    sectionIsLocked ||
+                    (!isFirstLesson && !lessonManuallyUnlocked && !prevLessonCompleted);
+
                 let lessonAllCompleted = true;
 
-                // We need to map contents to AggContent format for computeLessonMeta
-                // But computeLessonMeta needs obtainedMarks etc. to be populated.
                 const hydratedContents: AggContent[] = lesson.contents.map(c => {
-                    sectionHasItems = true;
-                    const progress = history[c._id.toString()];
 
+                    sectionHasItems = true;
+
+                    const progress = history[c._id.toString()];
                     const marks = c.marks || 0;
+
                     totalScore += marks;
 
                     const isCompleted = progress?.isCompleted || false;
                     const obtained = progress?.obtainedMarks || 0;
-                    const lastAttemptedAt = progress?.lastAttemptedAt ? new Date(progress.lastAttemptedAt) : null;
 
-                    if (isCompleted) {
-                        obtainedScore += obtained;
-                    } else {
+                    if (!isCompleted) {
                         lessonAllCompleted = false;
                         allItemsCompleted = false;
                     }
@@ -106,30 +105,38 @@ export const batchService = {
                         marks,
                         isCompleted,
                         obtainedMarks: obtained,
-                        lastAttemptedAt: lastAttemptedAt,
-                        // We removed these from the query so don't map them
-                        // videoStatus: c.videoStatus,
-                        // assessmentType: c.assessmentType,
+                        lastAttemptedAt: progress?.lastAttemptedAt
+                            ? new Date(progress.lastAttemptedAt)
+                            : null,
                     };
                 });
 
-                const lessonCompleted = lessonAllCompleted && lesson.contents.length > 0;
+                const lessonCompleted =
+                    lessonAllCompleted && lesson.contents.length > 0;
+
                 if (lessonCompleted) completedLessons++;
 
-                // Next lesson depends on this one
                 prevLessonCompleted = lessonCompleted;
 
-                // Compute Aggregated Meta (Overdue, Deadline, etc.)
                 const meta = computeLessonMeta(
                     hydratedContents,
                     now,
                     lessonIsLocked,
-                    lesson.deadline ? {
-                        dueDate: lesson.deadline.dueDate ? new Date(lesson.deadline.dueDate) : null, // Convert string to Date
-                        startDate: lesson.deadline.startDate ? new Date(lesson.deadline.startDate) : null, // Convert string to Date
-                        penaltyPercent: lesson.deadline.penaltyPercent
-                    } : undefined
+                    lesson.deadline
+                        ? {
+                            dueDate: lesson.deadline.dueDate
+                                ? new Date(lesson.deadline.dueDate)
+                                : null,
+                            startDate: lesson.deadline.startDate
+                                ? new Date(lesson.deadline.startDate)
+                                : null,
+                            penaltyPercent: lesson.deadline.penaltyPercent,
+                        }
+                        : undefined
                 );
+
+                // 🔥 IMPORTANT: add penalized marks
+                obtainedScore += meta.obtainedMarks;
 
                 lessonResults.push({
                     id: lesson._id.toString(),
@@ -153,9 +160,10 @@ export const batchService = {
             };
         });
 
-        const progressPercent = totalScore > 0
-            ? Math.round((obtainedScore / totalScore) * 100 * 100) / 100
-            : 0;
+        const progressPercent =
+            totalScore > 0
+                ? Math.round((obtainedScore / totalScore) * 10000) / 100
+                : 0;
 
         const batchData: BatchData = {
             title: courseTitle.title,
@@ -172,10 +180,11 @@ export const batchService = {
             batchData,
             modules,
             lastVisitedId,
+            lastVisitedLessonId,
             meta: {
                 isStructureCached,
-                isProgressCached
-            }
+                isProgressCached,
+            },
         };
     },
 

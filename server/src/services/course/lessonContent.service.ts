@@ -2,6 +2,7 @@ import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 import {
   courseRepository,
 } from "src/repositories/course.repository.js";
@@ -36,13 +37,10 @@ export const lessonContentService = {
 
     const maxOrder = await lessonContentRepository.getMaxOrder(lessonId);
 
-    console.log("Video data:", data.video);
     // 🔥 VIDEO STATUS INIT
     if (data.type === "video" && data.video?.rawKey) {
       data.video = normalizeVideoPayload(data.video);
     }
-
-    console.log("Video data after normalization:", data.video);
 
     const contentData = {
       ...data,
@@ -53,6 +51,7 @@ export const lessonContentService = {
 
     const newContent = await lessonContentRepository.create(contentData);
     await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+    await courseProgressRepository.invalidateAll(lesson.courseId.toString());
     return newContent;
   },
 
@@ -100,6 +99,7 @@ export const lessonContentService = {
 
     const updated = await lessonContentRepository.updateById(contentId, updateData);
     await batchRepository.invalidateCourseStructure(content.courseId.toString());
+    await courseProgressRepository.invalidateAll(content.courseId.toString());
     return updated;
   },
 
@@ -125,6 +125,7 @@ export const lessonContentService = {
     await lessonContentRepository.deleteById(contentId);
 
     await batchRepository.invalidateCourseStructure(content.courseId.toString());
+    await courseProgressRepository.invalidateAll(content.courseId.toString());
 
     return { message: "Content deleted successfully" };
   },
@@ -152,6 +153,7 @@ export const lessonContentService = {
     await lessonContentRepository.bulkReorder(contents);
     const result = await lessonContentRepository.findByLesson(lessonId);
     await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+    await courseProgressRepository.invalidateAll(lesson.courseId.toString());
     return result;
   },
 
@@ -173,6 +175,7 @@ export const lessonContentService = {
 
     const result = await lessonContentRepository.toggleVisibility(contentId);
     await batchRepository.invalidateCourseStructure(content.courseId.toString());
+    await courseProgressRepository.invalidateAll(content.courseId.toString());
     return result;
   },
 };

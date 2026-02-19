@@ -8,6 +8,7 @@ import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { sectionRepository } from "src/repositories/section.repository.js";
 import AppError from "src/utils/AppError.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 
 
 
@@ -43,6 +44,7 @@ export const lessonService = {
 
         const newLesson = await lessonRepository.create(lessonData);
         await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        await courseProgressRepository.invalidateAll(section.courseId.toString());
         return newLesson;
     },
 
@@ -83,6 +85,7 @@ export const lessonService = {
 
         const updated = await lessonRepository.updateById(lessonId, data);
         await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+        await courseProgressRepository.invalidateAll(lesson.courseId.toString());
         return updated;
     },
 
@@ -107,6 +110,7 @@ export const lessonService = {
         await lessonRepository.deleteById(lessonId);
 
         await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+        await courseProgressRepository.invalidateAll(lesson.courseId.toString());
 
         return { message: "Lesson deleted successfully" };
     },
@@ -135,6 +139,7 @@ export const lessonService = {
         await lessonRepository.bulkReorder(lessons);
         const result = await lessonRepository.findBySection(sectionId);
         await batchRepository.invalidateCourseStructure(section.courseId.toString());
+        await courseProgressRepository.invalidateAll(section.courseId.toString());
         return result;
     },
 
@@ -156,6 +161,7 @@ export const lessonService = {
 
         const result = await lessonRepository.toggleVisibility(lessonId);
         await batchRepository.invalidateCourseStructure(lesson.courseId.toString());
+        await courseProgressRepository.invalidateAll(lesson.courseId.toString());
         return result;
     },
 };

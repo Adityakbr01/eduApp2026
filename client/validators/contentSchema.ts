@@ -12,8 +12,8 @@ export const editContentSchema = z.object({
     rawKey: z.string().optional(),
 
     // important fields
-    tags: z.array(z.string()).min(1, "At least one tag is required").optional().default([]),
-    description: z.string().min(1, "Description is required").optional().default(""),
+    tags: z.array(z.string()).optional().default([]),
+    description: z.string().optional().default(""),
     level: z.enum(ContentLevel).default(ContentLevel.LOW),
     relatedLinks: z.array(z.object({
         title: z.string(),
@@ -43,8 +43,8 @@ export const createContentSchema = z.object({
     totalPages: z.number().min(1).optional(),
 
     // important fields
-    tags: z.array(z.string()).min(1, "At least one tag is required").optional().default([]), // Default empty
-    description: z.string().min(1, "Description is required").optional().default(""), // Default empty
+    tags: z.array(z.string()).optional().default([]),
+    description: z.string().optional().default(""),
     level: z.enum(ContentLevel).default(ContentLevel.LOW),
     relatedLinks: z.array(z.object({
         title: z.string(),
@@ -53,19 +53,6 @@ export const createContentSchema = z.object({
 
     // Quiz/Assignment fields
     quizId: z.string().optional(),
-}).refine((data) => {
-    // Validate pdf type has pdfUrl (backend constraint)
-    if (data.type === "pdf" && !data.pdfUrl) {
-        // return false; // Temporarily allow it to see if backend handles it or if strictly blocked?
-        // Backend Mongoose schema says PDF url is REQUIRED. So we strictly cannot create PDF without URL.
-        // But we have no way to get URL without Content ID.
-        // So PDF creation is effectively broken in this flow unless we upload first (but need ID).
-        // For now, I'll keep PDF check but REMOVE video check.
-        return false;
-    }
-    return true;
-}, {
-    message: "PDF content requires a file. Please upload a file first (Not fully supported in Add Dialog yet).",
 });
 
 export const updateContentSchema = z.object({

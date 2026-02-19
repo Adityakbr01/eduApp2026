@@ -68,17 +68,23 @@
 
 /* Tailwind v4 Theme extension */
 @theme {
+  /* fonts */
   --font-NeuMachina: "NeuMachina", sans-serif;
   --font-machina: "NeuMachina", sans-serif;
   --font-HelveticaNow: "HelveticaNow", sans-serif;
   --font-juana: "juana", sans-serif;
   --font-manrope: var(--font-manrope), sans-serif;
   --font-apfel: var(--font-manrope), sans-serif;
+
+  /* colors */
   --color-dark-card: #121212;
   --color-dark-extra-light: #1e1e1e;
   --color-dark-light: #2a2a2a;
-  --color-doubt: #e35927;
-
+  --color-doubt: #e8602e;
+  --color-doubt-light: #ff6b35;
+  --color-progress-accent: #e8602e;
+  
+  
   /* Collapsible animations */
   --animate-slideDown: slideDown 0.3s ease-out;
   --animate-slideUp: slideUp 0.2s ease-out;
@@ -149,6 +155,7 @@ body {
   --custom-inputColor: #1e1e1e;
   --custom-accentColor: #e8602e;
   --custom-successColor: #26760b;
+  
 
   /*  */
   --radius: 0.625rem;
@@ -602,4 +609,23 @@ input {
   to {
     height: 0;
   }
+}
+
+
+/* Progress */
+
+.progress-accent::-webkit-progress-bar {
+  background-color: #e2e8f0; /* Light gray background */
+  border-radius: 4px;
+}
+
+.progress-accent::-webkit-progress-value {
+  background-color: var(--custom-accentColor); /* Amber progress color */
+  border-radius: 4px;
+}
+
+/* Firefox */
+.progress-accent {
+  color: var(--custom-accentColor); /* Amber progress color */
+  border-radius: 4px;
 }

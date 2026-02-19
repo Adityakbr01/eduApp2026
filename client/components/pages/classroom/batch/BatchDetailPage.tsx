@@ -10,19 +10,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STORAGE_KEYS } from "@/lib/constants/storage";
 import { secureLocalStorage } from "@/lib/utils/storage";
 import { useGetBatchDetail } from "@/services/classroom";
-import { Loader2, Trophy } from "lucide-react";
-import { useParams } from "next/navigation";
+import { Loader2, Trophy, Play } from "lucide-react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const BatchDetailPage = () => {
   const params = useParams();
   const batchId = params?.batchId as string;
+  const router = useRouter();
 
   // Fetch batch detail from API
   const { data, isLoading, isError } = useGetBatchDetail(batchId);
   const batchData = data?.data?.batchData;
   const modules = data?.data?.modules || [];
   const lastVisitedId = data?.data?.lastVisitedId;
+  const lastVisitedLessonId = data?.data?.lastVisitedLessonId;
+
+  const searchParams = useSearchParams();
+  const stay = searchParams.get("stay");
+
+  // Auto-redirect to last visited lesson if available and not explicitly staying
+  useEffect(() => {
+    if (lastVisitedLessonId && !stay && data) {
+      // Find the lesson to ensure it exists (optional but safe)
+      // We can just redirect blindly if we trust the backend, but let's be safe.
+      // Actually, directly redirect is faster.
+      const url = `/classroom/batch/${batchId}/lessons/${lastVisitedLessonId}?lastVisitedId=${lastVisitedId}`;
+      router.push(url);
+    }
+  }, [lastVisitedLessonId, stay, batchId, lastVisitedId, data, router]);
 
   // Use state with default "leaderboard"
   const [activeSidebarView, setActiveSidebarViewState] =
@@ -117,9 +134,54 @@ const BatchDetailPage = () => {
             >
               <div className="flex flex-col gap-6">
                 <BatchProgress data={batchData} />
+
+                {/* Continue Learning Banner (Mobile) */}
+                {lastVisitedId &&
+                  (() => {
+                    let lastLesson: any = null;
+                    let sectionTitle = "";
+
+                    for (const module of modules) {
+                      const found = module.lessons.find(
+                        (l) => l.id === lastVisitedId,
+                      );
+                      if (found) {
+                        lastLesson = found;
+                        sectionTitle = module.title;
+                        break;
+                      }
+                    }
+
+                    if (lastLesson && !lastLesson.isLocked) {
+                      return (
+                        <div className="w-full bg-linear-to-r from-accent/20 to-accent/5 border border-accent/20 rounded-xl p-4 flex items-center justify-between gap-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-accent text-xs font-bold tracking-wider uppercase">
+                              Continue Learning
+                            </span>
+                            <h3 className="text-white font-medium text-lg leading-tight line-clamp-1">
+                              {lastLesson.title}
+                            </h3>
+                            <p className="text-white/40 text-sm line-clamp-1">
+                              {sectionTitle}
+                            </p>
+                          </div>
+                          <Link
+                            href={`/classroom/batch/${batchId}/lessons/${lastLesson.id}?lastVisitedId=${lastLesson.id}`}
+                            className="shrink-0 bg-accent text-white px-4 py-2 rounded-lg font-medium text-sm hover:brightness-110 transition-all flex items-center gap-2"
+                          >
+                            <Play className="w-4 h-4 fill-current" />
+                            Resume
+                          </Link>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                 <SectionModules
                   modules={modules}
-                  lastVisitedId={lastVisitedId}
+                  lastVisitedId={lastVisitedLessonId}
                 />
               </div>
             </TabsContent>
@@ -165,7 +227,55 @@ const BatchDetailPage = () => {
         {/* Left Column (Static) */}
         <div className="hidden xl:flex flex-col gap-6 w-[55%] h-full overflow-y-auto custom-scrollbar pb-10">
           <BatchProgress data={batchData} />
-          <SectionModules modules={modules} lastVisitedId={lastVisitedId} />
+
+          {/* Continue Learning Banner */}
+          {lastVisitedId &&
+            (() => {
+              let lastLesson: any = null;
+              let sectionTitle = "";
+
+              for (const module of modules) {
+                const found = module.lessons.find(
+                  (l) => l.id === lastVisitedLessonId,
+                );
+                if (found) {
+                  lastLesson = found;
+                  sectionTitle = module.title;
+                  break;
+                }
+              }
+
+              if (lastLesson && !lastLesson.isLocked) {
+                return (
+                  <div className="w-full bg-linear-to-r from-accent/20 to-accent/5 border border-accent/20 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-accent text-xs font-bold tracking-wider uppercase">
+                        Continue Learning
+                      </span>
+                      <h3 className="text-white font-medium text-lg leading-tight line-clamp-1">
+                        {lastLesson.title}
+                      </h3>
+                      <p className="text-white/40 text-sm line-clamp-1">
+                        {sectionTitle}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/classroom/batch/${batchId}/lessons/${lastLesson.id}?lastVisitedId=${lastLesson.id}`}
+                      className="shrink-0 bg-accent text-white px-4 py-2 rounded-lg font-medium text-sm hover:brightness-110 transition-all flex items-center gap-2"
+                    >
+                      <Play className="w-4 h-4 fill-current" />
+                      Resume
+                    </Link>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+          <SectionModules
+            modules={modules}
+            lastVisitedId={lastVisitedLessonId}
+          />
         </div>
 
         {/* Right Column (Dynamic) */}

@@ -38,6 +38,7 @@ export interface BatchDetailResponse {
     batchData: BatchData;
     modules: Module[];
     lastVisitedId?: string;
+    lastVisitedLessonId?: string;
     meta?: {
         isStructureCached: boolean;
         isProgressCached: boolean;
@@ -173,4 +174,5 @@ export interface UserProgressMap {
 export interface UserCourseProgress {
     history: UserProgressMap;
     lastVisitedId?: string;
+    lastVisitedLessonId?: string;
 } 

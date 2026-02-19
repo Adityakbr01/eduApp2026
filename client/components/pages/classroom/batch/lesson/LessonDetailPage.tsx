@@ -1,28 +1,31 @@
 "use client";
 
-import AssignmentPlayer from "@/components/Batch/Contents/AssignmentPlayer";
 import LessonDetailFooter from "@/components/Batch/Contents/LessonDetailFooter";
-import LessonSidebar from "@/components/Batch/Contents/LessonSidebar";
-import QuizPlayer from "@/components/Batch/Contents/QuizPlayer";
-import VdoCipherPlayer from "@/components/Batch/Contents/VdoCipherPlayer";
+import LessonSidebar from "@/components/Batch/Contents/LessonSidebar/LessonSidebar";
 import {
   useGetContentDetail,
   useGetLessonDetail,
 } from "@/services/classroom/batch-queries";
-import {
-  AssignmentData,
-  LessonRes,
-  QuizData,
-} from "@/services/classroom/batch-types";
+import { LessonRes } from "@/services/classroom/batch-types";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Play } from "lucide-react";
+import { Group, Panel, Separator } from "react-resizable-panels";
 
+import ClassInfoPanel from "./components/ClassInfoPanel";
+import ContentPlayerPanel from "./components/ContentPlayerPanel";
+import MobileLayout from "./components/MobileLayout";
+import { useResizePanels } from "./hooks/useResizePanels";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// ─── Props ───
 interface LessonDetailPageProps {
   batchId: string;
   lessonId: string;
 }
 
 function LessonDetailPage({ batchId, lessonId }: LessonDetailPageProps) {
+  const isMobile = useIsMobile();
   const { data, isLoading } = useGetLessonDetail(batchId, lessonId);
   const searchParams = useSearchParams();
   const lastVisitedId = searchParams.get("lastVisitedId");
@@ -32,6 +35,9 @@ function LessonDetailPage({ batchId, lessonId }: LessonDetailPageProps) {
   const [activeContentMeta, setActiveContentMeta] = useState<LessonRes | null>(
     null,
   );
+
+  // ─── Resize Hook ───
+  const { leftPanelRef, handleDoubleClick } = useResizePanels();
 
   // Fetch full content details when activeContentId changes
   const {
@@ -75,22 +81,32 @@ function LessonDetailPage({ batchId, lessonId }: LessonDetailPageProps) {
   }, [lesson, lastVisitedId, activeContentId]);
 
   const handleContentSelect = (content: LessonRes) => {
-    console.log("Selected content:", content.id);
     setActiveContentId(content.id);
     setActiveContentMeta(content);
   };
 
+  // Loading State
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full bg-[#171717] items-center justify-center text-white/50">
-        Loading...
+      <div className="flex h-screen w-full bg-black items-center justify-center text-white/50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
+          <span className="text-sm">Loading lesson...</span>
+        </div>
       </div>
     );
   }
 
+  // Footer data
+  const currentIndex =
+    lesson?.contents?.findIndex((c) => c.id === activeContentId) ?? -1;
+  const totalLessons = lesson?.contents?.length ?? 0;
+  const hasPrevious = currentIndex > 0;
+  const hasNext = currentIndex < totalLessons - 1;
+
   return (
-    <div className="flex h-screen w-full bg-[#171717] text-white overflow-hidden">
-      {/* LEFT SIDEBAR */}
+    <main className="relative flex flex-col bg-black py-7 px-5 gap-5 font-apfel font-normal md:flex-row md:gap-3 h-[calc(100vh-60px)]">
+      {/* ─── SIDEBAR (includes desktop + mobile) ─── */}
       <LessonSidebar
         lesson={lesson}
         batchId={batchId}
@@ -99,252 +115,114 @@ function LessonDetailPage({ batchId, lessonId }: LessonDetailPageProps) {
         onContentSelect={handleContentSelect}
       />
 
-      {/* CENTER - Untouched */}
-      {/* CENTER - Content Details */}
-      <div className="flex-1 bg-black/40 border-l border-white/5 flex flex-col overflow-y-auto custom-scrollbar">
-        {activeContentDetail ? (
-          <div className="p-6 flex flex-col gap-6">
-            {/* Meta Header */}
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded bg-white/10 text-[10px] font-bold uppercase tracking-wider text-white/70">
-                  {activeContentDetail.contentType}
-                </span>
-                {activeContentDetail.level && (
-                  <span className="px-2 py-1 rounded bg-primary/10 text-[10px] font-bold uppercase tracking-wider text-primary">
-                    {activeContentDetail.level}
-                  </span>
-                )}
-              </div>
-              <h2 className="text-lg font-bold leading-snug">
-                {activeContentDetail.title}
-              </h2>
-            </div>
+      {/* ─── Resizable Panels ─── */}
+      <div className="flex flex-1 h-full overflow-hidden">
+        <Group
+          orientation={isMobile ? "vertical" : "horizontal"}
+          id="lesson-panels"
+        >
+          {isMobile ? (
+            <>
+              {/* Mobile: Content Player on top */}
+              <Panel
+                defaultSize={60}
+                minSize={20}
+                id="content-player"
+                className="relative"
+              >
+                <ContentPlayerPanel
+                  batchId={batchId}
+                  activeContentId={activeContentId}
+                  activeContentMeta={activeContentMeta}
+                  contentDetail={activeContentDetail}
+                  isContentLoading={isContentLoading}
+                />
+              </Panel>
 
-            {/* Description */}
-            {activeContentDetail.description && (
-              <div className="flex flex-col gap-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-white/40">
-                  Description
-                </h3>
-                <p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">
-                  {activeContentDetail.description}
-                </p>
-              </div>
-            )}
+              {/* Mobile: Vertical resize handle */}
+              <Separator className="flex items-center justify-center group h-3 hover:h-4 transition-all relative z-20">
+                <div className="w-12 h-1 bg-white/10 rounded-full group-hover:bg-doubt group-hover:w-16 group-active:bg-doubt group-active:w-20 transition-all duration-150 cursor-row-resize" />
+              </Separator>
 
-            {/* Tags */}
-            {activeContentDetail.tags &&
-              activeContentDetail.tags.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-white/40">
-                    Tags
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {activeContentDetail.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 rounded-full border border-white/10 text-xs text-white/60"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Mobile: Class Info on bottom */}
+              <Panel
+                defaultSize={40}
+                minSize={0}
+                id="class-info"
+                className="relative"
+              >
+                <ClassInfoPanel
+                  contentDetail={activeContentDetail}
+                  activeContentId={activeContentId}
+                />
+              </Panel>
+            </>
+          ) : (
+            <>
+              {/* Desktop: Class Info on left */}
+              <Panel
+                panelRef={leftPanelRef}
+                id="class-info"
+                defaultSize={40}
+                minSize={0}
+                collapsible
+                collapsedSize={0}
+                className="relative"
+              >
+                <ClassInfoPanel
+                  contentDetail={activeContentDetail}
+                  activeContentId={activeContentId}
+                />
+              </Panel>
 
-            {/* Related Links */}
-            {activeContentDetail.relatedLinks &&
-              activeContentDetail.relatedLinks.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-white/40">
-                    Related Links
-                  </h3>
-                  <div className="flex flex-col gap-2">
-                    {activeContentDetail.relatedLinks.map((link, i) => (
-                      <a
-                        key={i}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-primary hover:underline truncate"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        {link.title}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-          </div>
-        ) : (
-          <div className="p-6 text-center text-white/30 text-sm mt-10">
-            {activeContentId
-              ? "Loading details..."
-              : "Select content to view details"}
-          </div>
-        )}
+              {/* Desktop: Horizontal resize handle */}
+              <Separator className="flex items-center justify-center group w-3 hover:w-4 transition-all relative z-20">
+                <div
+                  onMouseDown={handleDoubleClick}
+                  className="w-1 h-12 bg-white/10 rounded-full group-hover:bg-doubt group-hover:h-16 group-active:bg-doubt group-active:h-20 transition-all duration-150 cursor-col-resize"
+                />
+              </Separator>
+
+              {/* Desktop: Content Player on right */}
+              <Panel
+                defaultSize={60}
+                minSize={20}
+                id="content-player"
+                className="relative"
+              >
+                <ContentPlayerPanel
+                  batchId={batchId}
+                  activeContentId={activeContentId}
+                  activeContentMeta={activeContentMeta}
+                  contentDetail={activeContentDetail}
+                  isContentLoading={isContentLoading}
+                />
+              </Panel>
+            </>
+          )}
+        </Group>
       </div>
-      {/* Right - Content Player */}
-      <div className="right flex-1 bg-black/20 flex flex-col relative overflow-hidden">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-          <div className="mx-auto w-full">
-            {activeContentId ? (
-              <div className="flex flex-col gap-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-white mb-2">
-                    {activeContentMeta?.title || "Loading..."}
-                  </h1>
-                </div>
 
-                {isContentLoading ? (
-                  <div className="aspect-video w-full bg-white/5 animate-pulse rounded-xl flex items-center justify-center text-white/30">
-                    Loading content...
-                  </div>
-                ) : activeContentDetail ? (
-                  <>
-                    {activeContentDetail.contentType === "video" && (
-                      <VdoCipherPlayer
-                        batchId={batchId}
-                        lessonContent={activeContentDetail}
-                        lessonContentId={activeContentDetail.id}
-                      />
-                    )}
-
-                    {activeContentDetail.contentType === "pdf" &&
-                      activeContentDetail.pdfUrl && (
-                        <div className="flex flex-col gap-4 h-full">
-                          <iframe
-                            src={activeContentDetail.pdfUrl}
-                            className="w-full h-[80vh] rounded-xl border border-white/10 bg-white"
-                            title="PDF Viewer"
-                          />
-                          <div className="flex justify-end">
-                            <a
-                              href={activeContentDetail.pdfUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
-                            >
-                              Open in New Tab
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                    {activeContentDetail.contentType === "audio" &&
-                      activeContentDetail.audioUrl && (
-                        <div className="flex flex-col items-center justify-center p-20 border border-white/10 rounded-2xl bg-white/5 gap-6">
-                          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M9 18V5l12-2v13" />
-                              <circle cx="6" cy="18" r="3" />
-                              <circle cx="18" cy="16" r="3" />
-                            </svg>
-                          </div>
-                          <audio
-                            controls
-                            src={activeContentDetail.audioUrl}
-                            className="w-full max-w-md"
-                          />
-                        </div>
-                      )}
-
-                    {activeContentDetail.contentType === "quiz" &&
-                      activeContentDetail.assessment?.type === "quiz" && (
-                        <QuizPlayer
-                          contentId={activeContentDetail.id}
-                          courseId={batchId}
-                          quizData={
-                            activeContentDetail.assessment.data as QuizData
-                          }
-                          isCompleted={activeContentDetail.isCompleted}
-                          obtainedMarks={activeContentDetail.obtainedMarks}
-                        />
-                      )}
-
-                    {activeContentDetail.contentType === "assignment" &&
-                      activeContentDetail.assessment?.type === "assignment" && (
-                        <AssignmentPlayer
-                          contentId={activeContentDetail.id}
-                          courseId={batchId}
-                          assignmentData={
-                            activeContentDetail.assessment
-                              .data as AssignmentData
-                          }
-                          isCompleted={activeContentDetail.isCompleted}
-                          obtainedMarks={activeContentDetail.obtainedMarks}
-                        />
-                      )}
-
-                    {!["video", "pdf", "audio", "quiz", "assignment"].includes(
-                      activeContentDetail.contentType,
-                    ) && (
-                      <div className="flex items-center justify-center p-20 border border-white/10 rounded-2xl bg-white/5 text-white/50">
-                        Content type {activeContentDetail.contentType} player
-                        not implemented yet.
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="p-10 text-center text-red-400 bg-red-500/10 rounded-xl border border-red-500/20">
-                    Failed to load content. Please try again.
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-white/50">
-                Select a content to view
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        {lesson?.contents &&
-          activeContentId &&
-          (() => {
-            const currentIndex = lesson.contents.findIndex(
-              (c) => c.id === activeContentId,
-            );
-
-            if (currentIndex === -1) return null;
-
-            const totalLessons = lesson.contents.length;
-            const hasPrevious = currentIndex > 0;
-            const hasNext = currentIndex < totalLessons - 1;
-
-            return (
-              <LessonDetailFooter
-                currentIndex={currentIndex + 1}
-                totalLessons={totalLessons}
-                hasPrevious={hasPrevious}
-                hasNext={hasNext}
-                onPrevious={() => {
-                  if (hasPrevious) {
-                    handleContentSelect(lesson.contents[currentIndex - 1]);
-                  }
-                }}
-                onNext={() => {
-                  if (hasNext) {
-                    handleContentSelect(lesson.contents[currentIndex + 1]);
-                  }
-                }}
-              />
-            );
-          })()}
-      </div>
-    </div>
+      {/* ─── BOTTOM NAVIGATION ─── */}
+      {lesson?.contents && activeContentId && currentIndex !== -1 && (
+        <LessonDetailFooter
+          currentIndex={currentIndex + 1}
+          totalLessons={totalLessons}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          onPrevious={() => {
+            if (hasPrevious && lesson.contents) {
+              handleContentSelect(lesson.contents[currentIndex - 1]);
+            }
+          }}
+          onNext={() => {
+            if (hasNext && lesson.contents) {
+              handleContentSelect(lesson.contents[currentIndex + 1]);
+            }
+          }}
+        />
+      )}
+    </main>
   );
 }
 

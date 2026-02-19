@@ -82,8 +82,6 @@ export function ContentItem({
     videoStatus?.toUpperCase() === VideoStatusEnum.UPLOADED.toUpperCase() ||
     videoStatus?.toUpperCase() === VideoStatusEnum.PROCESSING.toUpperCase();
 
-  console.log("Video upload disabled:", isVideoUploadDisabled, videoStatus);
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [quizDialogOpen, setQuizDialogOpen] = useState(false);

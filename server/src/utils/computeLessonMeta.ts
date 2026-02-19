@@ -1,6 +1,7 @@
 import DATE_FORMAT from "src/helpers/DATE_FORMAT.js";
 import type { AggContent } from "src/types/classroom/batch.type.js";
 import type { LessonResult } from "src/types/classroom/batch.type.js";
+import { resolvePenalty } from "./penalty.util.js";
 
 function computeLessonMeta(
     contents: AggContent[],
@@ -14,73 +15,118 @@ function computeLessonMeta(
 ): Omit<LessonResult, "id" | "title" | "completed" | "isLocked"> {
 
     let marks = 0;
-    let obtainedMarks = 0;
+    let rawObtainedMarks = 0;
 
     let overdue = false;
-    let maxDaysLate = 0; // We'll just track if *any* content was submitted late relative to lesson deadline? 
-    // Actually, usually "Overdue" means the *lesson* is incomplete and past due.
-    // OR if items were submitted after the deadline.
+    let maxDaysLate = 0;
 
     const skipOverdue = lessonIsLocked;
 
-    const dueDate = lessonDeadline?.dueDate ? new Date(lessonDeadline.dueDate) : null;
-    const startDate = lessonDeadline?.startDate ? new Date(lessonDeadline.startDate) : null;
-    const penaltyPercent = lessonDeadline?.penaltyPercent || 0;
+    const dueDate = lessonDeadline?.dueDate
+        ? new Date(lessonDeadline.dueDate)
+        : null;
 
+    const startDate = lessonDeadline?.startDate
+        ? new Date(lessonDeadline.startDate)
+        : null;
+
+    // ================================
+    // 1️⃣ Aggregate Marks
+    // ================================
     for (const c of contents) {
         marks += c.marks || 0;
+
         if (c.isCompleted) {
-            obtainedMarks += c.obtainedMarks || 0;
+            rawObtainedMarks += c.obtainedMarks || 0;
         }
 
-        const lastAttemptedAt = c.lastAttemptedAt ? new Date(c.lastAttemptedAt) : null;
-
-        // -------------------------------
-        // 🔥 OVERDUE CALCULATION (Per Item check against Lesson Deadline)
-        // -------------------------------
         if (!skipOverdue && dueDate) {
-            let isLate = false;
+            const lastAttemptedAt = c.lastAttemptedAt
+                ? new Date(c.lastAttemptedAt)
+                : null;
+
             let daysLate = 0;
 
-            // 1. Incomplete + Lesson Past Due
+            // Incomplete + Past Due
             if (!c.isCompleted && dueDate < now) {
-                isLate = true;
-                const diffMs = now.getTime() - dueDate.getTime();
-                daysLate = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            }
-            // 2. Completed + Submitted Late (Item submitted after lesson deadline)
-            else if (c.isCompleted && lastAttemptedAt && lastAttemptedAt > dueDate) {
-                isLate = true;
-                const diffMs = lastAttemptedAt.getTime() - dueDate.getTime();
-                daysLate = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                daysLate = Math.floor(
+                    (now.getTime() - dueDate.getTime()) /
+                    (1000 * 60 * 60 * 24)
+                );
             }
 
-            if (isLate && daysLate > 0) {
+            // Completed + Submitted Late
+            else if (
+                c.isCompleted &&
+                lastAttemptedAt &&
+                lastAttemptedAt > dueDate
+            ) {
+                daysLate = Math.floor(
+                    (lastAttemptedAt.getTime() - dueDate.getTime()) /
+                    (1000 * 60 * 60 * 24)
+                );
+            }
+
+            if (daysLate > 0) {
                 overdue = true;
-                if (daysLate > maxDaysLate) maxDaysLate = daysLate;
+                maxDaysLate = Math.max(maxDaysLate, daysLate);
             }
         }
     }
 
-    const result: Omit<LessonResult, "id" | "title" | "completed" | "isLocked"> = {
+    let finalObtainedMarks = rawObtainedMarks;
+    let penaltyPercent = 0;
+
+    // ================================
+    // 2️⃣ Apply Penalty (READ-TIME)
+    // ================================
+    if (!skipOverdue && overdue) {
+        penaltyPercent = resolvePenalty(
+            maxDaysLate,
+            lessonDeadline?.penaltyPercent
+        );
+
+        if (penaltyPercent > 0 && rawObtainedMarks > 0) {
+            const deduction = Math.round(
+                (rawObtainedMarks * penaltyPercent) / 100
+            );
+
+            finalObtainedMarks = Math.max(
+                rawObtainedMarks - deduction,
+                0
+            );
+        }
+    }
+
+    // ================================
+    // 3️⃣ Prepare Result
+    // ================================
+    const result: Omit<
+        LessonResult,
+        "id" | "title" | "completed" | "isLocked"
+    > = {
         marks,
-        obtainedMarks,
-        overdue: false,
+        obtainedMarks: finalObtainedMarks,
+        overdue,
     };
 
-    // Apply overdue only if allowed
-    if (!skipOverdue && overdue) {
-        result.overdue = true;
+    if (overdue) {
         result.daysLate = maxDaysLate;
         result.penalty = penaltyPercent;
     }
 
     if (dueDate) {
-        result.deadline = dueDate.toLocaleDateString("en-US", DATE_FORMAT);
+        result.deadline = dueDate.toLocaleDateString(
+            "en-US",
+            DATE_FORMAT
+        );
     }
 
     if (startDate) {
-        result.start = startDate.toLocaleDateString("en-US", DATE_FORMAT);
+        result.start = startDate.toLocaleDateString(
+            "en-US",
+            DATE_FORMAT
+        );
     }
 
     return result;

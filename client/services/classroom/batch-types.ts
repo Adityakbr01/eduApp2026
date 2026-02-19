@@ -97,6 +97,7 @@ export interface BatchDetailResponse {
     batchData: BatchData;
     modules: Module[];
     lastVisitedId?: string;
+    lastVisitedLessonId?: string;
 }
 
 // ==================== CONTENT DETAIL TYPES ====================

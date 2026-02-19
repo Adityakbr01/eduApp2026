@@ -25,6 +25,13 @@ studentRouter.post(
     quizController.submitQuestion
 );
 
+// Student route for submitting quiz (finish attempt)
+studentRouter.post(
+    "/quiz/:quizId/submit",
+    checkRole(ROLES.STUDENT.code, ROLES.INSTRUCTOR.code),
+    quizController.submitQuiz
+);
+
 // Student route for getting assignment submission
 studentRouter.get(
     "/assignment/:assignmentId/submission",

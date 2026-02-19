@@ -6,6 +6,7 @@ import { lessonContentRepository } from "src/repositories/lessonContent.reposito
 import { lessonRepository } from "src/repositories/lesson.repository.js";
 import { domainEvents, DOMAIN_EVENTS } from "src/events/domainEvents.js";
 import AppError from "src/utils/AppError.js";
+import { classroomService } from "../classroom/classroom.service.js";
 
 
 // ============================================
@@ -28,17 +29,28 @@ export const contentProgressService = {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
 
-        const progressData = {
+        const progressData: any = {
             ...data,
             courseId: content.courseId,
             lessonId: content.lessonId,
             totalMarks: content.marks,
         };
 
+        const lesson = await lessonRepository.findById(content.lessonId);
+
+        // ⏰ DEADLINE PENALTY CHECK
+        if (progressData.obtainedMarks && lesson?.deadline?.dueDate && new Date() > new Date(lesson.deadline.dueDate)) {
+            const penaltyPercent = lesson.deadline.penaltyPercent || 0;
+            if (penaltyPercent > 0) {
+                progressData.obtainedMarks = Math.floor(progressData.obtainedMarks * (1 - penaltyPercent / 100));
+            }
+        }
+
         const result = await contentAttemptRepository.upsert(userId, contentId, progressData);
 
         if (data.isCompleted) {
             await batchRepository.invalidateUserProgress(userId, content.courseId.toString());
+            await classroomService.invalidateClassroomCache(userId);
             // Emit domain event instead of direct invalidation
             domainEvents.emit(DOMAIN_EVENTS.CONTENT_COMPLETED, {
                 userId,
@@ -102,6 +114,7 @@ export const contentProgressService = {
         );
 
         await batchRepository.invalidateUserProgress(userId, content.courseId.toString());
+        await classroomService.invalidateClassroomCache(userId);
         // Emit domain event for async processing
         domainEvents.emit(DOMAIN_EVENTS.CONTENT_COMPLETED, {
             userId,

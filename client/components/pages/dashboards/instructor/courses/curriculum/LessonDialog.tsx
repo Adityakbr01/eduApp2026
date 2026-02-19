@@ -1,18 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,15 +14,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { lessonSchema, LessonFormValues } from "@/validators/lessonSchema";
 import {
-  getTodayNoon,
-  getTomorrowNoon,
-  toDateTimeLocal,
-} from "@/lib/date-utils";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { getFutureDate, toDateTimeLocal } from "@/lib/date-utils";
+import { LessonFormValues, lessonSchema } from "@/validators/lessonSchema";
 
 interface LessonDialogProps {
   open: boolean;
@@ -98,8 +92,8 @@ export function LessonDialog({
         form.reset({
           title: "",
           description: "",
-          startDate: toDateTimeLocal(getTodayNoon().toISOString()),
-          dueDate: toDateTimeLocal(getTomorrowNoon().toISOString()),
+          startDate: toDateTimeLocal(getFutureDate(1).toISOString()),
+          dueDate: toDateTimeLocal(getFutureDate(3).toISOString()),
           penaltyPercent: 0,
         });
       } else if (initialData) {
@@ -255,20 +249,36 @@ export function LessonDialog({
                   name="penaltyPercent"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Penalty Percentage (%)</FormLabel>
+                      <FormLabel>Late Submission Penalty (%)</FormLabel>
+
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={100}
-                          disabled={isLoading}
-                          {...field}
-                          onChange={(e) => field.onChange(+e.target.value)}
-                        />
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step={1}
+                            placeholder="e.g. 20"
+                            disabled={isLoading}
+                            {...field}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              field.onChange(isNaN(value) ? 0 : value);
+                            }}
+                            className="pr-10"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                            %
+                          </span>
+                        </div>
                       </FormControl>
+
                       <FormDescription>
-                        Applied if submitted after due date.
+                        1. Set a fixed penalty for late submissions.
+                        <br /> 2. Leave(0) empty to use automatic system penalty
+                        (5% per day, max 30%).
                       </FormDescription>
+
                       <FormMessage />
                     </FormItem>
                   )}
