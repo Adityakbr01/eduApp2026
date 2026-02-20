@@ -63,11 +63,11 @@ services:
 
     # Healthcheck API to monitor backend readiness
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/v1/health"]
-      interval: 10s       # Har 10 sec me check
-      timeout: 3s        # Max response wait time
-      retries: 10        # Fail hone pe retry count
-      start_period: 10s  # Initial startup grace period
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
 
     # Same private network me run hoga
     networks:
