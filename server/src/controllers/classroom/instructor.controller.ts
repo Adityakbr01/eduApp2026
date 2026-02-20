@@ -6,6 +6,8 @@ import { sendResponse } from "src/utils/sendResponse.js";
 import AppError from "src/utils/AppError.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
+import { courseProgressRepository } from "src/repositories/progress/courseProgress.repository.js";
 
 // ============================================
 // INSTRUCTOR CONTROLLER
@@ -18,7 +20,7 @@ export const instructorController = {
      */
     toggleSectionUnlock: catchAsync(async (req, res) => {
         const { courseId, sectionId } = req.params;
-        const { unlock } = req.body;
+        const { unlock, lessonUnlock } = req.body;
 
         const section = await Section.findOneAndUpdate(
             { _id: sectionId, courseId },
@@ -29,6 +31,18 @@ export const instructorController = {
         if (!section) {
             throw new AppError("Section not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
+
+        // Recursive unlock for lessons if requested
+        if (lessonUnlock === true) {
+            await Lesson.updateMany(
+                { sectionId, courseId },
+                { $set: { isManuallyUnlocked: unlock !== false } }
+            );
+        }
+
+        // Invalidate caches
+        await batchRepository.invalidateCourseStructure(courseId);
+        await courseProgressRepository.invalidateAll(courseId);
 
         sendResponse(res, 200, `Section ${unlock !== false ? "unlocked" : "locked"}`, section);
     }),
@@ -51,6 +65,10 @@ export const instructorController = {
         if (!lesson) {
             throw new AppError("Lesson not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
+
+        // Invalidate caches
+        await batchRepository.invalidateCourseStructure(courseId);
+        await courseProgressRepository.invalidateAll(courseId);
 
         sendResponse(res, 200, `Lesson ${unlock !== false ? "unlocked" : "locked"}`, lesson);
     }),
@@ -79,6 +97,22 @@ export const instructorController = {
         if (!content) {
             throw new AppError("Content not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
         }
+
+        // Invalidate caches (structure contains deadline info)
+        await batchRepository.invalidateCourseStructure(courseId);
+        // We may or may not need to invalidate progress if deadlines affect completion/marks, 
+        // but typically deadlines affect *future* submissions or penalties, not structure.
+        // However, if we want to be safe:
+        // await courseProgressRepository.invalidateAll(courseId); 
+        // Logic: deadlines are used in progress calculation for penalty? Yes.
+        // So we probably should invalidate all progress too if we want immediate recalculation of "obtained marks" 
+        // (if the user already submitted and now the deadline changed, their penalty might change? 
+        // Actually, penalties are usually applied at submission time. 
+        // But `calculateCourseProgress` in classroom service uses `computeLessonMeta` which uses current deadlines.
+        // So yes, modifying a deadline might change the *display* of potential marks or locked status.
+        // Let's add it for consistency.)
+        await courseProgressRepository.invalidateAll(courseId);
+
 
         sendResponse(res, 200, "Deadline updated", content);
     }),

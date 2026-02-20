@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -18,6 +18,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +67,7 @@ import {
   ILesson,
 } from "@/services/courses";
 import apiClient from "@/lib/api/axios";
+import { QUERY_KEYS } from "@/config/query-keys";
 import { SortableLesson } from "./SortableLesson";
 import { SectionDialog } from "./SectionDialog";
 import { LessonDialog } from "./LessonDialog";
@@ -83,9 +86,11 @@ export function SortableSection({
   const [isOpen, setIsOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [lessons, setLessons] = useState<ILesson[]>([]);
 
+  const queryClient = useQueryClient();
   const { data: lessonsData } = useGetLessonsBySection(section._id);
   const updateSection = useUpdateSection();
   const deleteSection = useDeleteSection();
@@ -94,9 +99,13 @@ export function SortableSection({
 
   // API returns data as array directly
   const apiLessons = lessonsData?.data || [];
-  if (apiLessons.length > 0 && lessons.length === 0) {
-    setLessons(apiLessons);
-  }
+
+  // Update local state when API data changes
+  useEffect(() => {
+    if (apiLessons.length > 0) {
+      setLessons(apiLessons);
+    }
+  }, [lessonsData]);
 
   const {
     attributes,
@@ -168,18 +177,29 @@ export function SortableSection({
     });
   };
 
-  const handleToggleUnlock = async () => {
+  const handleToggleUnlock = async (lessonUnlock: boolean) => {
     try {
       await apiClient.put(
         `/classroom/${courseId}/section/${section._id}/unlock`,
         {
           unlock: !(section as any).isManuallyUnlocked,
+          lessonUnlock,
         },
       );
-      // Optimistic: force re-fetch
-      window.location.reload();
+      setUnlockDialogOpen(false);
+
+      const newStatus = !(section as any).isManuallyUnlocked;
+      toast.success(
+        `Section ${newStatus ? "unlocked" : "locked"} successfully`,
+      );
+
+      // Invalidate queries to refresh data without reload
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.COURSES.SECTIONS(courseId)],
+      });
     } catch (error) {
       console.error("Error toggling section lock:", error);
+      toast.error("Failed to update section lock status");
     }
   };
 
@@ -267,7 +287,7 @@ export function SortableSection({
                     </>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleToggleUnlock}>
+                <DropdownMenuItem onClick={() => setUnlockDialogOpen(true)}>
                   {(section as any).isManuallyUnlocked ? (
                     <>
                       <Lock className="h-4 w-4 mr-2" />
@@ -370,6 +390,30 @@ export function SortableSection({
             >
               Delete
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Recursive Unlock Confirmation */}
+      <AlertDialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {(section as any).isManuallyUnlocked ? "Lock" : "Unlock"} Section?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to apply this change to all lessons within this
+              section relative to the new section status?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button variant="outline" onClick={() => handleToggleUnlock(false)}>
+              Just Section
+            </Button>
+            <Button onClick={() => handleToggleUnlock(true)}>
+              Section & Lessons
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

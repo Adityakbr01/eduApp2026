@@ -1,51 +1,47 @@
-"use client"
-import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Toaster } from 'react-hot-toast';
+"use client";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { Toaster } from "react-hot-toast";
 
 function ReactToast() {
-    const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
-    return (
-        <Toaster
-            position={isMobile ? "bottom-center" : "top-right"}
-            gutter={8} // spacing between toasts
-            toastOptions={{
-                duration: 3500,
-                style: {
-                    fontSize: "14px",
-                    padding: "12px 16px",
-                    borderRadius: "12px",
-                    fontWeight: 500,
-                },
-                success: {
-                    style: {
-                        background: "hsl(142.1 76.2% 36.3%)", // green
-                        color: "white",
-                    },
-                    iconTheme: {
-                        primary: "white",
-                        secondary: "hsl(142.1 76.2% 36.3%)",
-                    },
-                },
-                error: {
-                    style: {
-                        background: "hsl(0 72.2% 50.6%)", // red
-                        color: "white",
-                    },
-                    iconTheme: {
-                        primary: "white",
-                        secondary: "hsl(0 72.2% 50.6%)",
-                    },
-                },
-                loading: {
-                    style: {
-                        background: "hsl(217.2 32.6% 17.5%)", // dark blue/gray
-                        color: "white",
-                    },
-                },
-            }}
-        />
-    )
+  return (
+    <Toaster
+      position={isMobile ? "bottom-center" : "top-right"}
+      gutter={8} // spacing between toasts
+      toastOptions={{
+        duration: 4000,
+        style: {
+          background: "#18181b", // zinc-900 for a sleek dark look
+          color: "#fff",
+          fontSize: "14px",
+          padding: "12px 20px",
+          borderRadius: "999px", // soft pill shape
+          fontWeight: 500,
+          border: "1px solid #27272a", // zinc-800
+          boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+        },
+        success: {
+          iconTheme: {
+            primary: "#10b981", // elegant emerald green for success
+            secondary: "#fff",
+          },
+        },
+        error: {
+          iconTheme: {
+            primary: "#ef4444", // clear red for errors
+            secondary: "#fff",
+          },
+        },
+        loading: {
+          iconTheme: {
+            primary: "#3b82f6", // clear blue for loading
+            secondary: "#fff",
+          },
+        },
+      }}
+    />
+  );
 }
 
-export default ReactToast
+export default ReactToast;

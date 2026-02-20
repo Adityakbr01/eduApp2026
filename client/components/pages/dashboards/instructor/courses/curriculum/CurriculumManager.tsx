@@ -11,7 +11,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -48,9 +48,13 @@ export function CurriculumManager() {
 
   // Sync sections from API - data is array directly
   const apiSections = sectionsData?.data || [];
-  if (apiSections.length > 0 && sections.length === 0) {
-    setSections(apiSections);
-  }
+
+  // Update local state when API data changes (e.g. after lock/unlock)
+  useEffect(() => {
+    if (apiSections.length > 0) {
+      setSections(apiSections);
+    }
+  }, [sectionsData]); // Depend on the data object itself to catch refetches
 
   const sensors = useSensors(
     useSensor(PointerSensor),

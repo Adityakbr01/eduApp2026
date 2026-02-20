@@ -18,6 +18,8 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +72,7 @@ import {
   ContentType,
 } from "@/services/courses";
 import apiClient from "@/lib/api/axios";
+import { QUERY_KEYS } from "@/config/query-keys";
 import { LessonDialog } from "./LessonDialog";
 import { SortableContentItem } from "./SortableContentItem";
 import { ContentDialog } from "./ContentAddDialog";
@@ -105,6 +108,7 @@ export function SortableLesson({
   );
   const [lastDataKey, setLastDataKey] = useState<string>("");
 
+  const queryClient = useQueryClient();
   const { data: contentsData } = useGetContentsByLesson(lesson._id);
   const updateLesson = useUpdateLesson();
   const deleteLesson = useDeleteLesson();
@@ -223,9 +227,15 @@ export function SortableLesson({
           unlock: !(lesson as any).isManuallyUnlocked,
         },
       );
-      window.location.reload();
+      // Invalidate queries to refresh data without reload
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.COURSES.LESSONS(sectionId)],
+      });
+      const newStatus = !(lesson as any).isManuallyUnlocked;
+      toast.success(`Lesson ${newStatus ? "unlocked" : "locked"} successfully`);
     } catch (error) {
       console.error("Error toggling lesson lock:", error);
+      toast.error("Failed to update lesson lock status");
     }
   };
 
