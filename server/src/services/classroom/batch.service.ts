@@ -406,9 +406,26 @@ export const batchService = {
         }
 
         if ((ctype === "assignment" || ctype === "quiz") && contentObj.assessment?.data) {
+            let assessmentData = contentObj.assessment.data;
+
+            // SECURITY: Hide correct answers and explanations for quizzes if not completed
+            if (ctype === "quiz" && assessmentData.questions) {
+                const showAnswers = attemptObj?.isCompleted && assessmentData.showCorrectAnswers;
+
+                assessmentData.questions = assessmentData.questions.map((q: any) => {
+                    return {
+                        ...q,
+                        // hide correct answer if not allowed to show
+                        correctAnswerIndex: showAnswers ? q.correctAnswerIndex : -1,
+                        // hide explanation if not allowed to show
+                        explanation: showAnswers ? q.explanation : undefined
+                    };
+                });
+            }
+
             response.assessment = {
                 type: contentObj.assessment.type,
-                data: contentObj.assessment.data, // This was already populated and mapped in lines 308-309
+                data: assessmentData, // Populated and secured data
             };
         }
 
