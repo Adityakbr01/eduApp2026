@@ -93,7 +93,7 @@ export default function VdoCipherPlayer({
         // 🔥 Production-safe URL builder
         const apiUrl =
           process.env.NODE_ENV === "production"
-            ? `http://localhost:3001/api/v1/videos/${lessonContentId}/play`
+            ? `/api/v1/videos/${lessonContentId}/play`
             : `${baseUrl}videos/${lessonContentId}/play`;
 
         const res = await fetch(apiUrl, {
