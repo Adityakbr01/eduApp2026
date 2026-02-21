@@ -1,4 +1,5 @@
 import { Router } from "express";
+import passport from "passport";
 import { changePasswordSchema, loginSchema, registerOtpSchema, registerSchema, registerVerifyOtpSchema, verifyOtpSchema, verify2faSchema } from "src/schemas/auth.schema.js";
 import { authRateLimiter } from "src/middlewares/system/rateLimit.middleware.js";
 import authMiddleware from "src/middlewares/system/authMiddleware.js";
@@ -26,5 +27,14 @@ router.delete("/me/resume", authMiddleware, profileController.deleteResume);
 
 // 2FA Verification
 router.post("/verify-2fa", authRateLimiter, validateRequest(verify2faSchema), authController.verifyLoginOtp);
+
+// ==================== OAUTH ROUTES ====================
+// Google
+router.get("/google", authRateLimiter, passport.authenticate("google", { scope: ["profile", "email"], session: false, prompt: "select_account" }));
+router.get("/google/callback", authRateLimiter, passport.authenticate("google", { session: false, failureRedirect: "/signin?error=GoogleAuthFailed" }), authController.oauthCallback);
+
+// GitHub
+router.get("/github", authRateLimiter, passport.authenticate("github", { scope: ["user:email"], session: false }));
+router.get("/github/callback", authRateLimiter, passport.authenticate("github", { session: false, failureRedirect: "/signin?error=GithubAuthFailed" }), authController.oauthCallback);
 
 export default router;

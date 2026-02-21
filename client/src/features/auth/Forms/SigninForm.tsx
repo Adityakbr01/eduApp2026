@@ -2,8 +2,9 @@
 
 import { loginSchema, type SigninFormInput } from "@/validators/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 
 import {
@@ -24,6 +25,7 @@ import links from "@/constants/links";
 import { secureLocalStorage } from "@/lib/utils/encryption";
 import { authMutations, useSendRegisterOtp } from "@/services/auth/mutations";
 import { handleMutationError } from "@/services/common/mutation-error-handler";
+import OuthForm from "./OuthForm";
 
 type SigninForm = SigninFormInput;
 
@@ -31,6 +33,7 @@ export default function SigninForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [requires2FA, setRequires2FA] = useState(false);
   const [otp, setOtp] = useState("");
@@ -49,8 +52,18 @@ export default function SigninForm() {
     mode: "onBlur",
   });
 
-  // ✅ On mount: check for saved credentials
+  // ✅ On mount: check for saved credentials & oauth errors
   useEffect(() => {
+    // Check for OAuth Error in URL (e.g., ?error=GoogleAuthFailed)
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      setTimeout(() => {
+        toast.error(`Authentication failed: ${errorParam}`);
+      }, 500);
+      // Clean up URL so it doesn't fire again on refresh
+      router.replace(links.AUTH.LOGIN);
+    }
+
     const savedCredentials =
       secureLocalStorage.getItem<SigninForm>("userCredentials");
     const rememberFlag = secureLocalStorage.getItem<boolean>("rememberMe");
@@ -63,7 +76,7 @@ export default function SigninForm() {
         setRememberMe(true);
       }, 0);
     }
-  }, [form]);
+  }, [form, router, searchParams]);
 
   const onSubmit = async (data: SigninForm) => {
     const response: any = await loginMutation.mutateAsync(data, {
@@ -308,6 +321,21 @@ export default function SigninForm() {
             "Sign In"
           )}
         </Button>
+
+        {/* OAuth Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* OAuth Buttons */}
+        <OuthForm />
       </form>
     </Form>
   );

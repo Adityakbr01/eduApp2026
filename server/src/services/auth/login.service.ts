@@ -32,6 +32,17 @@ export const loginService = {
 
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
+            // Give specific error if user signed up via OAuth and has no local password
+            if (!user.password && user.authProvider && user.authProvider.length > 0 && !user.authProvider.includes("local")) {
+                const providers = user.authProvider.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" or ");
+                throw new AppError(
+                    `Please log in using ${providers}`,
+                    STATUSCODE.UNAUTHORIZED,
+                    ERROR_CODE.UNAUTHORIZED,
+                    [{ path: "password", message: `Please log in using ${providers}` }]
+                );
+            }
+
             throw new AppError(
                 "Invalid password",
                 STATUSCODE.UNAUTHORIZED,

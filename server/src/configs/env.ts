@@ -80,8 +80,15 @@ const envSchema = z.object({
     // Firebase Admin
     FIREBASE_PROJECT_ID: z.string().min(1),
     FIREBASE_CLIENT_EMAIL: z.string().email(),
-    FIREBASE_PRIVATE_KEY: z.string().min(10)
+    FIREBASE_PRIVATE_KEY: z.string().min(10),
 
+    // OAuth
+    GOOGLE_CLIENT_ID: z.string().min(10).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(10).optional(),
+    GOOGLE_CALLBACK_URL: z.string().url().default("http://localhost:3001/api/v1/auth/google/callback"),
+    GITHUB_CLIENT_ID: z.string().min(10).optional(),
+    GITHUB_CLIENT_SECRET: z.string().min(10).optional(),
+    GITHUB_CALLBACK_URL: z.string().url().default("http://localhost:3001/api/v1/auth/github/callback"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

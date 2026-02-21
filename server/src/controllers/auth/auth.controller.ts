@@ -6,6 +6,7 @@ import { authService } from "src/services/auth/index.js";
 import type { ChangePassBody, EmailBody, LoginBody, OtpVerifyBody, RefreshTokenBody, ResetPassBody } from "src/types/auth.type.js";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
+import { env } from "src/configs/env.js";
 
 const authController = {
     registerUser: catchAsync<{}, any, RegisterSchemaInput>(async (req, res) => {
@@ -80,14 +81,14 @@ const authController = {
         });
     }),
     changePassword: catchAsync<{}, any, ChangePassBody>(async (req, res) => {
-        const userId = req.user!.id!;
+        const userId = (req.user as any).id!;
         const { currentPassword, newPassword } = req.body;
         const result = await authService.changePasswordService(userId, currentPassword, newPassword);
         sendResponse(res, 200, "Password changed successfully", result);
     }),
     logoutUser: catchAsync<{}, any, RefreshTokenBody>(async (req, res) => {
         clearAuthCookies(res);
-        const userId = req.user.id
+        const userId = (req.user as any).id;
         await authService.logoutUserService(userId);
         sendResponse(res, 200, "User logged out successfully");
     }),
@@ -98,6 +99,26 @@ const authController = {
     getSession: catchAsync(async (req, res) => {
         const result = await authService.getSessionInfoService(req);
         sendResponse(res, 200, "Session active", result);
+    }),
+
+    // OAuth Callbacks
+    oauthCallback: catchAsync(async (req, res) => {
+        // req.user will contain the user object returned from oauthService via Passport
+        if (!req.user) {
+            return res.redirect(`${env.CLIENT_URL}/signin?error=OAuthFailed`);
+        }
+
+        const user = req.user as any; // The payload returned by handleOAuthLogin
+
+        if (user.requires2FA) {
+            // OAuth doesn't currently do 2FA, but structured for future extensions
+            return res.redirect(`${env.CLIENT_URL}/signin/verify-2fa?email=${user.email}`);
+        }
+
+        setAuthCookies(res, user.accessToken);
+
+        // Redirect to client homepage/dashboard
+        return res.redirect(`${env.CLIENT_URL}/`);
     }),
 };
 

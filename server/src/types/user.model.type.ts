@@ -28,12 +28,12 @@ export interface UserProfile {
     dateOfBirth?: Date;
     bio?: string;
     avatar?: VersionedAsset;
-    
+
     // Location
     city?: string;
     state?: string;
     country?: string;
-    
+
     // Professional
     profession?: ProfessionEnum;
     organization?: string;
@@ -76,6 +76,11 @@ export interface IUser {
 
     // User Profile (personal, professional info)
     profile?: UserProfile;
+
+    // OAuth Fields
+    googleId?: string;
+    githubId?: string;
+    authProvider?: ("local" | "google" | "github")[];
 
     approvalStatus?: approvalStatusEnum;
     approvedBy?: Types.ObjectId;

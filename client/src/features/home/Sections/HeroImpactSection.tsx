@@ -94,100 +94,102 @@ function HeroImpactSection() {
   };
 
   return (
-    <div
-      ref={sectionRef}
-      className="w-full mt-20 bg-black flex flex-col items-center overflow-hidden"
-    >
-      {/* Section Title */}
-      <h1>
-        <CornerDotsBox
-          bgColor="bg-[#e8602e36]"
-          borderColor="border-[#3a1a0e]"
-          textColor="text-[#c4c4c4]"
-          className="md:text-2xl text-xl font-machina font-light leading-none pt-1.5 inline-block"
-        >
-          Our Impact So Far
-        </CornerDotsBox>
-      </h1>
-      {/* Section Heading */}
-      <div className="phone:max-w-[85%]">
-        <div className="text-center mx-auto mt-5 mb-14 text-[2.3rem] md:text-[3.5rem] capitalize leading-[1.3] md:leading-18 w-[90%] md:w-[95%] lg:w-[72%] font-manrope font-medium">
-          How We Are Doing It <span className="text-[#D35628]">Faster</span> and
-          Better Than Others!
+    <div className="w-full relative">
+      <div
+        ref={sectionRef}
+        className="w-full mt-20 bg-black flex flex-col items-center overflow-hidden"
+      >
+        {/* Section Title */}
+        <h1>
+          <CornerDotsBox
+            bgColor="bg-[#e8602e36]"
+            borderColor="border-[#3a1a0e]"
+            textColor="text-[#c4c4c4]"
+            className="md:text-2xl text-xl font-machina font-light leading-none pt-1.5 inline-block"
+          >
+            Our Impact So Far
+          </CornerDotsBox>
+        </h1>
+        {/* Section Heading */}
+        <div className="phone:max-w-[85%]">
+          <div className="text-center mx-auto mt-5 mb-14 text-[2.3rem] md:text-[3.5rem] capitalize leading-[1.3] md:leading-18 w-[90%] md:w-[95%] lg:w-[72%] font-manrope font-medium">
+            How We Are Doing It <span className="text-[#D35628]">Faster</span>{" "}
+            and Better Than Others!
+          </div>
         </div>
-      </div>
 
-      {/* Mobile Swiper */}
-      <div className="w-full lg:hidden px-4">
-        <Swiper
-          spaceBetween={16}
-          slidesPerView={1.15}
-          centeredSlides={true}
-          onSwiper={setSwiperInstance}
-          onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
-          breakpoints={{
-            480: {
-              slidesPerView: 1.5,
-              spaceBetween: 20,
-            },
-            640: {
-              slidesPerView: 2,
-              spaceBetween: 24,
-            },
-          }}
-          className="overflow-visible!"
-        >
-          {impactCards.map((card, index) => (
-            <SwiperSlide key={index}>
-              <div className="rounded-xl group overflow-hidden relative aspect-7/9">
-                <ImpactCard card={card} />
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        {/* Mobile Swiper */}
+        <div className="w-full lg:hidden px-4">
+          <Swiper
+            spaceBetween={16}
+            slidesPerView={1.15}
+            centeredSlides={true}
+            onSwiper={setSwiperInstance}
+            onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+            breakpoints={{
+              480: {
+                slidesPerView: 1.5,
+                spaceBetween: 20,
+              },
+              640: {
+                slidesPerView: 2,
+                spaceBetween: 24,
+              },
+            }}
+            className="overflow-visible!"
+          >
+            {impactCards.map((card, index) => (
+              <SwiperSlide key={index}>
+                <div className="rounded-xl group overflow-hidden relative aspect-7/9">
+                  <ImpactCard card={card} />
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
-        {/* Custom Pagination Dots */}
-        <div className="flex gap-2 mt-5 py-4 items-center justify-center">
-          {impactCards.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => handleDotClick(index)}
-              className={`
+          {/* Custom Pagination Dots */}
+          <div className="flex gap-2 mt-5 py-4 items-center justify-center">
+            {impactCards.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => handleDotClick(index)}
+                className={`
                 h-3 w-3 rounded-full transition-all cursor-pointer
                 ${index === activeIndex ? "bg-[#edeaea] scale-110" : "bg-[#2c2b2b]"}
               `}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Desktop Cards with GSAP Scroll */}
-      <div className="hidden lg:block w-full overflow-hidden">
-        <div
-          ref={cardsWrapperRef}
-          className="flex gap-8 items-start will-change-transform"
-          style={{ willChange: "transform" }}
-        >
-          {/* Left Spacer */}
-          <div className="w-[25%] shrink-0"></div>
+        {/* Desktop Cards with GSAP Scroll */}
+        <div className="hidden lg:block w-full overflow-hidden">
+          <div
+            ref={cardsWrapperRef}
+            className="flex gap-8 items-start will-change-transform"
+            style={{ willChange: "transform" }}
+          >
+            {/* Left Spacer */}
+            <div className="w-[25%] shrink-0"></div>
 
-          {/* Impact Cards */}
-          {impactCards.map((card, index) => (
-            <div
-              key={index}
-              className={`
+            {/* Impact Cards */}
+            {impactCards.map((card, index) => (
+              <div
+                key={index}
+                className={`
                 impactCard w-[25%] shrink-0
                 rounded-xl group overflow-hidden relative aspect-7/9
                 ${card.hasOffset ? "mt-20" : ""}
               `}
-            >
-              <ImpactCard card={card} />
-            </div>
-          ))}
+              >
+                <ImpactCard card={card} />
+              </div>
+            ))}
 
-          {/* Right Spacer */}
-          <div className="w-10 shrink-0"></div>
+            {/* Right Spacer */}
+            <div className="w-10 shrink-0"></div>
+          </div>
         </div>
       </div>
     </div>

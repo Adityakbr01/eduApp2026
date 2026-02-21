@@ -16,7 +16,23 @@ const userSchema = new Schema<IUser>(
         //! Basic Information for all roles
         name: { type: String, required: true },
         email: { type: String, unique: true, required: true },
-        password: { type: String, required: true, select: false },
+        password: {
+            type: String,
+            required: function () {
+                // Password is required if both googleId and githubId are missing
+                return !this.googleId && !this.githubId;
+            },
+            select: false
+        },
+
+        // OAuth
+        googleId: { type: String, sparse: true, unique: true },
+        githubId: { type: String, sparse: true, unique: true },
+        authProvider: {
+            type: [String],
+            enum: ["local", "google", "github"],
+            default: ["local"]
+        },
 
 
         roleId: {
@@ -137,7 +153,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+    if (!this.isModified("password") || !this.password) return next();
 
     const salt = await bcrypt.genSalt(env.BCRYPT_SALT_ROUNDS);
     this.password = await bcrypt.hash(this.password, salt);
@@ -145,6 +161,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.comparePassword = async function (plainPassword: string) {
+    if (!this.password) return false;
     return bcrypt.compare(plainPassword, this.password);
 };
 

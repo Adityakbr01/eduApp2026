@@ -215,65 +215,67 @@ const HeroCourseSection = () => {
   }, [courses, isMobile]);
 
   return (
-    <section
-      ref={sectionRef}
-      className="max-md:px-8 overflow-hidden flex flex-col pb-0 md:pb-16 md:mt-44 relative text-black pt-24 items-center rounded-3xl bg-[#FFF3EF] px-0"
-    >
-      {/* Section Title */}
-      <CornerDotsBox
-        dotColor="bg-black/60"
-        bgColor="bg-[#e8602e21]"
-        textColor="text-black/90"
-        className="mt-6 px-4 py-1.5  text-black/90 border-accent border-[0.5px] md:text-2xl text-xl font-machina font-light leading-none pt-1.5 inline-block"
+    <div className="w-full relative">
+      <section
+        ref={sectionRef}
+        className="max-md:px-8 overflow-hidden flex flex-col pb-0 md:pb-16 md:mt-44 relative text-black pt-24 items-center rounded-3xl bg-[#FFF3EF] px-0"
       >
-        <h1 className="Section-Title">Courses</h1>
-      </CornerDotsBox>
-
-      {/* Section Heading */}
-      <div className="phone:max-w-[85%]">
-        <div className="text-center mx-auto mt-5 mb-14 text-[1.7rem] md:text-[3.5rem] capitalize leading-[1.3] md:leading-18 w-[90%] md:w-[95%] lg:w-[72%] font-manrope font-medium">
-          Not sure which <span className="text-accent">course fits you?</span>{" "}
-          Don&apos;t worry, we&apos;re Here to Help.
-        </div>
-      </div>
-
-      {/* Explore Courses Button */}
-      <div className="flex p-[.5px] bg-linear-to-b from-white/50 rounded-2xl to-transparent mb-10">
-        <Link
-          href="/courses"
-          className="text-white text-center group text-xl md:text-xl font-bold py-3 sm:py-4 px-8 sm:px-10 rounded-2xl outline-none hover:shadow-[0_0px_40px_5px_rgba(232,96,46,0.5)] transition-all duration-300"
-          style={{
-            background:
-              "linear-gradient(96.76deg, rgb(232, 96, 46) 5.3%, rgb(52, 14, 0) 234.66%) right center / 150% 100% border-box padding-box, border-box",
-            transition: "background-position 300ms, box-shadow 300ms",
-          }}
+        {/* Section Title */}
+        <CornerDotsBox
+          dotColor="bg-black/60"
+          bgColor="bg-[#e8602e21]"
+          textColor="text-black/90"
+          className="mt-6 px-4 py-1.5  text-black/90 border-accent border-[0.5px] md:text-2xl text-xl font-machina font-light leading-none pt-1.5 inline-block"
         >
-          <div className="relative overflow-hidden w-max cursor-pointer mx-auto">
-            <div className="transition-transform duration-300 ease-out group-hover:-translate-y-full">
-              Explore Courses <span className="ml-2">→</span>
-            </div>
-            <div className="absolute inset-0 translate-y-full transition-transform duration-300 ease-out group-hover:translate-y-0">
-              Explore Courses <span className="ml-2">→</span>
-            </div>
+          <h1 className="Section-Title">Courses</h1>
+        </CornerDotsBox>
+
+        {/* Section Heading */}
+        <div className="phone:max-w-[85%]">
+          <div className="text-center mx-auto mt-5 mb-14 text-[1.7rem] md:text-[3.5rem] capitalize leading-[1.3] md:leading-18 w-[90%] md:w-[95%] lg:w-[72%] font-manrope font-medium">
+            Not sure which <span className="text-accent">course fits you?</span>{" "}
+            Don&apos;t worry, we&apos;re Here to Help.
           </div>
-        </Link>
-      </div>
-
-      {/* Course Cards Stack - Scroll Trigger Container */}
-      <div
-        ref={triggerRef}
-        className="relative w-full min-h-[70vh] md:min-h-[80vh] sm:min-h-screen pt-6 sm:pt-10"
-      >
-        <div
-          ref={cardsContainerRef}
-          className="relative w-full mt-2 md:mt-0 h-[60vh] sm:h-[70vh] md:h-[80vh] "
-        >
-          {courses?.map((course, index) => (
-            <HomeCourseCard key={index} {...course} index={index} />
-          ))}
         </div>
-      </div>
-    </section>
+
+        {/* Explore Courses Button */}
+        <div className="flex p-[.5px] bg-linear-to-b from-white/50 rounded-2xl to-transparent mb-10">
+          <Link
+            href="/courses"
+            className="text-white text-center group text-xl md:text-xl font-bold py-3 sm:py-4 px-8 sm:px-10 rounded-2xl outline-none hover:shadow-[0_0px_40px_5px_rgba(232,96,46,0.5)] transition-all duration-300"
+            style={{
+              background:
+                "linear-gradient(96.76deg, rgb(232, 96, 46) 5.3%, rgb(52, 14, 0) 234.66%) right center / 150% 100% border-box padding-box, border-box",
+              transition: "background-position 300ms, box-shadow 300ms",
+            }}
+          >
+            <div className="relative overflow-hidden w-max cursor-pointer mx-auto">
+              <div className="transition-transform duration-300 ease-out group-hover:-translate-y-full">
+                Explore Courses <span className="ml-2">→</span>
+              </div>
+              <div className="absolute inset-0 translate-y-full transition-transform duration-300 ease-out group-hover:translate-y-0">
+                Explore Courses <span className="ml-2">→</span>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Course Cards Stack - Scroll Trigger Container */}
+        <div
+          ref={triggerRef}
+          className="relative w-full min-h-[70vh] md:min-h-[80vh] sm:min-h-screen pt-6 sm:pt-10"
+        >
+          <div
+            ref={cardsContainerRef}
+            className="relative w-full mt-2 md:mt-0 h-[60vh] sm:h-[70vh] md:h-[80vh] "
+          >
+            {courses?.map((course, index) => (
+              <HomeCourseCard key={index} {...course} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
 

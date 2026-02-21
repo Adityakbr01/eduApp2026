@@ -70,6 +70,15 @@ export const passwordService = {
             await user.comparePassword(currentPassword);
 
         if (!isPasswordValid) {
+            if (!user.password && user.authProvider && user.authProvider.length > 0 && !user.authProvider.includes("local")) {
+                const providers = user.authProvider.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" or ");
+                throw new AppError(
+                    `You registered using ${providers} and do not have a password.`,
+                    STATUSCODE.BAD_REQUEST,
+                    ERROR_CODE.VALIDATION_ERROR, [{ path: 'currentPassword', message: `You registered using ${providers} and do not have a password.` }]
+                );
+            }
+
             throw new AppError(
                 "Current password is incorrect",
                 STATUSCODE.BAD_REQUEST,

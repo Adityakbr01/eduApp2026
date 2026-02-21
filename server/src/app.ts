@@ -5,10 +5,15 @@ import { notFoundHandler } from "./middlewares/system/notFound.js";
 import links from "./routes/index.js";
 import rootRoute from "./routes/root.route.js";
 import { applyMiddlewares } from "./middlewares/system/index.js";
+import passport from "./configs/passport.js";
 
 const app = express();
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Initialize Passport
+app.use(passport.initialize());
+
 applyMiddlewares(app);
 app.use(httpLogger);
 

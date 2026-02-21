@@ -12,8 +12,11 @@ declare global {
             sessionId?: string;
         }
 
+        // Passport expects this interface
+        interface User extends UserPermission { }
+
         interface Request {
-            user?: UserPermission | null;
+            user?: User | null;
             requestId?: string;
         }
     }
