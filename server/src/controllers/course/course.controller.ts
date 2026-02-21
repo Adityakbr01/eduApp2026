@@ -11,19 +11,22 @@ import { sendResponse } from "src/utils/sendResponse.js";
 const courseController = {
     // -------------------- GET ALL PUBLISHED COURSES --------------------
     getAllPublishedCourses: catchAsync(async (req, res) => {
-        const { page, limit, search, category } = req.query as any;
+        const { page = 1, limit = 10, search = '', category = '' } = req.query as any;
+
         const result = await courseService.getAllPublishedCourses({
-            page: page ? parseInt(page) : undefined,
-            limit: limit ? parseInt(limit) : undefined,
-            search,
-            category,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            search: search || undefined,
+            category: category || undefined,
         });
+
         sendResponse(res, 200, "Published courses fetched successfully", result);
     }),
 
     // -------------------- GET PUBLISHED COURSE BY ID --------------------
     getPublishedCourseById: catchAsync<{ id: string }>(async (req, res) => {
         const result = await courseService.getPublishedCourseById(req.params.id);
+
         sendResponse(res, 200, "Published course fetched successfully", result);
     }),
 
@@ -99,6 +102,7 @@ const courseController = {
     }),
     getFeaturedCourses: catchAsync(async (req, res) => {
         const result = await courseService.getFeaturedCourses();
+
         sendResponse(res, 200, "Featured courses fetched successfully", { courses: result });
     }),
 

@@ -13,7 +13,7 @@ import { CourseStatus } from "src/types/course.type.js";
 import AppError from "src/utils/AppError.js";
 import generateSlug from "src/utils/generateSlug.js";
 import { batchRepository } from "src/repositories/classroom/batch.repository.js";
-
+import { getCache, setCache } from "src/utils/redisHelper.js";
 
 // ============================================
 // COURSE SERVICE
@@ -21,16 +21,32 @@ import { batchRepository } from "src/repositories/classroom/batch.repository.js"
 export const courseService = {
   // -------------------- GET ALL PUBLISHED COURSES --------------------
   getAllPublishedCourses: async (query: { page?: number; limit?: number; search?: string; category?: string }) => {
-    return courseRepository.findAllPublished(query);
+    const { page = 1, limit = 10, search = '', category = '' } = query;
+    const cacheKey = `published_courses:page_${page}:limit_${limit}:search_${search}:category_${category}`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) return cachedData;
+
+    const result = await courseRepository.findAllPublished(query);
+    await setCache(cacheKey, result, 30); // 30 seconds TTL for fast updates while mitigating load spikes
+
+    return result;
   },
 
   // -------------------- GET PUBLISHED COURSE BY ID --------------------
   getPublishedCourseById: async (courseId: string) => {
+    const cacheKey = `published_course:${courseId}`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) return cachedData;
+
     const course = await courseRepository.findPublishedById(courseId);
 
     if (!course) {
       throw new AppError("Published course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
     }
+
+    await setCache(cacheKey, course, 60);
 
     return course;
   },
@@ -293,7 +309,15 @@ export const courseService = {
   },
 
   getFeaturedCourses: async () => {
-    return courseRepository.findFeaturedCourses();
+    const cacheKey = `featured_courses`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) return cachedData;
+
+    const result = await courseRepository.findFeaturedCourses();
+    await setCache(cacheKey, result, 120); // 2 mins TTL
+
+    return result;
   },
 
   // -------------------- REORDER COURSES (ADMIN) --------------------
