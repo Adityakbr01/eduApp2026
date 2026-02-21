@@ -76,6 +76,7 @@ const envSchema = z.object({
 
     //VDO_CIPHER
     VDO_CIPHER_API_KEY: z.string().min(10),
+    VDO_WEBHOOK_SECRET: z.string().min(10),
     // Firebase Admin
     FIREBASE_PROJECT_ID: z.string().min(1),
     FIREBASE_CLIENT_EMAIL: z.string().email(),
