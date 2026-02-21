@@ -1,6 +1,6 @@
 import { MoveUpRight, Sparkles } from "lucide-react";
 import Image from "next/image";
-import { impactCards } from "./pages/Sections/HeroSections/HeroImpactSection";
+import { impactCards } from "../features/home/Sections/HeroImpactSection";
 
 function ImpactCard({ card }: { card: (typeof impactCards)[0] }) {
   return (
@@ -11,7 +11,9 @@ function ImpactCard({ card }: { card: (typeof impactCards)[0] }) {
           <h1 className="font-machina font-extrabold text-xl sm:text-3xl">
             {card.title}
           </h1>
-          <p className="text-white/90 text-sm sm:text-base">{card.description}</p>
+          <p className="text-white/90 text-sm sm:text-base">
+            {card.description}
+          </p>
         </div>
       </div>
 
@@ -47,6 +49,5 @@ function ImpactCard({ card }: { card: (typeof impactCards)[0] }) {
     </>
   );
 }
-
 
 export default ImpactCard;

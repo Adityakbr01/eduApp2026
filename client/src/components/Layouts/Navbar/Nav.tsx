@@ -1,6 +1,5 @@
 "use client";
 
-import RequestCallbackModal from "@/components/modals/RequestCallback";
 import links from "@/constants/links";
 import { useAuthStore } from "@/store/auth";
 import { Squeeze as Hamburger } from "hamburger-react";
@@ -11,6 +10,7 @@ import MobileNav from "./MobileNav";
 import NavCTA from "./NavCTA";
 import NavLinks from "./NavLInks";
 import ProfileDropdown from "./ProfileDropdown";
+import RequestCallbackModal from "@/features/RequestCallback";
 
 export default function Nav() {
   const [showNav, setShowNav] = useState(true);

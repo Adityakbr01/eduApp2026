@@ -1,21 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import {
-  useCreateCampaign,
-  RecipientType,
-  CampaignPriority,
-  type CreateCampaignDTO,
-} from "@/services/campaigns";
-import {
-  useGenerateEmail,
-  useGetSubjectSuggestions,
-  type CampaignType,
-  type TargetAudience,
-  type EmailTone,
-  WizardStep,
-  STEPS,
-} from "@/services/ai";
 import {
   Dialog,
   DialogContent,
@@ -23,19 +7,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Sparkles, ChevronLeft } from "lucide-react";
+import {
+  STEPS,
+  useGenerateEmail,
+  useGetSubjectSuggestions,
+  WizardStep,
+  type CampaignType,
+  type EmailTone,
+  type TargetAudience,
+} from "@/services/ai";
+import {
+  CampaignPriority,
+  RecipientType,
+  useCreateCampaign,
+  type CreateCampaignDTO,
+} from "@/services/campaigns";
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import AISettingStep from "./AISettingStep";
-import { ContentStep } from "./ContentStep";
-import { ReviewStep } from "./ReviewStep";
-import { EmailCompainDialogFooter } from "./EmailCompainDialogFooter";
 import {
   CampaignWizardSteps,
 } from "./CampaignWizardSteps";
+import { ContentStep } from "./ContentStep";
+import { EmailCompainDialogFooter } from "./EmailCompainDialogFooter";
+import { ReviewStep } from "./ReviewStep";
 
 interface CreateCampaignDialogProps {
   open: boolean;

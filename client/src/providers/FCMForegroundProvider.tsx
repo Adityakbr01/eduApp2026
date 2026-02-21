@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { setupForegroundMessaging } from "@/lib/firebaseMessaging";
+import { setupForegroundMessaging } from "@/lib/Firebase/firebaseMessaging";
 
 /**
  * This provider sets up the FCM foreground listener only on the client side.

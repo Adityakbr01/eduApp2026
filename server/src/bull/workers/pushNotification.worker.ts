@@ -33,6 +33,7 @@ export const pushNotificationWorker = new Worker(
 
             if (isSendToAll) {
                 const cursor = UserPreferenceModel.find({
+                    "notifications.push": true,
                     fcmTokens: { $exists: true, $not: { $size: 0 } },
                 }).cursor();
 
@@ -55,7 +56,9 @@ export const pushNotificationWorker = new Worker(
                 if (!userId) return;
 
                 const pref = await UserPreferenceModel.findOne({ userId });
-                if (pref?.fcmTokens?.length) {
+                if (!pref || !pref.notifications?.push) return;
+
+                if (pref.fcmTokens?.length) {
                     for (const tokenObj of pref.fcmTokens) {
                         if (tokenObj.notificationsEnabled) {
                             tokens.push(tokenObj.token);

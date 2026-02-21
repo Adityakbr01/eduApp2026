@@ -1,5 +1,5 @@
 
-import { BatchStatus, ContentType, CourseLevel, DeliveryMode, Language, SocialLinkType } from "@/services/courses";
+import { BatchStatus, CourseLevel, DeliveryMode, Language, SocialLinkType } from "@/services/courses";
 import { z } from "zod";
 
 

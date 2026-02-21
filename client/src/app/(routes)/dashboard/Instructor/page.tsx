@@ -1,22 +1,20 @@
-
-
 // Instructor Dashboard Page
-import APP_info from '@/constants/app_info';
-import { user_roles } from '@/constants/roles';
-import RoleGate from '@/providers/RoleGate';
-import { InstructorDashboard } from '@/components/pages/dashboards/instructor';
+import APP_info from "@/constants/app_info";
+import { user_roles } from "@/constants/roles";
+import RoleGate from "@/providers/RoleGate";
+import { InstructorDashboard } from "@/features/dashboards/instructor";
 
 export const metadata = {
-    title: `Instructor Dashboard | ${APP_info.NAME}`,
-    description: "Instructor dashboard for managing the courses.",
+  title: `Instructor Dashboard | ${APP_info.NAME}`,
+  description: "Instructor dashboard for managing the courses.",
 };
 
 function page() {
-    return (
-        <RoleGate allowed={[user_roles.INSTRUCTOR]}>
-            <InstructorDashboard />
-        </RoleGate>
-    )
+  return (
+    <RoleGate allowed={[user_roles.INSTRUCTOR]}>
+      <InstructorDashboard />
+    </RoleGate>
+  );
 }
 
-export default page
+export default page;

@@ -1,6 +1,9 @@
+import resolveUserIdOrEmail from "src/helpers/resolveUserIdOrEmail.js";
+import pushNotificationService from "src/services/Notification/pushNotification.service.js";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
-import pushNotificationService from "src/services/Notification/pushNotification.service.js";
+
+
 
 /**
  * @route   POST /api/v1/notifications/push/register
@@ -28,8 +31,10 @@ export const registerDeviceToken = catchAsync(async (req, res) => {
 export const sendPushNotification = catchAsync(async (req, res) => {
     const { userId, title, body, data } = req.body;
 
+    const resolvedUserId = await resolveUserIdOrEmail(userId);
+
     await pushNotificationService.sendPushNotification({
-        userId,
+        userId: resolvedUserId,
         title,
         body,
         data
@@ -64,8 +69,10 @@ export const sendToAllPushNotification = catchAsync(async (req, res) => {
 export const schedulePushNotification = catchAsync(async (req, res) => {
     const { userId, title, body, data, delayMs, cron, isSendToAll, targetPlatforms } = req.body;
 
+    const resolvedUserId = await resolveUserIdOrEmail(userId);
+
     await pushNotificationService.schedulePushNotification({
-        userId,
+        userId: resolvedUserId,
         title,
         body,
         data,

@@ -15,7 +15,7 @@ const attachPermissionsToUser = async (
     let customPermissions: any[] = [];
     customPermissions = await getUserExtraPermissions(user.permissions);
     if (!rolePermissions) {
-        const { permissions = [] } = await getUserRolePermissions(user?.roleId._id);
+        const { permissions = [] } = await getUserRolePermissions(user?.roleId?._id);
         rolePermissions = [...(permissions || [])];
         rolePermissionsCache.set(String(user.roleId), rolePermissions);
     }

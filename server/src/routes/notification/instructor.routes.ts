@@ -4,7 +4,7 @@ import {
     updateNotification,
     deleteNotification,
     getSentNotifications
-} from "src/controllers/notification.controller.js";
+} from "src/controllers/notification/notification.controller.js";
 // You might want to add checkRole(ROLES.INSTRUCTOR) here
 // import checkRole from "src/middlewares/system/checkRole.js";
 // import { ROLES } from "src/constants/roles.js";

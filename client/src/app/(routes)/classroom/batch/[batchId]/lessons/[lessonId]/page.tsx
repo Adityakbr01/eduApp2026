@@ -1,5 +1,5 @@
 "use client";
-import LessonDetailPage from "@/features/batch/Contents/LessonDetailPage";
+import LessonDetailPage from "@/features/batch/Contents/pages/LessonDetailPage";
 import { useParams } from "next/navigation";
 
 function page() {
