@@ -13,18 +13,17 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: "1m", target: 100 },
-    { duration: "2m", target: 300 },
-    { duration: "3m", target: 500 },
-    { duration: "3m", target: 500 },
-    { duration: "1m", target: 0 },
+    { duration: "1m", target: 50 },   // ramp to 50 users
+    { duration: "2m", target: 100 },  // ramp to 100 users
+    { duration: "3m", target: 100 },  // hold 100 users
+    { duration: "1m", target: 0 },    // ramp down
   ],
   thresholds: {
-    http_req_duration: ["p(95)<800"],
-    http_req_failed: ["rate<0.03"],
+    http_req_duration: ["p(95)<600"], 
+    http_req_failed: ["rate<0.02"],
   },
 };
-const BASE_URL = 'http://localhost:3001/api/v1'; // Based on your .env PORT=3001
+const BASE_URL = 'https://app.edulaunch.shop/api/v1'; // Based on your .env PORT=3001
 
 export function setup() {
     // 1. Login User ONCE before the test starts to avoid the 10-req/10-min rate limit
