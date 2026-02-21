@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import Providers from "@/providers/Providers";
 import Script from "next/script";
+import FCMForegroundProvider from "@/providers/FCMForegroundProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,7 +67,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <FCMForegroundProvider />
+          {children}
+        </Providers>
       </body>
     </html>
   );

@@ -9,7 +9,7 @@ import {
   adminUtils,
   PermissionKey,
   RecentUserItem,
-  RolePermission
+  RolePermission,
 } from "@/components/pages/dashboards/common/utils";
 import AdminCoursesPage from "./AdminCoursesPage";
 import DashBoardHeader from "./DashBoardHeader";
@@ -17,7 +17,12 @@ import OverviewWidgets from "./OverviewWidgets";
 
 const EmailMarketingPage = dynamic(
   () => import("./AdminEmailMarketingPage").then((mod) => mod.default),
-  { ssr: false }
+  { ssr: false },
+);
+
+const PushNotificationPage = dynamic(
+  () => import("./AdminPushNotificationPage").then((mod) => mod.default),
+  { ssr: false },
 );
 
 interface DashboardContentProps {
@@ -57,7 +62,7 @@ interface DashboardContentProps {
   handleTogglePermission: (
     role: string,
     permissionKey: PermissionKey,
-    checked: boolean
+    checked: boolean,
   ) => void;
   onMenuClick?: () => void;
 }
@@ -99,7 +104,7 @@ function DashboardContent({
             {noPermissionToReadUsers && <PermissionDeniedOverlay />}
             <div
               className={cn(
-                noPermissionToReadUsers && "pointer-events-none select-none"
+                noPermissionToReadUsers && "pointer-events-none select-none",
               )}
             >
               <OverviewWidgets
@@ -117,7 +122,7 @@ function DashboardContent({
             {noPermissionToReadUsers && <PermissionDeniedOverlay />}
             <div
               className={cn(
-                noPermissionToReadUsers && "pointer-events-none select-none"
+                noPermissionToReadUsers && "pointer-events-none select-none",
               )}
             >
               <UsersPage
@@ -146,6 +151,12 @@ function DashboardContent({
         {activeSection === adminUtils.sidebarItems[3].value && (
           <div className="min-h-screen h-screen overflow-y-auto">
             <EmailMarketingPage />
+          </div>
+        )}
+
+        {activeSection === adminUtils.sidebarItems[4].value && (
+          <div className="min-h-screen overflow-y-auto">
+            <PushNotificationPage />
           </div>
         )}
       </div>

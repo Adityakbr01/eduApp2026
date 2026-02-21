@@ -6,6 +6,9 @@ export interface GenerateEmailContentParams {
     keyPoints?: string[];
     additionalContext?: string;
     brandName?: string;
+    brandColor?: string;
+    brandLogo?: string;
+    senderName?: string;
 }
 
 export interface GeneratedEmailContent {

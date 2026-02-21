@@ -12,6 +12,7 @@ import type {
 
 // ==================== BASE PATH ====================
 const BASE_PATH = "/preferences";
+const PUSH_NOTIFICATIONS_PATH = "/notifications/push";
 
 // ==================== PREFERENCE API ====================
 export const preferenceApi = {
@@ -76,6 +77,14 @@ export const preferenceApi = {
      */
     updatePrivacyPreferences: async (data: UpdatePrivacyPreferencesDTO): Promise<PreferenceResponse> => {
         const response = await apiClient.patch(`${BASE_PATH}/privacy`, data);
+        return response.data;
+    },
+
+    /**
+     * Register a device token for push notifications
+     */
+    registerPushToken: async (data: { token: string; platform: string }): Promise<any> => {
+        const response = await apiClient.post(`${PUSH_NOTIFICATIONS_PATH}/register`, data);
         return response.data;
     },
 };

@@ -1,11 +1,11 @@
 import apiClient from "@/lib/api/axios";
 import {
-  ProfileData,
-  ProfileUpdatePayload,
-  ProfileImageUploadResponse,
-  ResumeUploadResponse,
   ConfirmUploadPayload,
   ConfirmUploadResponse,
+  ProfileData,
+  ProfileImageUploadResponse,
+  ProfileUpdatePayload,
+  ResumeUploadResponse,
 } from "./types";
 
 // CloudFront/S3 public URL base

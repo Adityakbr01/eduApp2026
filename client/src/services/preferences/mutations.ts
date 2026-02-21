@@ -137,3 +137,16 @@ export const useUpdatePrivacyPreferences = () => {
         onError: (error) => mutationHandlers.error(error),
     });
 };
+
+/**
+ * Register push token
+ */
+export const useRegisterPushToken = () => {
+    return useMutation({
+        mutationFn: (data: { token: string; platform: string }) => preferenceApi.registerPushToken(data),
+        onError: (error) => {
+            console.error("Failed to register push token", error);
+            mutationHandlers.error(error);
+        },
+    });
+};

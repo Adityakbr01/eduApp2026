@@ -16,6 +16,9 @@ export const generateEmailContent = catchAsync(async (req, res) => {
         keyPoints,
         additionalContext,
         brandName,
+        brandColor,
+        brandLogo,
+        senderName,
     } = req.body;
 
     const result = await aiService.generateEmailContent({
@@ -26,6 +29,9 @@ export const generateEmailContent = catchAsync(async (req, res) => {
         keyPoints,
         additionalContext,
         brandName,
+        brandColor,
+        brandLogo,
+        senderName,
     });
 
     sendResponse(res, 200, "Email content generated successfully", result);

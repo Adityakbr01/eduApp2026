@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Settings, Shield, Users } from "lucide-react";
+import { Activity, Bell, Settings, Shield, Users } from "lucide-react";
 
 import { approvalStatusEnum, type User } from "@/services/auth";
 import { StatusMeta, UserRow } from "./types";
@@ -91,7 +91,8 @@ const sidebarItems = [
   { label: "Overview", icon: Activity, value: "overview" },
   { label: "Users", icon: Users, value: "users" },
   { label: "Courses", icon: Shield, value: "courses" },
-  {label:"Email Marketing", icon: Settings, value: "email"},
+  { label: "Email Marketing", icon: Settings, value: "email" },
+  { label: "Push Notifications", icon: Bell, value: "push" },
 ];
 const ManagerSidebarItems = [
   { label: "Overview", icon: Activity, value: "overview" },
@@ -249,7 +250,7 @@ const mapApiUserToRow = (user: User): UserRow => {
   const rolePermissions = user.rolePermissions ?? [];
   const hasCustomPayload = Array.isArray(user.customPermissions);
   const rawCustomPermissions = hasCustomPayload
-    ? user.customPermissions ?? []
+    ? (user.customPermissions ?? [])
     : [];
   const rawLegacyPermissions = Array.isArray(user.permissions)
     ? user.permissions
@@ -258,10 +259,10 @@ const mapApiUserToRow = (user: User): UserRow => {
   const effectivePermissions = user.effectivePermissions?.length
     ? user.effectivePermissions
     : hasCustomPayload
-    ? [...new Set([...rolePermissions, ...rawCustomPermissions])]
-    : rawLegacyPermissions.length
-    ? rawLegacyPermissions
-    : [...new Set(rolePermissions)];
+      ? [...new Set([...rolePermissions, ...rawCustomPermissions])]
+      : rawLegacyPermissions.length
+        ? rawLegacyPermissions
+        : [...new Set(rolePermissions)];
 
   return {
     id: user.id!,
@@ -334,10 +335,10 @@ const buildRecentUsers = (rows: UserRow[], limit = 5): RecentUserItem[] => {
   if (!rows?.length) return mockRecentUsers;
   const sorted = [...rows].sort((a, b) => {
     const aDate = new Date(
-      a.sourceUser?.createdAt ?? a.sourceUser?.updatedAt ?? Date.now()
+      a.sourceUser?.createdAt ?? a.sourceUser?.updatedAt ?? Date.now(),
     ).getTime();
     const bDate = new Date(
-      b.sourceUser?.createdAt ?? b.sourceUser?.updatedAt ?? Date.now()
+      b.sourceUser?.createdAt ?? b.sourceUser?.updatedAt ?? Date.now(),
     ).getTime();
     return bDate - aDate;
   });
@@ -348,7 +349,7 @@ const buildRecentUsers = (rows: UserRow[], limit = 5): RecentUserItem[] => {
     role: row.roleLabel,
     status: row.status,
     timeAgo: formatRelativeTime(
-      row.sourceUser?.createdAt ?? row.sourceUser?.updatedAt
+      row.sourceUser?.createdAt ?? row.sourceUser?.updatedAt,
     ),
   }));
 };
@@ -358,10 +359,10 @@ const buildActivityFeed = (rows: UserRow[]): ActivityFeedItem[] => {
   const timeline: ActivityFeedItem[] = [...rows]
     .sort((a, b) => {
       const aDate = new Date(
-        a.sourceUser?.updatedAt ?? a.sourceUser?.createdAt ?? Date.now()
+        a.sourceUser?.updatedAt ?? a.sourceUser?.createdAt ?? Date.now(),
       ).getTime();
       const bDate = new Date(
-        b.sourceUser?.updatedAt ?? b.sourceUser?.createdAt ?? Date.now()
+        b.sourceUser?.updatedAt ?? b.sourceUser?.createdAt ?? Date.now(),
       ).getTime();
       return bDate - aDate;
     })
@@ -372,24 +373,24 @@ const buildActivityFeed = (rows: UserRow[]): ActivityFeedItem[] => {
         title: row.status.label,
         description: `${row.name} • ${row.roleLabel}`,
         timestamp: formatRelativeTime(
-          row.sourceUser?.updatedAt ?? row.sourceUser?.createdAt
+          row.sourceUser?.updatedAt ?? row.sourceUser?.createdAt,
         ),
         tone: row.status.label.toLowerCase().includes("ban")
           ? "danger"
           : row.status.label.toLowerCase().includes("pending")
-          ? "warning"
-          : "info",
-      })
+            ? "warning"
+            : "info",
+      }),
     );
 
   const activeCount = rows.filter(
-    (row) => row.status.label === "Active"
+    (row) => row.status.label === "Active",
   ).length;
   const pendingCount = rows.filter((row) =>
-    row.status.label.toLowerCase().includes("pending")
+    row.status.label.toLowerCase().includes("pending"),
   ).length;
   const bannedCount = rows.filter((row) =>
-    row.status.label.toLowerCase().includes("ban")
+    row.status.label.toLowerCase().includes("ban"),
   ).length;
 
   const aggregate: ActivityFeedItem[] = [];

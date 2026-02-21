@@ -2,8 +2,9 @@ import logger from "src/utils/logger.js";
 import { emailWorker } from "./workers/email.worker.js";
 import { progressWorker } from "./workers/progress.worker.js";
 import { notificationWorker } from "./workers/notification.worker.js";
+import { pushNotificationWorker } from "./workers/pushNotification.worker.js";
 
-const ALL_WORKERS = [emailWorker, progressWorker, notificationWorker];
+const ALL_WORKERS = [emailWorker, progressWorker, notificationWorker, pushNotificationWorker];
 
 export function startWorkers() {
     logger.info("⚙️ Starting BullMQ workers...");

@@ -9,6 +9,7 @@ import { initSocket } from "./Socket/socket.js";
 import { registerEventHandlers } from "./events/eventHandlers.js";
 import { startWorkers } from "./bull/index.js";
 import { initStreams } from "./stream/index.js";
+import { initializeFirebase } from "./configs/firebase.js";
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ const startServer = async () => {
         });
 
         startAggregationWorker();
+        initializeFirebase();
         startWorkers();
         initStreams();
         registerEventHandlers();

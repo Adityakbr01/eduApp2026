@@ -6,6 +6,7 @@
 export const QUEUE_NAMES = {
     EMAIL: "email-queue",
     PROGRESS: "progress-queue",
+    PUSH_NOTIFICATION: "push-notification-queue",
 } as const;
 
 export const JOB_NAMES = {

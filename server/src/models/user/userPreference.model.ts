@@ -37,6 +37,15 @@ export interface IPrivacyPreferences {
     allowAnalytics: boolean;
 }
 
+// FCM Token interface
+export interface IFCMToken {
+    token: string;
+    platform: "web" | "android" | "ios" | "unknown";
+    notificationsEnabled: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 // Main user preference interface
 export interface IUserPreference {
     _id: Types.ObjectId;
@@ -47,6 +56,7 @@ export interface IUserPreference {
     appearance: IAppearancePreferences;
     regional: IRegionalPreferences;
     privacy: IPrivacyPreferences;
+    fcmTokens: IFCMToken[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -163,6 +173,28 @@ const privacyPreferencesSchema = new Schema<IPrivacyPreferences>(
     { _id: false }
 );
 
+// FCM Token schema
+const fcmTokenSchema = new Schema<IFCMToken>(
+    {
+        token: {
+            type: String,
+            required: true
+        },
+        platform: {
+            type: String,
+            enum: ["web", "android", "ios", "unknown"],
+            default: "unknown"
+        },
+        notificationsEnabled: {
+            type: Boolean,
+            default: true
+        },
+    },
+    {
+        timestamps: true
+    }
+);
+
 // Main user preference schema
 const userPreferenceSchema = new Schema<IUserPreference>(
     {
@@ -201,6 +233,10 @@ const userPreferenceSchema = new Schema<IUserPreference>(
             type: privacyPreferencesSchema,
             default: () => ({}),
             required: true,
+        },
+        fcmTokens: {
+            type: [fcmTokenSchema],
+            default: () => [],
         },
     },
     {
