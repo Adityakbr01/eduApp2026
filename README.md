@@ -499,7 +499,8 @@ RAZORPAY_KEY_SECRET=<YOUR_RAZORPAY_SECRET_KEY>
 RESEND_API_KEY=<YOUR_RESEND_API_KEY>
 ```
 
-> **🔒 Security Note:** 
+> **🔒 Security Note:**
+>
 > - Copy `.env.example` files from respective directories (`server/.env.example`, `client/.env.example`) and rename them to `.env`
 > - Generate secure random secrets using: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
 > - **Never commit** `.env` files to version control
@@ -721,3 +722,5 @@ If you find this project helpful, please consider giving it a ⭐ on [GitHub](ht
 [🔝 Back to Top](#-eduapp-2026)
 
 </div>
+
+fake push
