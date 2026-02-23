@@ -266,6 +266,10 @@ export const courseService = {
       );
     }
 
+
+
+    
+
     const course = await courseRepository.findById(request.course.toString());
     if (!course) {
       throw new AppError("Course not found", STATUSCODE.NOT_FOUND, ERROR_CODE.NOT_FOUND);
