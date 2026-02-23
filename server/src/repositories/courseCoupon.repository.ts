@@ -68,7 +68,7 @@ export const courseCouponRepository = {
         return CourseCoupon.findByIdAndDelete(id);
     },
 
-    updateOne: async (filter: FilterQuery<any>, update: UpdateQuery<any>, session: any) => {
+    updateOne: async (filter: FilterQuery<any>, update: UpdateQuery<any>, session?: any) => {
         return CourseCoupon.updateOne(filter, update, { session });
     },
 };
