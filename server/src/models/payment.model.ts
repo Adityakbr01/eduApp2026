@@ -33,8 +33,11 @@ export interface IPayment extends Document {
     refundId?: string;
     refundedAt?: Date;
     paidAt?: Date;
+    couponId?: Types.ObjectId;
+    discountAmount?: number;
     createdAt: Date;
     updatedAt: Date;
+    isRefunded: boolean;
 }
 
 // ==================== SCHEMA ====================
@@ -115,6 +118,16 @@ const paymentSchema = new Schema<IPayment>(
         },
         paidAt: {
             type: Date,
+        },
+        couponId: {
+            type: Schema.Types.ObjectId,
+            ref: "CourseCoupon",
+            index: true,
+        },
+        discountAmount: {
+            type: Number,
+            default: 0,
+            min: 0,
         },
     },
     {

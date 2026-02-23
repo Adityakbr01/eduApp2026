@@ -7,6 +7,7 @@ export const QUEUE_NAMES = {
     EMAIL: "email-queue",
     PROGRESS: "progress-queue",
     PUSH_NOTIFICATION: "push-notification-queue",
+    REVIEW_AGGREGATION: "review-aggregation-queue",
 } as const;
 
 export const JOB_NAMES = {
@@ -23,6 +24,9 @@ export const JOB_NAMES = {
         UPDATE_LEADERBOARD: "update-leaderboard-score",
         REBUILD_LEADERBOARD: "rebuild-leaderboard",
         LOG_ACTIVITY: "log-activity",
+    },
+    REVIEW_AGGREGATION: {
+        REVIEW_STATS: "recalculate-review-stats",
     },
 } as const;
 

@@ -116,6 +116,7 @@ export const cacheKeyFactory = {
         enrollments: (courseId: string) => `course:enrollments:${courseId}`,
         userEnrollments: (userId: string) => `user:enrollments:${userId}`,
         structure: (courseId: string) => `course:${courseId}:structure`,
+        featured: () => `featured_courses`,
     },
 
     // =====================

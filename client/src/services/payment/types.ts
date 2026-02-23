@@ -60,6 +60,7 @@ export interface PaymentHistoryResponse {
 
 export interface CreateOrderDTO {
     courseId: string;
+    couponCode?: string;
 }
 
 export interface VerifyPaymentDTO {

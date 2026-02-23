@@ -10,6 +10,10 @@ const EMAIL_LIMITS = {
     "account-approval": {
         max: 5,
         duration: 60000
+    },
+    "payment-success": {
+        max: 10,
+        duration: 60000
     }
 };
 

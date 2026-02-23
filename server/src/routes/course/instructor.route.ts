@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ROLES } from "src/constants/roles.js";
 import courseController from "src/controllers/course/course.controller.js";
+import { courseCouponController } from "src/controllers/course/courseCoupon.controller.js";
 import { lessonController } from "src/controllers/course/lesson.controller.js";
 import { lessonContentController } from "src/controllers/course/lessonContent.controller.js";
 import { sectionController } from "src/controllers/course/section.controller.js";
@@ -9,6 +10,8 @@ import authMiddleware from "src/middlewares/system/authMiddleware.js";
 import checkRole from "src/middlewares/system/checkRole.js";
 import {
     createContentSchema,
+    createCouponSchema,
+    updateCouponSchema,
     createCourseSchema,
     createLessonSchema,
     createSectionSchema,
@@ -25,6 +28,12 @@ const instructorRouter = Router();
 
 instructorRouter.use(authMiddleware);
 instructorRouter.use(checkRole(ROLES.INSTRUCTOR.code));
+
+// 🔟 COUPON CRUD (Must be before /:id routes)
+instructorRouter.post("/coupons", validateRequest(createCouponSchema), courseCouponController.createCoupon);
+instructorRouter.get("/coupons", courseCouponController.getInstructorCoupons);
+instructorRouter.put("/coupons/:id", validateRequest(updateCouponSchema), courseCouponController.updateCoupon);
+instructorRouter.delete("/coupons/:id", courseCouponController.deleteCoupon);
 
 // 1️⃣ COURSE CRUD
 instructorRouter.post("/", validateRequest(createCourseSchema), courseController.createCourse);

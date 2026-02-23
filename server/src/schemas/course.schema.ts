@@ -1,4 +1,5 @@
 import { BatchStatus, ContentLevel, ContentType, CourseLevel, DeliveryMode, Language, SocialLinkType } from "src/types/course.type.js";
+import { CouponScope, CouponType } from "src/models/course/courseCoupon.model.js";
 import { z } from "zod";
 
 
@@ -255,6 +256,49 @@ export const updateResumeSchema = z.object({
 
 export const markCompletedSchema = z.object({
     obtainedMarks: z.number().min(0).optional(),
+});
+
+// ============================================
+// COURSE COUPON SCHEMAS
+// ============================================
+export const createCouponSchema = z.object({
+    code: z.string().min(3).max(20).trim(),
+    name: z.string().max(100).trim(),
+    description: z.string().max(500).trim().optional(),
+    type: z.nativeEnum(CouponType),
+    discountValue: z.number().min(0),
+    maxDiscountAmount: z.number().min(0).optional(),
+    minPurchaseAmount: z.number().min(0).optional(),
+    scope: z.nativeEnum(CouponScope).default(CouponScope.ALL_COURSES),
+    applicableCourses: z.array(z.string()).optional(),
+    startDate: z.string(),
+    endDate: z.string(),
+    usageLimit: z.number().min(1).optional().nullable(),
+    usageLimitPerUser: z.number().min(1).default(1),
+    firstPurchaseOnly: z.boolean().default(false),
+});
+
+export const validateCouponSchema = z.object({
+    code: z.string().trim(),
+    courseId: z.string().trim(),
+});
+
+export const updateCouponSchema = z.object({
+    code: z.string().min(3).max(20).trim().optional(),
+    name: z.string().max(100).trim().optional(),
+    description: z.string().max(500).trim().optional(),
+    type: z.nativeEnum(CouponType).optional(),
+    discountValue: z.number().min(0).optional(),
+    maxDiscountAmount: z.number().min(0).optional(),
+    minPurchaseAmount: z.number().min(0).optional(),
+    scope: z.nativeEnum(CouponScope).optional(),
+    applicableCourses: z.array(z.string()).optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    usageLimit: z.number().min(1).optional().nullable(),
+    usageLimitPerUser: z.number().min(1).optional(),
+    firstPurchaseOnly: z.boolean().optional(),
+    status: z.enum(["active", "expired", "exhausted", "inactive"]).optional(),
 });
 
 // ============================================

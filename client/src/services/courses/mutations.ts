@@ -1,19 +1,22 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminCourseApi, courseApi } from "./api";
-import {
-    CreateCourseDTO,
-    UpdateCourseDTO,
-    CreateSectionDTO,
-    UpdateSectionDTO,
-    CreateLessonDTO,
-    UpdateLessonDTO,
-    CreateContentDTO,
-    UpdateContentDTO,
-    ReorderItemDTO,
-    CourseStatus,
-} from "./types";
-import { mutationHandlers } from "@/services/common/mutation-utils";
 import { QUERY_KEYS } from "@/config/query-keys";
+import { mutationHandlers } from "@/services/common/mutation-utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminCourseApi, courseApi, publicCourseApi } from "./api";
+import {
+    CourseStatus,
+    CreateContentDTO,
+    CreateCouponDTO,
+    CreateCourseDTO,
+    CreateLessonDTO,
+    CreateSectionDTO,
+    ReorderItemDTO,
+    UpdateContentDTO,
+    UpdateCouponDTO,
+    UpdateCourseDTO,
+    UpdateLessonDTO,
+    UpdateSectionDTO,
+    ValidateCouponDTO,
+} from "./types";
 
 // ==================== COURSE MUTATIONS ====================
 
@@ -52,6 +55,9 @@ export const useUpdateCourse = () => {
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.COURSES.DETAIL(id)],
             });
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.COUPONS],
+            });
         },
         onError: (error) => mutationHandlers.error(error),
     });
@@ -69,6 +75,9 @@ export const useDeleteCourse = () => {
             mutationHandlers.success(response.message || "Course deleted successfully");
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.COURSES.INSTRUCTOR_COURSES],
+            });
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.COUPONS],
             });
         },
         onError: (error) => mutationHandlers.error(error),
@@ -451,6 +460,76 @@ export const useReorderCourses = () => {
             mutationHandlers.success(response.message || "Courses reordered successfully");
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.COURSES.ADMIN_ALL],
+            });
+        },
+        onError: (error) => mutationHandlers.error(error),
+    });
+};
+
+// ==================== COUPON MUTATIONS ====================
+
+/**
+ * Create a new coupon
+ */
+export const useCreateCoupon = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data: CreateCouponDTO) => courseApi.createCoupon(data),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Coupon created successfully");
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.COUPONS],
+            });
+        },
+        onError: (error) => mutationHandlers.error(error),
+    });
+};
+
+/**
+ * Validate a coupon
+ */
+export const useValidateCoupon = () => {
+    return useMutation({
+        mutationFn: (data: ValidateCouponDTO) => publicCourseApi.validateCoupon(data),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Coupon is valid");
+        },
+        onError: (error) => mutationHandlers.error(error),
+    });
+};
+
+/**
+ * Update a coupon
+ */
+export const useUpdateCoupon = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: UpdateCouponDTO }) =>
+            courseApi.updateCoupon(id, data),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Coupon updated successfully");
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.COUPONS],
+            });
+        },
+        onError: (error) => mutationHandlers.error(error),
+    });
+};
+
+/**
+ * Delete a coupon
+ */
+export const useDeleteCoupon = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => courseApi.deleteCoupon(id),
+        onSuccess: (response) => {
+            mutationHandlers.success(response.message || "Coupon deleted successfully");
+            queryClient.invalidateQueries({
+                queryKey: [QUERY_KEYS.COURSES.COUPONS],
             });
         },
         onError: (error) => mutationHandlers.error(error),

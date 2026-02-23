@@ -1,25 +1,6 @@
 import apiClient from "@/lib/api/axios";
-import {
-    CourseListData,
-    CourseDetailData,
-    SectionListData,
-    SectionDetailData,
-    LessonListData,
-    LessonDetailData,
-    ContentListData,
-    ContentDetailData,
-    CreateCourseDTO,
-    UpdateCourseDTO,
-    CreateSectionDTO,
-    UpdateSectionDTO,
-    CreateLessonDTO,
-    UpdateLessonDTO,
-    CreateContentDTO,
-    UpdateContentDTO,
-    ReorderItemDTO,
-    CourseStatus,
-} from "./types";
 import { ApiResponse } from "../auth";
+import { CourseDetailData, CreateCourseDTO, CourseListData, UpdateCourseDTO, CourseStatus, CreateSectionDTO, SectionDetailData, SectionListData, UpdateSectionDTO, ReorderItemDTO, CreateLessonDTO, LessonDetailData, LessonListData, UpdateLessonDTO, CreateContentDTO, ContentDetailData, ContentListData, UpdateContentDTO, CreateCouponDTO, ValidateCouponDTO, ValidateCouponResponseData, CouponListData, UpdateCouponDTO } from "./types";
 
 // ==================== BASE PATH ====================
 
@@ -238,6 +219,42 @@ export const courseApi = {
         const response = await apiClient.put(`${INSTRUCTOR_BASE}/lesson/${lessonId}/contents/reorder`, items);
         return response.data;
     },
+
+    // ============================
+    // 🏷️ COURSE COUPON CRUD
+    // ============================
+
+    /**
+     * Create a new course coupon
+     */
+    createCoupon: async (data: CreateCouponDTO): Promise<ApiResponse<any>> => {
+        const response = await apiClient.post(`${INSTRUCTOR_BASE}/coupons`, data);
+        return response.data;
+    },
+
+    /**
+     * Get coupons created by instructor
+     */
+    getInstructorCoupons: async (query?: { page?: number; limit?: number; status?: string; search?: string }): Promise<ApiResponse<CouponListData>> => {
+        const response = await apiClient.get(`${INSTRUCTOR_BASE}/coupons`, { params: query });
+        return response.data;
+    },
+
+    /**
+     * Update a coupon
+     */
+    updateCoupon: async (id: string, data: UpdateCouponDTO): Promise<ApiResponse<any>> => {
+        const response = await apiClient.put(`${INSTRUCTOR_BASE}/coupons/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Delete a coupon
+     */
+    deleteCoupon: async (id: string): Promise<ApiResponse<any>> => {
+        const response = await apiClient.delete(`${INSTRUCTOR_BASE}/coupons/${id}`);
+        return response.data;
+    },
 };
 
 // ==================== PUBLIC COURSE API ====================
@@ -261,6 +278,11 @@ export const publicCourseApi = {
 
     getFeaturedCourses: async (): Promise<ApiResponse<CourseListData>> => {
         const response = await apiClient.get("/courses/featured");
+        return response.data;
+    },
+
+    validateCoupon: async (data: ValidateCouponDTO): Promise<ApiResponse<ValidateCouponResponseData>> => {
+        const response = await apiClient.post("/courses/coupons/validate", data);
         return response.data;
     },
 };

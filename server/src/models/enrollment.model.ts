@@ -20,6 +20,8 @@ export interface IEnrollment extends Document {
     status: EnrollmentStatus;
     enrolledAt: Date;
     expiresAt?: Date;
+    couponId?: Types.ObjectId;
+    discountAmount?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -69,6 +71,16 @@ const enrollmentSchema = new Schema<IEnrollment>(
         },
         expiresAt: {
             type: Date,
+        },
+        couponId: {
+            type: Schema.Types.ObjectId,
+            ref: "CourseCoupon",
+            index: true,
+        },
+        discountAmount: {
+            type: Number,
+            default: 0,
+            min: 0,
         },
     },
     {

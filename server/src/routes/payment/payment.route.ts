@@ -11,6 +11,7 @@ const router = Router();
 // ============================================
 const createOrderSchema = z.object({
     courseId: z.string().min(1, "Course ID is required"),
+    couponCode: z.string().optional(),
 });
 
 const verifyPaymentSchema = z.object({
@@ -33,7 +34,7 @@ const paymentFailureSchema = z.object({
  * @route   POST /api/payment/razorpay/order
  * @desc    Create a Razorpay order for course enrollment
  * @access  Private (Authenticated users)
- * @body    { courseId: string }
+ * @body    { courseId: string, couponCode?: string }
  */
 router.post(
     "/razorpay/order",

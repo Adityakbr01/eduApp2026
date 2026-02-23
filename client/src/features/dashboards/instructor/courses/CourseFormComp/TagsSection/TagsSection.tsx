@@ -1,8 +1,7 @@
 "use client";
 
-import { FC, useState } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { CreateCourseInput } from "@/validators/course.schema";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   FormField,
   FormItem,
@@ -10,9 +9,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { CreateCourseInput } from "@/validators/course.schema";
 import { X } from "lucide-react";
+import { FC, useState } from "react";
+import { UseFormReturn } from "react-hook-form";
 
 interface TagsSectionProps {
   form: UseFormReturn<CreateCourseInput>;

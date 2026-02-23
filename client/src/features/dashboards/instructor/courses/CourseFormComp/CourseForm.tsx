@@ -33,14 +33,15 @@ import {
   CreateCourseInput,
   createCourseSchema,
 } from "@/validators/course.schema";
-import { BasicInformationSection } from "./BasicInformationSection";
-import { CategoryAndLevelSection } from "./CategoryAndLevelSection";
+import { BasicInformationSection } from "./BasicInformationSection/BasicInformationSection";
+import { BatchInformationSection } from "./BatchInformationSection/BatchInformationSection";
+import { CategoryAndLevelSection } from "./CategoryAndLevelSection/CategoryAndLevelSection";
+import { CourseCouponsSection } from "./CourseCouponsSection/CourseCouponsSection";
 import { CourseHeader } from "./CourseHeader";
-import { DurationSection } from "./DurationSection";
-import { PricingSection } from "./PricingSection";
-import { TagsSection } from "./TagsSection";
-import { BatchInformationSection } from "./BatchInformationSection";
-import { SocialLinksSection } from "./SocialLinksSection";
+import { DurationSection } from "./DurationSection/DurationSection";
+import { PricingSection } from "./PricingSection/PricingSection";
+import { SocialLinksSection } from "./SocialLinksSection/SocialLinksSection";
+import { TagsSection } from "./TagsSection/TagsSection";
 
 interface CourseFormProps {
   initialData?: ICourse;
@@ -214,6 +215,11 @@ export function CourseForm({
 
         {/* ─── Row 3: Social Links (full width) ─── */}
         <SocialLinksSection form={form as UseFormReturn<CreateCourseInput>} />
+
+        {/* ─── Row 4: Coupons Section (only visible when editing an existing course) ─── */}
+        {isEditing && initialData?._id && (
+          <CourseCouponsSection courseId={initialData._id} />
+        )}
       </form>
     </Form>
   );

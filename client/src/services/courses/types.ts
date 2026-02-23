@@ -430,6 +430,50 @@ export interface ReorderItemDTO {
     order: number;
 }
 
+// ==================== COUPON DTO INTERFACES ====================
+
+export interface CreateCouponDTO {
+    code: string;
+    name: string;
+    description?: string;
+    type: CouponType;
+    discountValue: number;
+    maxDiscountAmount?: number;
+    minPurchaseAmount?: number;
+    scope: CouponScope;
+    applicableCourses?: string[];
+    startDate: string;
+    endDate: string;
+    usageLimit?: number | null;
+    usageLimitPerUser?: number;
+    firstPurchaseOnly?: boolean;
+}
+
+export interface UpdateCouponDTO extends Partial<CreateCouponDTO> {
+    status?: CouponStatus;
+}
+
+export interface ValidateCouponDTO {
+    code: string;
+    courseId: string;
+}
+
+export interface ValidateCouponResponseData {
+    isValid: boolean;
+    couponId: string;
+    originalPrice: number;
+    finalPrice: number;
+    discountType: CouponType;
+    discountValue: number;
+}
+
+export interface CouponListData {
+    coupons: ICourseCoupon[];
+    total: number;
+    page?: number;
+    limit?: number;
+}
+
 // ==================== COUPON TYPES ====================
 
 export enum CouponType {
@@ -477,6 +521,26 @@ export interface ICourseCoupon {
     createdAt: string;
     updatedAt: string;
 }
+
+
+
+export const createCouponSchema = z.object({
+    code: z.string().min(3).max(20).toUpperCase(),
+    name: z.string().min(3).max(100),
+    description: z.string().max(500).optional(),
+    type: z.nativeEnum(CouponType),
+    discountValue: z.string().min(1, "Discount value is required"),
+    maxDiscountAmount: z.string().optional(),
+    minPurchaseAmount: z.string().optional(),
+    startDate: z.string(),
+    endDate: z.string(),
+    usageLimit: z.string().optional(),
+    usageLimitPerUser: z.string().default("1"),
+    firstPurchaseOnly: z.boolean().default(false),
+});
+
+export type CreateCouponFormValues = z.infer<typeof createCouponSchema>;
+
 
 // ==================== REVIEW TYPES ====================
 

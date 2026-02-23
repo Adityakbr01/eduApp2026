@@ -1,5 +1,5 @@
 import { PaymentStatus } from "src/models/payment.model.js";
-import { paymentService } from "src/services/enrollment/enrollment.service.js";
+import { paymentService } from "src/services/payments/payment.service.js";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 
@@ -14,11 +14,12 @@ export const paymentController = {
      */
     createOrder: catchAsync(async (req, res) => {
         const userId = req.user!.id;
-        const { courseId } = req.body;
+        const { courseId, couponCode } = req.body;
 
         const result = await paymentService.createOrder({
             courseId,
             userId,
+            couponCode,
         });
 
         sendResponse(res, 201, "Order created successfully", result);
@@ -51,7 +52,6 @@ export const paymentController = {
      */
     handlePaymentFailure: catchAsync(async (req, res) => {
         const { razorpayOrderId, reason } = req.body;
-
         const result = await paymentService.handlePaymentFailure(
             razorpayOrderId,
             reason

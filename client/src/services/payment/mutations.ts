@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { paymentApi } from "./api";
-import { VerifyPaymentDTO, PaymentFailureDTO, RazorpayOptions, RazorpayResponse } from "./types";
+import { VerifyPaymentDTO, PaymentFailureDTO, RazorpayOptions, RazorpayResponse, CreateOrderDTO } from "./types";
 import { mutationHandlers } from "@/services/common/mutation-utils";
 import { QUERY_KEYS } from "@/config/query-keys";
 import { buildRazorpayOptions, PAYMENT_MESSAGES } from "@/config/razorpay.config";
@@ -12,7 +12,7 @@ import { buildRazorpayOptions, PAYMENT_MESSAGES } from "@/config/razorpay.config
  */
 export const useCreatePaymentOrder = () => {
     return useMutation({
-        mutationFn: (courseId: string) => paymentApi.createOrder({ courseId }),
+        mutationFn: (data: CreateOrderDTO) => paymentApi.createOrder(data),
         onError: (error) => mutationHandlers.error(error),
     });
 };
@@ -86,7 +86,8 @@ export const useRazorpayPayment = (options?: UseRazorpayOptions) => {
 
     const initiatePayment = async (
         courseId: string,
-        userInfo?: { name?: string; email?: string; contact?: string }
+        userInfo?: { name?: string; email?: string; contact?: string },
+        couponCode?: string
     ) => {
         try {
             // Load Razorpay script
@@ -96,7 +97,7 @@ export const useRazorpayPayment = (options?: UseRazorpayOptions) => {
             }
 
             // Create order
-            const orderResponse = await createOrder.mutateAsync(courseId);
+            const orderResponse = await createOrder.mutateAsync({ courseId, couponCode });
             const orderData = orderResponse.data;
 
             // Configure Razorpay options using config

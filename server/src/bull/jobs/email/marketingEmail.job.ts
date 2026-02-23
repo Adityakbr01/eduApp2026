@@ -1,3 +1,4 @@
+import { JOB_NAMES } from "src/bull/config/bullmq.config.js";
 import emailQueue from "../../queues/email.queue.js";
 import type { Types } from "mongoose";
 
@@ -21,7 +22,7 @@ export const sendMarketingEmailJob = async (data: SendMarketingEmailJobData) => 
         low: 10,
     };
 
-    return emailQueue.add("send-marketing-email", data, {
+    return emailQueue.add(JOB_NAMES.EMAIL.SEND_MARKETING_EMAIL, data, {
         priority: priorityMap[data.priority],
         attempts: 3,
         backoff: {

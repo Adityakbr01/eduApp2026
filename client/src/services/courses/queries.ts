@@ -148,3 +148,16 @@ export const useGetCoursesForAdmin = (
         ...options,
     });
 };
+
+// ==================== COUPON QUERIES ====================
+export const useGetInstructorCoupons = (
+    query?: { page?: number; limit?: number; status?: string; search?: string },
+    options?: Omit<UseQueryOptions<ApiResponse<any>>, "queryKey" | "queryFn">
+) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.COURSES.COUPONS, query],
+        queryFn: () => courseApi.getInstructorCoupons(query),
+        staleTime: Infinity,
+        ...options,
+    });
+};

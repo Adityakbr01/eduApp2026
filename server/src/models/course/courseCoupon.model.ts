@@ -144,7 +144,13 @@ const courseCouponSchema = new mongoose.Schema(
             index: true,
             validate: {
                 validator: function (this: any, value: Date) {
-                    return value > this.startDate;
+                    let startDate = this.startDate;
+                    if (this.getUpdate) {
+                        const update = this.getUpdate();
+                        startDate = update.startDate || update.$set?.startDate;
+                    }
+                    if (!startDate) return true;
+                    return new Date(value) > new Date(startDate);
                 },
                 message: "End date must be after start date",
             },

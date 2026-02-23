@@ -92,7 +92,8 @@ export const enrollmentRepository = {
     // -------------------- ACTIVATE ENROLLMENT --------------------
     activateEnrollment: async (
         orderId: string,
-        paymentId: string
+        paymentId: string,
+        session: any
     ): Promise<IEnrollment | null> => {
         return Enrollment.findOneAndUpdate(
             { orderId },
@@ -101,7 +102,7 @@ export const enrollmentRepository = {
                 paymentId,
                 enrolledAt: new Date(),
             },
-            { new: true }
+            { new: true, session }
         );
     },
 

@@ -1,7 +1,9 @@
 import { Types } from "mongoose";
+import { cacheKeyFactory } from "src/cache/cacheKeyFactory.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import CourseStatusRequestSchema from "src/models/course/CourseStatusRequestSchema.js";
+import { batchRepository } from "src/repositories/classroom/batch.repository.js";
 import { contentAttemptRepository } from "src/repositories/contentAttempt.repository.js";
 import {
   courseRepository
@@ -12,8 +14,7 @@ import { sectionRepository } from "src/repositories/section.repository.js";
 import { CourseStatus } from "src/types/course.type.js";
 import AppError from "src/utils/AppError.js";
 import generateSlug from "src/utils/generateSlug.js";
-import { batchRepository } from "src/repositories/classroom/batch.repository.js";
-import { getCache, setCache } from "src/utils/redisHelper.js";
+import { deleteCache, getCache, setCache } from "src/utils/redisHelper.js";
 
 // ============================================
 // COURSE SERVICE
@@ -65,7 +66,9 @@ export const courseService = {
       instructor: instructorId,
     };
 
-    return courseRepository.create(courseData);
+    const result = await courseRepository.create(courseData);
+    await deleteCache(cacheKeyFactory.course.featured());
+    return result;
   },
 
   // -------------------- GET INSTRUCTOR COURSES --------------------
@@ -129,6 +132,7 @@ export const courseService = {
 
     // Invalidate if title or anything else changed.
     await batchRepository.invalidateCourseStructure(courseId);
+    await deleteCache(cacheKeyFactory.course.featured());
 
     return updatedCourse;
   },
@@ -169,6 +173,7 @@ export const courseService = {
 
     await courseRepository.deleteById(courseId, instructorId);
     await batchRepository.invalidateCourseStructure(courseId);
+    await deleteCache(cacheKeyFactory.course.featured());
 
     return { message: "Course deleted successfully" };
   },
@@ -292,6 +297,7 @@ export const courseService = {
     request.admin = new Types.ObjectId(adminId);
     request.reviewedAt = new Date();
     await request.save();
+    await deleteCache(cacheKeyFactory.course.featured());
 
     return request;
   },
@@ -305,11 +311,12 @@ export const courseService = {
     const newFeaturedStatus = !course.isFeatured;
     // Use updateById to only update isFeatured field, avoiding issues with malformed nested data
     const updatedCourse = await courseRepository.updateById(courseId, { isFeatured: newFeaturedStatus });
+    await deleteCache(cacheKeyFactory.course.featured());
     return updatedCourse;
   },
 
   getFeaturedCourses: async () => {
-    const cacheKey = `featured_courses`;
+    const cacheKey = cacheKeyFactory.course.featured();
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) return cachedData;
@@ -332,6 +339,7 @@ export const courseService = {
     if (bulkOps.length > 0) {
       await courseRepository.bulkWrite(bulkOps);
     }
+    await deleteCache(cacheKeyFactory.course.featured());
   },
 
 };

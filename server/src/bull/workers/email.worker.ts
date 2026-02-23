@@ -16,6 +16,7 @@ import videoReadyProcessor from "../processors/email/videoReadyProcessor.js";
 import notificationEmailProcessor from "../processors/email/notificationEmailProcessor.js";
 import { EMAIL_QUEUE_NAME } from "../queues/email.queue.js";
 import { EMAIL_JOB_NAMES, type EmailJobName } from "src/constants/email-jobs.constants.js";
+import paymentSuccessProcessor from "../processors/email/paymentSuccessProcessor.js";
 
 const EMAIL_RATE_LIMITS: Partial<Record<EmailJobName, any>> = {
     [EMAIL_JOB_NAMES.REGISTER_OTP]: EMAIL_LIMITS?.["register-otp"] ?? null,
@@ -23,6 +24,7 @@ const EMAIL_RATE_LIMITS: Partial<Record<EmailJobName, any>> = {
     [EMAIL_JOB_NAMES.ACCOUNT_APPROVAL]: EMAIL_LIMITS?.["account-approval"] ?? null,
     [EMAIL_JOB_NAMES.ACCOUNT_BAN]: EMAIL_LIMITS?.["account-ban"] ?? null,
     [EMAIL_JOB_NAMES.LOGIN_OTP]: EMAIL_LIMITS?.["login-otp"] ?? null,
+    [EMAIL_JOB_NAMES.PAYMENT_SUCCESS]: EMAIL_LIMITS?.["payment-success"] ?? null,
 };
 
 export async function addEmailJob(
@@ -52,10 +54,11 @@ export const emailWorker = new Worker(
             [EMAIL_JOB_NAMES.ACCOUNT_BAN]: accountBanProcessor,
             [EMAIL_JOB_NAMES.LOGIN_OTP]: loginOtpProcessor,
             [EMAIL_JOB_NAMES.LOGIN_ALERT]: loginAlertProcessor,
-            "send-marketing-email": marketingEmailProcessor,
-            "process-campaign": processCampaignProcessor,
+            [EMAIL_JOB_NAMES.SEND_MARKETING_EMAIL]: marketingEmailProcessor,
+            [EMAIL_JOB_NAMES.PROCESS_CAMPAIGN]: processCampaignProcessor,
             [EMAIL_JOB_NAMES.VIDEO_READY]: videoReadyProcessor,
-            "send-email": notificationEmailProcessor,
+            [EMAIL_JOB_NAMES.NOTIFICATION_EMAIL]: notificationEmailProcessor,
+            [EMAIL_JOB_NAMES.PAYMENT_SUCCESS]: paymentSuccessProcessor,
         };
 
         const processor = processors[job.name];

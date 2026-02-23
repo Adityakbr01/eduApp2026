@@ -1,8 +1,8 @@
-import { notificationRepository } from "src/repositories/notification.repository.js";
 import notificationQueue from "src/bull/queues/notification.queue.js";
 import { redis } from "src/configs/redis.js";
-import logger from "src/utils/logger.js";
 import type { INotification } from "src/models/Notification/notification.model.js";
+import { notificationRepository } from "src/repositories/notification.repository.js";
+import logger from "src/utils/logger.js";
 
 // Queue payload now expects an existing ID
 export interface NotificationQueuePayload {

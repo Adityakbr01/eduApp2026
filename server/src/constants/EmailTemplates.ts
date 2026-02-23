@@ -1,3 +1,6 @@
+import type { NotificationEmailJobData } from "src/bull/processors/email/notificationEmailProcessor.js";
+import type { PaymentSuccessJobData } from "src/bull/processors/email/paymentSuccessProcessor.js";
+import { env } from "src/configs/env.js";
 import { EMAIL_TYPES, type EmailType } from "src/constants/email-types.constants.js";
 import app_info from "./app_info.js";
 
@@ -323,7 +326,6 @@ export const templates: Record<EmailType, any> = {
       </tr>
     `),
   }),
-
   [EMAIL_TYPES.HIGH_ERROR_RATE_ALERT]: (data: { errorRate: number; total: number; batchSize: number }) => ({
     subject: `🚨 CRITICAL: High API Error Rate Detected (${data.errorRate.toFixed(1)}%)`,
     text: `High error rate detected: ${data.errorRate.toFixed(1)}% errors in the last batch.`,
@@ -355,7 +357,6 @@ export const templates: Record<EmailType, any> = {
       </tr>
     `),
   }),
-
   [EMAIL_TYPES.LOGIN_ALERT]: (data: { device: string; time: string; location?: string }) => ({
     subject: "New Login Detected 🔐",
     text: `New login to your account from ${data.device} at ${data.time}.`,
@@ -375,7 +376,6 @@ export const templates: Record<EmailType, any> = {
       </tr>
     `),
   }),
-
   [EMAIL_TYPES.TWO_FACTOR_OTP]: (data: { otp: string }) => ({
     subject: "Login Verification Code 🛡️",
     text: `Your login verification code is ${data.otp}. Valid for 5 minutes.`,
@@ -394,7 +394,6 @@ export const templates: Record<EmailType, any> = {
       </tr>
     `),
   }),
-
   [EMAIL_TYPES.VIDEO_READY]: (data: { instructorName: string; videoTitle: string; courseName: string; videoLink: string }) => ({
     subject: "Video Processing Complete 🎬",
     text: `Your video "${data.videoTitle}" in course "${data.courseName}" is now ready.`,
@@ -422,4 +421,225 @@ export const templates: Record<EmailType, any> = {
       </tr>
     `),
   }),
+  [EMAIL_TYPES.PAYMENT_SUCCESS]: (data: PaymentSuccessJobData) => ({
+
+    subject: `You're enrolled in ${data.courseTitle}`,
+    text: `Your payment for course "${data.courseTitle}" has been successful. Order ID: ${data.orderId}`,
+    html: emailTheme(`
+      <tr>
+        <td class="header" style="padding: 48px 40px 0; text-align: left;">
+
+          <!-- Checkmark icon -->
+          <div style="
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #dcfce7;
+            margin-bottom: 24px;
+          ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="#16a34a" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+
+          <h1 style="
+            margin: 0 0 8px;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+            color: var(--text-main);
+            text-align: left;
+          ">Enrollment confirmed</h1>
+
+          <p style="
+            margin: 0 0 32px;
+            font-size: 15px;
+            color: var(--text-muted);
+            text-align: left;
+          ">Hi <strong style="color: var(--text-main); font-weight: 500;">${data.userName}</strong> — your payment went through and you now have full access.</p>
+
+          <!-- Details table -->
+          <table width="100%" role="presentation" style="
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 28px;
+          ">
+            <tr>
+              <td style="
+                padding: 14px 20px;
+                border-bottom: 1px solid var(--border-soft);
+                background-color: var(--accent-bg);
+              ">
+                <table width="100%" role="presentation">
+                  <tr>
+                    <td style="font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted);">Course</td>
+                    <td style="font-size: 14px; font-weight: 600; color: var(--text-main); text-align: right;">${data.courseTitle}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="
+                padding: 14px 20px;
+                border-bottom: 1px solid var(--border-soft);
+              ">
+                <table width="100%" role="presentation">
+                  <tr>
+                    <td style="font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted);">Amount paid</td>
+                    <td style="font-size: 14px; font-weight: 600; color: var(--text-main); text-align: right;">${data.currency} ${data.amount}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 20px;">
+                <table width="100%" role="presentation">
+                  <tr>
+                    <td style="font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted);">Order ID</td>
+                    <td style="font-size: 13px; font-weight: 500; color: var(--text-muted); text-align: right; font-family: 'Menlo', 'Courier New', monospace;">${data.orderId}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- CTA button -->
+          <table role="presentation" style="margin-bottom: 40px;">
+            <tr>
+              <td>
+                <a href="${env.CLIENT_URL}/classroom" style="
+                  display: inline-block;
+                  padding: 10px 20px;
+                  background-color: var(--text-main);
+                  color: var(--bg-card);
+                  text-decoration: none;
+                  border-radius: 6px;
+                  font-size: 14px;
+                  font-weight: 500;
+                  letter-spacing: -0.01em;
+                ">Open Classroom →</a>
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+    `),
+  }),
+  [EMAIL_TYPES.NOTIFICATION_EMAIL]: (data: NotificationEmailJobData) => ({
+    subject: data.subject,
+    text: `${data.context.title}\n\n${data.context.message}${data.context.link ? `\n\n${data.context.link}` : ""}`,
+    html: emailTheme(`
+      <tr>
+        <td class="header" style="padding: 48px 40px 40px; text-align: left;">
+
+          <!-- Bell icon -->
+          <div style="
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background-color: var(--accent-bg);
+            border: 1px solid var(--border-soft);
+            margin-bottom: 24px;
+          ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="#64748b" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </div>
+
+          <!-- Title -->
+          <h1 style="
+            margin: 0 0 8px;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: var(--text-main);
+            text-align: left;
+          ">${data.context.title}</h1>
+
+          <!-- Greeting -->
+          <p style="
+            margin: 0 0 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-align: left;
+          ">Hi <strong style="color: var(--text-main); font-weight: 500;">${data.context.name}</strong>,</p>
+
+          <!-- Divider -->
+          <div style="
+            width: 100%;
+            height: 1px;
+            background-color: var(--border-soft);
+            margin-bottom: 24px;
+          "></div>
+
+          <!-- Message block -->
+          <table width="100%" role="presentation" style="
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 28px;
+          ">
+            <tr>
+              <td style="
+                padding: 20px 24px;
+                background-color: var(--accent-bg);
+                font-size: 14px;
+                line-height: 1.7;
+                color: var(--text-muted);
+                border-left: 3px solid var(--border-soft);
+              ">
+                ${data.context.message}
+              </td>
+            </tr>
+          </table>
+
+          <!-- CTA (conditional) -->
+          ${data.context.link ? `
+          <table role="presentation" style="margin-bottom: 8px;">
+            <tr>
+              <td>
+                <a href="${data.context.link}" style="
+                  display: inline-block;
+                  padding: 10px 20px;
+                  background-color: var(--text-main);
+                  color: var(--bg-card);
+                  text-decoration: none;
+                  border-radius: 6px;
+                  font-size: 14px;
+                  font-weight: 500;
+                  letter-spacing: -0.01em;
+                ">View details →</a>
+              </td>
+            </tr>
+          </table>
+
+          <p style="margin: 12px 0 0; font-size: 12px; color: var(--text-muted);">
+            Or copy this link:
+            <span style="
+              font-family: 'Menlo', 'Courier New', monospace;
+              font-size: 11px;
+              color: var(--text-muted);
+            ">${data.context.link}</span>
+          </p>
+          ` : ""}
+
+        </td>
+      </tr>
+    `),
+  }),
 };
+
+

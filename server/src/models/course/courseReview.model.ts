@@ -1,4 +1,7 @@
 import mongoose, { Schema } from "mongoose";
+import { JOB_NAMES } from "src/bull/config/bullmq.config.js";
+import { reviewAggregationQueue } from "src/bull/queues/aggregation.queue.js";
+import logger from "src/utils/logger.js";
 
 // Review Status
 export enum ReviewStatus {
@@ -258,8 +261,11 @@ courseReviewSchema.virtual("averageDetailedRating").get(function () {
     return values.reduce((sum, val) => sum + val, 0) / values.length;
 });
 
+
 // Static method to get course rating summary
-courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: string) {
+courseReviewSchema.statics.getCourseRatingSummary = async function (
+    courseId: string
+) {
     const result = await this.aggregate([
         {
             $match: {
@@ -273,20 +279,21 @@ courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: st
                 _id: "$course",
                 averageRating: { $avg: "$rating" },
                 totalReviews: { $sum: 1 },
-                ratingsDistribution: {
+                rawRatings: {
                     $push: "$rating",
                 },
             },
         },
         {
             $project: {
+                _id: 1,
                 averageRating: { $round: ["$averageRating", 1] },
                 totalReviews: 1,
                 ratingsDistribution: {
                     one: {
                         $size: {
                             $filter: {
-                                input: "$ratingsDistribution",
+                                input: "$rawRatings",
                                 cond: { $eq: ["$$this", 1] },
                             },
                         },
@@ -294,7 +301,7 @@ courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: st
                     two: {
                         $size: {
                             $filter: {
-                                input: "$ratingsDistribution",
+                                input: "$rawRatings",
                                 cond: { $eq: ["$$this", 2] },
                             },
                         },
@@ -302,7 +309,7 @@ courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: st
                     three: {
                         $size: {
                             $filter: {
-                                input: "$ratingsDistribution",
+                                input: "$rawRatings",
                                 cond: { $eq: ["$$this", 3] },
                             },
                         },
@@ -310,7 +317,7 @@ courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: st
                     four: {
                         $size: {
                             $filter: {
-                                input: "$ratingsDistribution",
+                                input: "$rawRatings",
                                 cond: { $eq: ["$$this", 4] },
                             },
                         },
@@ -318,7 +325,7 @@ courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: st
                     five: {
                         $size: {
                             $filter: {
-                                input: "$ratingsDistribution",
+                                input: "$rawRatings",
                                 cond: { $eq: ["$$this", 5] },
                             },
                         },
@@ -337,30 +344,41 @@ courseReviewSchema.statics.getCourseRatingSummary = async function (courseId: st
     );
 };
 
-// Post-save hook to update course rating stats
-courseReviewSchema.post("save", async function () {
-    const CourseModel = mongoose.model("Course");
-    const summary = await (this.constructor as any).getCourseRatingSummary(this.course);
+// Function to trigger background aggregation
+const triggerStatsAggregation = (courseId: any) => {
+    reviewAggregationQueue
+        .add(
+            JOB_NAMES.REVIEW_AGGREGATION.REVIEW_STATS,
+            { courseId: courseId.toString() },
+            {
+                jobId: `review-stats-${courseId.toString()}`,
+                removeOnComplete: true,
+            }
+        )
+        .catch((err) => {
+            logger.error(
+                `Failed to queue review aggregation for course ${courseId}:`,
+                err
+            );
+        });
+};
 
-    await CourseModel.findByIdAndUpdate(this.course, {
-        "ratingStats.averageRating": summary.averageRating,
-        "ratingStats.totalReviews": summary.totalReviews,
-        "ratingStats.ratingsDistribution": summary.ratingsDistribution,
-    });
+// Post-save hook to update course rating stats via BullMQ
+courseReviewSchema.post("save", function () {
+    triggerStatsAggregation(this.course);
 });
 
-// Post-remove hook to update course rating stats
+// Post-update hook
+courseReviewSchema.post("findOneAndUpdate", async function (doc) {
+    if (doc) {
+        triggerStatsAggregation(doc.course);
+    }
+});
+
+// Post-remove hook
 courseReviewSchema.post("findOneAndDelete", async function (doc) {
     if (doc) {
-        const CourseModel = mongoose.model("Course");
-        const CourseReviewModel = mongoose.model("CourseReview");
-        const summary = await (CourseReviewModel as any).getCourseRatingSummary(doc.course);
-
-        await CourseModel.findByIdAndUpdate(doc.course, {
-            "ratingStats.averageRating": summary.averageRating,
-            "ratingStats.totalReviews": summary.totalReviews,
-            "ratingStats.ratingsDistribution": summary.ratingsDistribution,
-        });
+        triggerStatsAggregation(doc.course);
     }
 });
 

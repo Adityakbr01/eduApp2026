@@ -33,6 +33,8 @@ export const QUERY_KEYS = {
         LESSONS: (sectionId: string) => ["courses", "lessons", sectionId],
         // Contents
         CONTENTS: (lessonId: string) => ["courses", "contents", lessonId],
+        // Coupons
+        COUPONS: ["courses", "coupons"],
     },
     // Assessments
     ASSESSMENTS: {

@@ -6,6 +6,12 @@ export const EMAIL_JOB_NAMES = {
     LOGIN_ALERT: "login-alert",
     LOGIN_OTP: "login-otp",
     VIDEO_READY: "video-ready",
+    PAYMENT_SUCCESS: "payment-success",
+
+    //Marketing Emails && Campaigns
+    SEND_MARKETING_EMAIL: "send-marketing-email",
+    PROCESS_CAMPAIGN: "process-campaign",
+    NOTIFICATION_EMAIL: "send-notification-email",
 } as const;
 
 export type EmailJobName =

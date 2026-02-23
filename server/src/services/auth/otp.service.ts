@@ -22,14 +22,21 @@ const emailService = {
         if (!template) throw new Error("Invalid email type");
 
         const { subject, text, html } = template(payload);
+        const recipient = (payload as any).email || (payload as any).to;
+
+        if (!recipient) {
+            logger.error(`❌ No recipient email found for type: ${type}`, { payload });
+            throw new Error("Recipient email is missing");
+        }
 
         try {
             const response = await resend.emails.send({
                 from: "no-reply@edulaunch.shop", // must be your verified domain
-                to: payload.email,
+                to: recipient,
                 subject,
                 html,
             });
+            console.log("Email sent successfully", response);
             return response;
         } catch (error) {
             logger.error(`❌ Failed to send email to ${payload.email}:`, error);

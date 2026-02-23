@@ -385,9 +385,9 @@ export const courseRepository = {
     },
 
     // Update by ID
-    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>) => {
+    updateById: async (id: string | Types.ObjectId, data: UpdateQuery<any>, session?: any) => {
         console.log("Updating course with data:", data);
-        return Course.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+        return Course.findByIdAndUpdate(id, data, { new: true, runValidators: true, session });
     },
 
     // Delete by ID (soft delete)

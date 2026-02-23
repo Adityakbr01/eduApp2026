@@ -3,8 +3,15 @@ import { emailWorker } from "./workers/email.worker.js";
 import { progressWorker } from "./workers/progress.worker.js";
 import { notificationWorker } from "./workers/notification.worker.js";
 import { pushNotificationWorker } from "./workers/pushNotification.worker.js";
+import aggregationWorker from "./workers/aggregation.worker.js";
 
-const ALL_WORKERS = [emailWorker, progressWorker, notificationWorker, pushNotificationWorker];
+const ALL_WORKERS = [
+    emailWorker,
+    progressWorker,
+    notificationWorker,
+    pushNotificationWorker,
+    aggregationWorker,
+];
 
 export function startWorkers() {
     logger.info("⚙️ Starting BullMQ workers...");

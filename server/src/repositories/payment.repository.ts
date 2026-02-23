@@ -27,13 +27,13 @@ export const paymentRepository = {
     },
 
     // -------------------- FIND BY RAZORPAY ORDER ID --------------------
-    findByOrderId: async (razorpayOrderId: string): Promise<IPayment | null> => {
-        return Payment.findOne({ razorpayOrderId });
+    findByOrderId: async (razorpayOrderId: string, session?: any): Promise<IPayment | null> => {
+        return Payment.findOne({ razorpayOrderId }, null, { session });
     },
 
     // -------------------- FIND BY RAZORPAY PAYMENT ID --------------------
-    findByPaymentId: async (razorpayPaymentId: string): Promise<IPayment | null> => {
-        return Payment.findOne({ razorpayPaymentId });
+    findByPaymentId: async (razorpayPaymentId: string, session?: any): Promise<IPayment | null> => {
+        return Payment.findOne({ razorpayPaymentId }, null, { session });
     },
 
     // -------------------- UPDATE BY ID --------------------
@@ -75,6 +75,29 @@ export const paymentRepository = {
                 enrollmentId,
             },
             { new: true }
+        );
+    },
+
+    markAsPaidConditionally: async (
+        orderId: string,
+        paymentId: string,
+        signature: string,
+        session: any
+    ) => {
+        return Payment.updateOne(
+            {
+                razorpayOrderId: orderId,
+                status: PaymentStatus.CREATED, // important
+            },
+            {
+                $set: {
+                    status: PaymentStatus.PAID,
+                    razorpayPaymentId: paymentId,
+                    razorpaySignature: signature,
+                    paidAt: new Date(),
+                },
+            },
+            { session }
         );
     },
 
