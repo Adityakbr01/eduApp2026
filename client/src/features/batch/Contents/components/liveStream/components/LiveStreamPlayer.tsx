@@ -49,7 +49,7 @@ export default function LiveStreamPlayer({
           if (timerRef.current) clearTimeout(timerRef.current);
           setStatus("error");
         }}
-        className="absolute inset-0 w-full h-full border-0"
+        className={`absolute inset-0 w-full h-full border-0 ${status !== "playing" ? "invisible" : ""}`}
         title="Live Stream"
       />
 

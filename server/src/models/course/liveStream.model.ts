@@ -7,6 +7,7 @@ export interface ILiveStream extends Document {
     description?: string;
     courseId: Types.ObjectId;
     lessonId: Types.ObjectId;
+    lessonContentId?: Types.ObjectId;
     instructorId: Types.ObjectId;
     liveId: string;
     serverUrl: string;
@@ -44,6 +45,11 @@ const liveStreamSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Lesson",
             required: true,
+        },
+
+        lessonContentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "LessonContent",
         },
 
         instructorId: {

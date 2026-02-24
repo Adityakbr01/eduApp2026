@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 import LessonContent from "src/models/course/lessonContent.model.js";
-import { getVideoOTP } from "src/services/upload/vdocipher.service.js";
+import { getVideoOTP } from "src/services/liveStream/vdocipher.service.js";
 import logger from "src/utils/logger.js";
 import { sessionService } from "src/services/auth/session.service.js";
 

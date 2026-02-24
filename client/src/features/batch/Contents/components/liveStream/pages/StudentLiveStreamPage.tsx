@@ -2,19 +2,19 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { Group, Panel, Separator } from "react-resizable-panels";
+import { io } from "socket.io-client";
 
-import { socketUrl, SOCKET_KEYS } from "@/constants/SOCKET_IO";
+import { SOCKET_KEYS, socketUrl } from "@/constants/SOCKET_IO";
+import { useResizePanels } from "@/features/batch/Contents/hooks/useResizePanels";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGetStudentLiveStream } from "@/services/liveStream/queries";
-import { useResizePanels } from "@/features/batch/Contents/hooks/useResizePanels";
 
-import LiveStreamPlayer from "../components/LiveStreamPlayer";
 import LiveStreamChat from "../components/LiveStreamChat";
+import LiveStreamError from "../components/LiveStreamError";
 import LiveStreamHeader from "../components/LiveStreamHeader";
 import LiveStreamLoading from "../components/LiveStreamLoading";
-import LiveStreamError from "../components/LiveStreamError";
+import LiveStreamPlayer from "../components/LiveStreamPlayer";
 import LiveStreamScheduled from "../components/LiveStreamScheduled";
 
 export default function StudentLiveStreamPage() {

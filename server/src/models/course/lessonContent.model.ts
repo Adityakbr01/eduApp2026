@@ -16,7 +16,7 @@ const videoSchema = new mongoose.Schema({
     failureReason: { type: String, required: false },
     version: { type: Number, required: false, default: 0 },
     isEmailSent: { type: Boolean, default: false },
-    videoId: { type: String, required: false },
+    videoId: { type: String, required: false }, //vdoCipher 
     thumbnails: { type: [String], required: false },
 });
 

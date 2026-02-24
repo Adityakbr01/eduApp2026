@@ -149,8 +149,17 @@ export const getLiveStreamPublic = async (streamId: string): Promise<VdoLiveStre
 export const endLiveStream = async (streamId: string): Promise<void> => {
     logger.info("📡 Ending VdoCipher Live Stream", { streamId });
     return retry(async () => {
-        await liveClient.patch(`/livestream/${streamId}/end`);
-        logger.info("✅ VdoCipher Live Stream ended", { streamId });
+        try {
+            await liveClient.patch(`/livestream/${streamId}/end`);
+            logger.info("✅ VdoCipher Live Stream ended", { streamId });
+        } catch (error: any) {
+            logger.error("❌ VdoCipher Live Stream failed to end", {
+                streamId,
+                status: error.response?.status,
+                data: error.response?.data
+            });
+            throw error;
+        }
     });
 };
 

@@ -87,7 +87,26 @@ export function initVideoStatusStream() {
 
             const videoLink = `${env.PRODUCTION_CLIENT_URL}`;
 
-            // Add email job
+            // Atomically mark email as sent to prevent race conditions that lead to duplicate emails
+            const updated = await LessonContent.findOneAndUpdate(
+                {
+                    _id: lessonContent._id,
+                    $or: [
+                        { "video.isEmailSent": false },
+                        { "video.isEmailSent": { $exists: false } }
+                    ]
+                },
+                { $set: { "video.isEmailSent": true } },
+                { new: true } // Return modified document if matched
+            );
+
+            if (!updated) {
+                // If it evaluates to null, another concurrent stream event already claimed the dispatch row lock
+                logger.info("⛔ Email already handled securely (Atomic Lock), skipping...");
+                return;
+            }
+
+            // Add email job ONLY if we acquired the atomic update
             await emailQueue.add(
                 EMAIL_JOB_NAMES.VIDEO_READY,
                 {
@@ -103,15 +122,7 @@ export function initVideoStatusStream() {
                 }
             );
 
-            logger.info(`📨 Email job added for ${instructor.email}`);
-
-            // Mark email sent
-            await LessonContent.updateOne(
-                { _id: lessonContent._id },
-                { $set: { "video.isEmailSent": true } }
-            );
-
-            logger.info("✅ Marked video as email sent");
+            logger.info(`📨 Email job securely added for ${instructor.email}`);
 
         } catch (error) {
             logger.error("❌ Error in Video Status Stream:", error);

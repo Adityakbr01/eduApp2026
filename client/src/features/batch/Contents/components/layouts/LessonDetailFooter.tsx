@@ -28,7 +28,7 @@ const LessonDetailFooter = ({
       >
         <ChevronLeft
           size={20}
-          className="text-accent group-hover:-translate-x-0.5 group-disabled:translate-x-0 transition-transform"
+          className="text-(--custom-accentColor) group-hover:-translate-x-0.5 group-disabled:translate-x-0 transition-transform"
         />
       </button>
 
@@ -43,7 +43,7 @@ const LessonDetailFooter = ({
       >
         <ChevronRight
           size={20}
-          className="text-accent group-hover:translate-x-0.5 group-disabled:translate-x-0 transition-transform"
+          className="text-(--custom-accentColor) group-hover:translate-x-0.5 group-disabled:translate-x-0 transition-transform"
         />
       </button>
     </div>

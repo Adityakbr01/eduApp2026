@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Trash2, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import LessonVideoUpload from "@/lib/s3/LessonVideoUpload";
 import {
   ContentLevel,
   ContentType,
@@ -66,6 +65,9 @@ export function EditContentDialog({
   const [isUploading, setIsUploading] = useState(false);
   const [newFileKey, setNewFileKey] = useState<string | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
+
+  // Video source mode: upload file vs paste VdoCipher videoId directly
+  const [videoMode, setVideoMode] = useState<"upload" | "videoId">("upload");
 
   // New states for array fields
   const [tagInput, setTagInput] = useState("");
@@ -113,6 +115,7 @@ export function EditContentDialog({
       setTagInput("");
       setLinkTitle("");
       setLinkUrl("");
+      setVideoMode("upload");
     }
   }, [open, content, form]);
 
@@ -130,31 +133,32 @@ export function EditContentDialog({
 
       // Handle specific content types
       if (content.type === ContentType.VIDEO) {
-        updateData.video = {
-          // Duration update logic preserved from previous implementation?
-          // The previous code had `editDuration`. If duration editing isn't in the form,
-          // we should preserve existing or default.
-          // Looking at previous code, editDuration was state.
-          // If we don't expose it in UI, we might lose the ability to edit it manually if that was desired.
-          // But normally duration comes from upload.
-          // Let's assume for now we keep existing or use what's there.
-          // The previous code had `setEditDuration` but no input for it in the dialog UI shown in the view_file!
-          // Wait, I should check if there was an input for duration.
-          // I verified the file content in Step 301, there was NO input for duration.
-          // So `editDuration` was just state initialized from content.
+        if (videoMode === "videoId" && videoId?.trim()) {
+          // Direct VdoCipher videoId — no server processing needed
+          updateData.video = {
+            videoId: videoId.trim(),
+            status: "READY",
+            minWatchPercent: data.minWatchPercent,
+            duration:
+              content.video?.duration != null
+                ? Number(content.video.duration.toFixed(0))
+                : data.duration,
+          };
+        } else {
+          updateData.video = {
+            minWatchPercent: data.minWatchPercent,
+            hlsKey: content.video?.hlsKey,
+            rawKey: content.video?.rawKey,
+            duration:
+              content.video?.duration != null
+                ? Number(content.video.duration.toFixed(0))
+                : data.duration,
+            videoId: videoId || undefined,
+          };
 
-          minWatchPercent: data.minWatchPercent,
-          hlsKey: content.video?.hlsKey,
-          rawKey: content.video?.rawKey,
-          duration:
-            content.video?.duration != null
-              ? Number(content.video.duration.toFixed(0))
-              : data.duration,
-          videoId: videoId || undefined,
-        };
-
-        if (data.rawKey) {
-          updateData.video.rawKey = data.rawKey;
+          if (data.rawKey) {
+            updateData.video.rawKey = data.rawKey;
+          }
         }
       }
 
@@ -479,33 +483,71 @@ export function EditContentDialog({
                 <FormLabel>Replace File</FormLabel>
 
                 {content.type === ContentType.VIDEO && (
-                  <VdoCipherVideoUpload
-                    courseId={courseId}
-                    lessonId={lessonId}
-                    lessonContentId={content._id}
-                    disabled={isVideoUploadDisabled}
-                    onUploadStateChange={setIsUploading}
-                    onUploaded={(videoId) => {
-                      if (videoId) {
-                        setNewFileKey(videoId);
-                        setVideoId(videoId);
-                      } else {
-                        setNewFileKey("processed-by-vdo");
-                        setVideoId(null);
-                      }
-                    }}
-                  />
-                )}
+                  <div className="space-y-3">
+                    {/* Video source toggle */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVideoMode("upload")}
+                        className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all cursor-pointer ${
+                          videoMode === "upload"
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-muted hover:border-muted-foreground/30 text-muted-foreground"
+                        }`}
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload Video
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVideoMode("videoId")}
+                        className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all cursor-pointer ${
+                          videoMode === "videoId"
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-muted hover:border-muted-foreground/30 text-muted-foreground"
+                        }`}
+                      >
+                        🔗 VdoCipher Video ID
+                      </button>
+                    </div>
 
-                {/* TODO: Add Audio/PDF upload components if they exist or use generic? 
-                         The previous code only showed LessonVideoUpload for VIDEO type specifically in the logical block, 
-                         but the condition wrapped VIDEO, AUDIO, PDF. 
-                         Wait, looking at previous Step 301 line 146: it ONLY rendered LessonVideoUpload if type === VIDEO.
-                         So Audio/PDF replacement wasn't fully implemented or used a different component not shown?
-                         Ah, strictly interpretation of previous code: 
-                         It only rendered LessonVideoUpload for VIDEO. 
-                         I will preserve that behavior.
-                     */}
+                    {videoMode === "upload" ? (
+                      <VdoCipherVideoUpload
+                        courseId={courseId}
+                        lessonId={lessonId}
+                        lessonContentId={content._id}
+                        disabled={isVideoUploadDisabled}
+                        onUploadStateChange={setIsUploading}
+                        onUploaded={(vid) => {
+                          if (vid) {
+                            setNewFileKey(vid);
+                            setVideoId(vid);
+                          } else {
+                            setNewFileKey("processed-by-vdo");
+                            setVideoId(null);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="e.g. a1b2c3d4e5f6g7h8"
+                          value={videoId ?? ""}
+                          onChange={(e) => setVideoId(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Paste the Video ID from your VdoCipher dashboard. The
+                          video must already be uploaded and processed on
+                          VdoCipher.{" "}
+                          <span className="font-medium text-foreground">
+                            This saves server resources
+                          </span>{" "}
+                          since no upload or transcoding is needed on our end.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {newFileKey && (
                   <div className="rounded-md border p-3 text-xs bg-muted">

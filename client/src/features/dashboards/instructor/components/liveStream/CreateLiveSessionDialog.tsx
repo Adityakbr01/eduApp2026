@@ -9,10 +9,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,15 +25,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ICourse,
-  useGetSectionsByCourse,
   useGetLessonsBySection,
+  useGetSectionsByCourse,
 } from "@/services/courses";
 import { useCreateLiveSession } from "@/services/liveStream";
-import { useState, useMemo } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+// ── Zod Schema ──────────────────────────────────────────────────────────────
+const createLiveSessionSchema = z.object({
+  courseId: z.string().min(1, "Course is required"),
+  sectionId: z.string().min(1, "Section is required"),
+  lessonId: z.string().min(1, "Lesson is required"),
+  recordingTitle: z
+    .string()
+    .min(1, "Recording title is required")
+    .max(200, "Title must be 200 characters or less"),
+  recordingDescription: z.string().min(1, "Recording description is required"),
+  scheduledAt: z.string().optional(),
+  autoSaveRecording: z.boolean().default(true),
+  liveId: z.string().min(1, "Live ID is required"),
+  serverUrl: z.string().min(1, "RTMP Server URL is required"),
+  streamKey: z.string().min(1, "Stream Key is required"),
+  chatSecret: z.string().min(1, "Chat Secret is required"),
+  chatEmbedCode: z.string().min(1, "Chat Embed Code is required"),
+  playerEmbedCode: z.string().min(1, "Player Embed Code is required"),
+});
+
+type CreateLiveSessionFormValues = z.infer<typeof createLiveSessionSchema>;
+
+// ── Component ───────────────────────────────────────────────────────────────
 interface CreateLiveSessionDialogProps {
   courses: ICourse[];
 }
@@ -37,23 +70,36 @@ export function CreateLiveSessionDialog({
   courses,
 }: CreateLiveSessionDialogProps) {
   const [open, setOpen] = useState(false);
-  const [courseId, setCourseId] = useState("");
-  const [sectionId, setSectionId] = useState("");
-  const [lessonId, setLessonId] = useState("");
-  const [recordingTitle, setRecordingTitle] = useState("");
-  const [recordingDescription, setRecordingDescription] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [autoSaveRecording, setAutoSaveRecording] = useState(true);
-
-  // Manual Credentials
-  const [liveId, setLiveId] = useState("");
-  const [serverUrl, setServerUrl] = useState("");
-  const [streamKey, setStreamKey] = useState("");
-  const [chatSecret, setChatSecret] = useState("");
-  const [chatEmbedCode, setChatEmbedCode] = useState("");
-  const [playerEmbedCode, setPlayerEmbedCode] = useState("");
-
   const createSession = useCreateLiveSession();
+
+  const form = useForm<CreateLiveSessionFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(createLiveSessionSchema) as any,
+    defaultValues: {
+      courseId: "",
+      sectionId: "",
+      lessonId: "",
+      recordingTitle: "",
+      recordingDescription: "",
+      scheduledAt: "",
+      autoSaveRecording: true,
+      liveId: "",
+      serverUrl: "rtmp://live-ingest-01.vd0.co:1935/livestream",
+      streamKey: "",
+      chatSecret: "",
+      chatEmbedCode:
+        '<iframe\n  src="https://zenstream.chat?liveId=2606538097584602acfe69bd43e0534b&token={GENERATED_JWT_TOKEN}"\n  style="border:0;width:720px;aspect-ratio:16/9;max-width:100%;"\n  allow="autoplay,fullscreen"\n  allowfullscreen\n></iframe>',
+      playerEmbedCode:
+        '<iframe\n  src="https://player.vdocipher.com/live-v2?liveId=2606538097584602acfe69bd43e0534b&token={GENERATED_JWT_TOKEN}"\n  style="border:0;width:720px;aspect-ratio:16/9;max-width:100%;"\n  allow="autoplay,fullscreen"\n  allowfullscreen\n></iframe>',
+    },
+  });
+
+  const handleClearField = (fieldName: keyof CreateLiveSessionFormValues) => {
+    form.setValue(fieldName, "");
+  };
+
+  const courseId = form.watch("courseId");
+  const sectionId = form.watch("sectionId");
 
   // Fetch sections when course is selected
   const { data: sectionsData } = useGetSectionsByCourse(courseId, {
@@ -75,57 +121,29 @@ export function CreateLiveSessionDialog({
     [lessonsData],
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (
-      !courseId ||
-      !lessonId ||
-      !recordingTitle ||
-      !liveId ||
-      !serverUrl ||
-      !streamKey
-    )
-      return;
-
+  const onSubmit = (values: CreateLiveSessionFormValues) => {
     createSession.mutate(
       {
-        courseId,
-        lessonId,
-        recordingTitle,
-        recordingDescription: recordingDescription || undefined,
-        scheduledAt: scheduledAt || undefined,
-        autoSaveRecording,
-        liveId,
-        serverUrl,
-        streamKey,
-        chatSecret: chatSecret || undefined,
-        chatEmbedCode: chatEmbedCode || undefined,
-        playerEmbedCode: playerEmbedCode || undefined,
+        courseId: values.courseId,
+        lessonId: values.lessonId,
+        recordingTitle: values.recordingTitle,
+        recordingDescription: values.recordingDescription,
+        scheduledAt: values.scheduledAt || undefined,
+        autoSaveRecording: values.autoSaveRecording,
+        liveId: values.liveId,
+        serverUrl: values.serverUrl,
+        streamKey: values.streamKey,
+        chatSecret: values.chatSecret as string,
+        chatEmbedCode: values.chatEmbedCode as string,
+        playerEmbedCode: values.playerEmbedCode as string,
       },
       {
         onSuccess: () => {
           setOpen(false);
-          resetForm();
+          form.reset();
         },
       },
     );
-  };
-
-  const resetForm = () => {
-    setCourseId("");
-    setSectionId("");
-    setLessonId("");
-    setRecordingTitle("");
-    setRecordingDescription("");
-    setScheduledAt("");
-    setAutoSaveRecording(true);
-    setLiveId("");
-    setServerUrl("");
-    setStreamKey("");
-    setChatSecret("");
-    setChatEmbedCode("");
-    setPlayerEmbedCode("");
   };
 
   return (
@@ -145,220 +163,375 @@ export function CreateLiveSessionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Course Select */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Course *</Label>
-            <Select
-              value={courseId}
-              onValueChange={(v) => {
-                setCourseId(v);
-                setSectionId("");
-                setLessonId("");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a course..." />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c._id} value={c._id}>
-                    {c.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Section Select */}
-          {courseId && (
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Section *</Label>
-              <Select
-                value={sectionId}
-                onValueChange={(v) => {
-                  setSectionId(v);
-                  setLessonId("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a section..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {(sections as any[]).map((s: any) => (
-                    <SelectItem key={s._id} value={s._id}>
-                      {s.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Lesson Select */}
-          {sectionId && (
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Lesson *</Label>
-              <Select value={lessonId} onValueChange={setLessonId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a lesson..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {(lessons as any[]).map((l: any) => (
-                    <SelectItem key={l._id} value={l._id}>
-                      {l.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Recording Title */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Recording Title *</Label>
-            <Input
-              value={recordingTitle}
-              onChange={(e) => setRecordingTitle(e.target.value)}
-              placeholder="e.g. React Hooks Deep Dive - Live Session"
-              required
-            />
-          </div>
-
-          {/* Recording Description */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Description</Label>
-            <Textarea
-              value={recordingDescription}
-              onChange={(e) => setRecordingDescription(e.target.value)}
-              placeholder="Optional description for the recording..."
-              rows={2}
-            />
-          </div>
-
-          {/* Schedule Date */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Schedule (optional)</Label>
-            <Input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-            />
-          </div>
-
-          {/* Auto Save Toggle */}
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label className="text-xs font-medium">Auto-Save Recording</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Automatically save as lesson content when stream ends
-              </p>
-            </div>
-            <Switch
-              checked={autoSaveRecording}
-              onCheckedChange={setAutoSaveRecording}
-            />
-          </div>
-
-          <div className="pt-4 border-t space-y-4">
-            <h4 className="text-sm font-semibold">
-              VdoCipher Stream Credentials
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Create the stream in your VdoCipher Dashboard and paste the
-              credentials here.
-            </p>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Live ID *</Label>
-              <Input
-                value={liveId}
-                onChange={(e) => setLiveId(e.target.value)}
-                placeholder="e.g. 1234abcd5678"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">RTMP Server URL *</Label>
-              <Input
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
-                placeholder="rtmp://..."
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Stream Key *</Label>
-              <Input
-                type="password"
-                value={streamKey}
-                onChange={(e) => setStreamKey(e.target.value)}
-                placeholder="Enter stream key"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">
-                  Live Player Embed Code (Optional)
-                </Label>
-                <Input
-                  value={playerEmbedCode}
-                  onChange={(e) => setPlayerEmbedCode(e.target.value)}
-                  placeholder="Player iframe code"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">
-                  Chat Embed Code (Optional)
-                </Label>
-                <Input
-                  value={chatEmbedCode}
-                  onChange={(e) => setChatEmbedCode(e.target.value)}
-                  placeholder="Chat iframe code"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label className="text-xs font-medium">
-                  Chat Secret (Optional)
-                </Label>
-                <Input
-                  type="password"
-                  value={chatSecret}
-                  onChange={(e) => setChatSecret(e.target.value)}
-                  placeholder="Chat secret"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Submit */}
-          <Button
-            type="submit"
-            className="w-full mt-2"
-            disabled={
-              !courseId ||
-              !lessonId ||
-              !recordingTitle ||
-              !liveId ||
-              !serverUrl ||
-              !streamKey ||
-              createSession.isPending
-            }
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 py-2"
           >
-            {createSession.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Live Session"
+            {/* Course Select */}
+            <FormField
+              control={form.control}
+              name="courseId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium">
+                    Course *
+                  </FormLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      form.setValue("sectionId", "");
+                      form.setValue("lessonId", "");
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a course..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {courses.map((c) => (
+                        <SelectItem key={c._id} value={c._id}>
+                          {c.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Section Select */}
+            {courseId && (
+              <FormField
+                control={form.control}
+                name="sectionId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">
+                      Section *
+                    </FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        form.setValue("lessonId", "");
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a section..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(sections as any[]).map((s: any) => (
+                          <SelectItem key={s._id} value={s._id}>
+                            {s.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          </Button>
-        </form>
+
+            {/* Lesson Select */}
+            {sectionId && (
+              <FormField
+                control={form.control}
+                name="lessonId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">
+                      Lesson *
+                    </FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a lesson..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(lessons as any[]).map((l: any) => (
+                          <SelectItem key={l._id} value={l._id}>
+                            {l.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Recording Title */}
+            <FormField
+              control={form.control}
+              name="recordingTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium flex flex-col">
+                    <span className="font-bold text-red-400 w-full">
+                      Important Notice :
+                    </span>
+                    Use the exact same title as in your VdoCipher Dashboard for
+                    easier management and tracking
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. React Hooks Deep Dive - Live Session"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Recording Description */}
+            <FormField
+              control={form.control}
+              name="recordingDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium">
+                    Description
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Optional description for the recording..."
+                      rows={2}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Schedule Date */}
+            <FormField
+              control={form.control}
+              name="scheduledAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium">
+                    Schedule (optional)
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Auto Save Toggle */}
+            <FormField
+              control={form.control}
+              name="autoSaveRecording"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <FormLabel className="text-xs font-medium">
+                      Auto-Save Recording
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Automatically save as lesson content when stream ends
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <div className="pt-4 border-t space-y-4">
+              <h4 className="text-sm font-semibold">
+                VdoCipher Stream Credentials
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Create the stream in your VdoCipher Dashboard and paste the
+                credentials here.
+              </p>
+
+              {/* Live ID */}
+              <FormField
+                control={form.control}
+                name="liveId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">
+                      Live ID *
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. 1234abcd5678" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* RTMP Server URL */}
+              <FormField
+                control={form.control}
+                name="serverUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xs font-medium">
+                        RTMP Server URL *
+                      </FormLabel>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          onClick={() => handleClearField("serverUrl")}
+                          className="text-[10px] cursor-pointer text-muted-foreground hover:text-foreground underline"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    <FormControl>
+                      <Input placeholder="rtmp://..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Stream Key */}
+              <FormField
+                control={form.control}
+                name="streamKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium">
+                      Stream Key *
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter stream key"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Chat Secret */}
+                <FormField
+                  control={form.control}
+                  name="chatSecret"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-xs font-medium">
+                        Chat Secret (Required)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Chat secret"
+                          {...field}
+                          value={(field.value as string) ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {/* Player Embed Code */}
+              <FormField
+                control={form.control}
+                name="playerEmbedCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xs font-medium">
+                        Live Player Embed Code (Required)
+                      </FormLabel>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          onClick={() => handleClearField("playerEmbedCode")}
+                          className="text-[10px] cursor-pointer text-muted-foreground hover:text-foreground underline"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    <FormControl>
+                      <Input placeholder="Player iframe code" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Chat Embed Code */}
+              <FormField
+                control={form.control}
+                name="chatEmbedCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xs font-medium">
+                        Chat Embed Code (Required)
+                      </FormLabel>
+                      {field.value && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          onClick={() => handleClearField("chatEmbedCode")}
+                          className="text-[10px] cursor-pointer text-muted-foreground hover:text-foreground underline"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                    <FormControl>
+                      <Input placeholder="Chat iframe code" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="mt-4">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={createSession.isPending}
+              >
+                {createSession.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Live Session"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

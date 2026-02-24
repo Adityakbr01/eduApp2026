@@ -30,6 +30,8 @@ export const createLiveSession = catchAsync(
             playerEmbedCode
         } = req.body;
 
+        console.log(req.body);
+
         const result = await liveStreamService.createLiveSession(instructorId, {
             courseId,
             lessonId,

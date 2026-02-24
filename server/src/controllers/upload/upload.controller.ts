@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { UploadService } from "src/services/upload/upload.service.js";
 import { sendResponse } from "src/utils/sendResponse.js";
 import { catchAsync } from "src/utils/catchAsync.js";
-import { createVdoVideo } from "src/services/upload/vdocipher.service.js";
+import { createVdoVideo } from "src/services/liveStream/vdocipher.service.js";
 import axios from "axios";
 import { LessonContent } from "src/models/course/index.js";
 import FormData from "form-data";

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Trash2, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -93,6 +93,10 @@ export function ContentDialog({
   const [uploadedKey, setUploadedKey] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
 
+  // Video source mode: upload file vs paste VdoCipher videoId
+  const [videoMode, setVideoMode] = useState<"upload" | "videoId">("upload");
+  const [directVideoId, setDirectVideoId] = useState("");
+
   // New states for array fields
   const [tagInput, setTagInput] = useState("");
   const [linkTitle, setLinkTitle] = useState("");
@@ -136,6 +140,8 @@ export function ContentDialog({
     });
     setUploadedKey(null);
     setDuration(0);
+    setVideoMode("upload");
+    setDirectVideoId("");
     setTagInput("");
     setLinkTitle("");
     setLinkUrl("");
@@ -165,13 +171,23 @@ export function ContentDialog({
       } as CreateContentDTO;
 
       if (data.type === ContentType.VIDEO) {
-        // Video allows optional key on backend, but we can set pending if we want to be explicit
-        const finalKey = uploadedKey || data.videoUrl;
-        contentData.video = {
-          rawKey: finalKey,
-          duration,
-          minWatchPercent: data.minWatchPercent,
-        };
+        if (videoMode === "videoId" && directVideoId.trim()) {
+          // Direct VdoCipher videoId — no server processing needed
+          contentData.video = {
+            videoId: directVideoId.trim(),
+            status: "READY",
+            minWatchPercent: data.minWatchPercent,
+            duration,
+          };
+        } else {
+          // Upload mode — server will process the video
+          const finalKey = uploadedKey || data.videoUrl;
+          contentData.video = {
+            rawKey: finalKey,
+            duration,
+            minWatchPercent: data.minWatchPercent,
+          };
+        }
       } else if (data.type === ContentType.AUDIO) {
         // Backend requires 'url' (mapped from rawKey). Send placeholder if missing to allow creation.
         const finalKey = uploadedKey || data.videoUrl || "pending_upload";
@@ -571,11 +587,58 @@ export function ContentDialog({
                     )}
                   />
 
-                  <div className="space-y-2">
-                    <FormLabel>Upload Video</FormLabel>
-                    <div className="p-4 border border-dashed rounded-md text-center text-sm text-muted-foreground">
-                      Upload functionality requires content creation first.
+                  {/* Video source toggle */}
+                  <div className="space-y-3">
+                    <FormLabel>Video Source</FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVideoMode("upload")}
+                        className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all cursor-pointer ${
+                          videoMode === "upload"
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-muted hover:border-muted-foreground/30 text-muted-foreground"
+                        }`}
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload Video
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVideoMode("videoId")}
+                        className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all cursor-pointer ${
+                          videoMode === "videoId"
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-muted hover:border-muted-foreground/30 text-muted-foreground"
+                        }`}
+                      >
+                        🔗 VdoCipher Video ID
+                      </button>
                     </div>
+
+                    {videoMode === "upload" ? (
+                      <div className="p-4 border border-dashed rounded-md text-center text-sm text-muted-foreground">
+                        Upload functionality requires content creation first.
+                        You can upload the video after adding this item.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="e.g. a1b2c3d4e5f6g7h8"
+                          value={directVideoId}
+                          onChange={(e) => setDirectVideoId(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Paste the Video ID from your VdoCipher dashboard. The
+                          video must already be uploaded and processed on
+                          VdoCipher.{" "}
+                          <span className="font-medium text-foreground">
+                            This saves server resources
+                          </span>{" "}
+                          since no upload or transcoding is needed on our end.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 

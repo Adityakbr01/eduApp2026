@@ -40,27 +40,64 @@ export const liveStreamService = {
             throw new AppError("Live streaming is not enabled for this course. Contact admin.", STATUSCODE.FORBIDDEN, ERROR_CODE.LIVE_NOT_ENABLED);
         }
 
-        const liveStream = await LiveStream.create({
-            title: recordingTitle,
-            courseId: new mongoose.Types.ObjectId(courseId),
-            lessonId: new mongoose.Types.ObjectId(lessonId),
-            instructorId: new mongoose.Types.ObjectId(instructorId),
-            liveId, serverUrl, streamKey, chatSecret,
-            chatEmbedCode, playerEmbedCode,
-            status: "scheduled",
-            scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
-            autoSaveRecording, recordingTitle, recordingDescription,
-        });
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-        logger.info("✅ Live session created by instructor", { liveStreamId: liveStream._id, liveId });
+        try {
+            // Calculate next order for the LessonContent
+            const lastContent = await LessonContent.findOne({ lessonId })
+                .sort({ order: -1 })
+                .select("order")
+                .session(session)
+                .lean();
 
-        return {
-            _id: liveStream._id,
-            liveId, serverUrl, streamKey,
-            title: recordingTitle,
-            status: liveStream.status,
-            scheduledAt: liveStream.scheduledAt,
-        };
+            const nextOrder = (lastContent?.order ?? 0) + 1;
+
+            // 1. Create Placeholder LessonContent (status: PROCESSING)
+            const [lessonContent] = await LessonContent.create([{
+                courseId: new mongoose.Types.ObjectId(courseId),
+                lessonId: new mongoose.Types.ObjectId(lessonId),
+                type: "video",
+                title: recordingTitle,
+                description: recordingDescription,
+                order: nextOrder,
+                video: {
+                    status: "PROCESSING",
+                    videoId: liveId // Pre-assign the videoId to link it in the player
+                },
+            }], { session });
+
+            // 2. Create LiveStream linked to the new LessonContent
+            const [liveStream] = await LiveStream.create([{
+                title: recordingTitle,
+                courseId: new mongoose.Types.ObjectId(courseId),
+                lessonId: new mongoose.Types.ObjectId(lessonId),
+                lessonContentId: lessonContent._id,
+                instructorId: new mongoose.Types.ObjectId(instructorId),
+                liveId, serverUrl, streamKey, chatSecret,
+                chatEmbedCode, playerEmbedCode,
+                status: "scheduled",
+                scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+                autoSaveRecording, recordingTitle, recordingDescription,
+            }], { session });
+
+            await session.commitTransaction();
+            logger.info("✅ Live session and placeholder content created", { liveStreamId: liveStream._id, liveId });
+
+            return {
+                _id: liveStream._id,
+                liveId, serverUrl, streamKey,
+                title: recordingTitle,
+                status: liveStream.status,
+                scheduledAt: liveStream.scheduledAt,
+            };
+        } catch (error) {
+            await session.abortTransaction();
+            logger.error("❌ Failed to create live session", { error });
+            throw error;
+        } finally {
+            session.endSession();
+        }
     },
 
     enableLiveStreamingForCourse: async (courseId: string) => {
@@ -80,7 +117,46 @@ export const liveStreamService = {
     getInstructorStreams: async (instructorId: string, courseId?: string) => {
         const query: Record<string, any> = { instructorId: new mongoose.Types.ObjectId(instructorId) };
         if (courseId) query.courseId = new mongoose.Types.ObjectId(courseId);
-        return LiveStream.find(query).select("-webhookProcessedEvents").sort({ createdAt: -1 }).lean();
+
+        const dbStreams = await LiveStream.find(query).select("-webhookProcessedEvents").sort({ createdAt: -1 }).lean();
+
+        // Fetch real-time metadata from VdoCipher to merge with DB state
+        try {
+            const { listLiveStreams } = await import("src/services/liveStream/vdocipher-live.service.js");
+            const vdoStreams = await listLiveStreams();
+
+            // Map liveId to VdoLiveStream object
+            const vdoStreamMap = new Map(vdoStreams.map((s) => [s.streamId, s]));
+
+            return dbStreams.map((stream) => {
+                const liveId = stream.liveId as string;
+                const vdoData = vdoStreamMap.get(liveId);
+
+                if (vdoData) {
+                    // VdoCipher status mapping: "Streaming Active" -> "live", etc.
+                    // We only override the "live" status if VdoCipher confirms it's actively streaming or prepping.
+                    let realStatus = stream.status;
+
+                    if (vdoData.status === "Streaming Active") {
+                        realStatus = "live";
+                    } else if (vdoData.status === "Closed") {
+                        realStatus = "ended";
+                    }
+
+                    return {
+                        ...stream,
+                        status: realStatus,
+                        viewerCount: vdoData.viewerCount || 0,
+                    };
+                }
+
+                // If stream is 'ended' in DB but not returned by listLiveStreams, it's accurately ended
+                return stream;
+            });
+        } catch (error) {
+            logger.error("❌ Failed to fetch VdoCipher live streams for merge", { instructorId, error });
+            return dbStreams; // Fallback to DB state if API fails
+        }
     },
 
     /**
@@ -210,7 +286,7 @@ export const liveStreamService = {
                     title: `Live Class Started: ${courseTitle}`,
                     message: `A new live session "${stream.recordingTitle}" is happening right now! Join in!`,
                     category: "INFO",
-                    level: "HIGH",
+                    level: "LOW",
                     type: "LIVE_STREAM_STARTED",
                     link: `/courses/${stream.courseId}/live`,
                     createdBy: new Types.ObjectId(instructorId),
@@ -235,7 +311,7 @@ export const liveStreamService = {
         if (status === "ended") {
             // End the stream on VdoCipher's side (permanent stop)
             try {
-                const { endLiveStream } = await import("src/services/upload/vdocipher-live.service.js");
+                const { endLiveStream } = await import("src/services/liveStream/vdocipher-live.service.js");
                 await endLiveStream(stream.liveId);
                 logger.info("✅ VdoCipher live stream ended via API", { liveId: stream.liveId });
             } catch (err) {
@@ -269,23 +345,39 @@ export const liveStreamService = {
                 return;
             }
 
-            const lastContent = await LessonContent.findOne({ lessonId: liveStream.lessonId })
-                .sort({ order: -1 })
-                .select("order")
-                .session(session)
-                .lean();
+            if (liveStream.lessonContentId) {
+                // Update the existing placeholder LessonContent
+                await LessonContent.updateOne(
+                    { _id: liveStream.lessonContentId },
+                    {
+                        $set: {
+                            "video.videoId": recordedVideoId,
+                            "video.status": "READY"
+                        }
+                    },
+                    { session }
+                );
+                logger.info("🔄 Placeholder LessonContent updated with recording", { lessonContentId: liveStream.lessonContentId });
+            } else {
+                // Fallback for legacy streams that didn't create a placeholder upfront
+                const lastContent = await LessonContent.findOne({ lessonId: liveStream.lessonId })
+                    .sort({ order: -1 })
+                    .select("order")
+                    .session(session)
+                    .lean();
 
-            const nextOrder = (lastContent?.order ?? 0) + 1;
+                const nextOrder = (lastContent?.order ?? 0) + 1;
 
-            await LessonContent.create([{
-                courseId: liveStream.courseId,
-                lessonId: liveStream.lessonId,
-                type: "video",
-                title: liveStream.recordingTitle,
-                description: liveStream.recordingDescription,
-                order: nextOrder,
-                video: { videoId: recordedVideoId, status: "READY" },
-            }], { session });
+                await LessonContent.create([{
+                    courseId: liveStream.courseId,
+                    lessonId: liveStream.lessonId,
+                    type: "video",
+                    title: liveStream.recordingTitle,
+                    description: liveStream.recordingDescription,
+                    order: nextOrder,
+                    video: { videoId: recordedVideoId, status: "READY" },
+                }], { session });
+            }
 
             liveStream.recordedVideoId = recordedVideoId;
             liveStream.recordingProcessed = true;
