@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Leaf, MoreHorizontal, Star, GripVertical } from "lucide-react";
+import { Leaf, MoreHorizontal, Star, GripVertical, Radio } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -56,6 +56,7 @@ import {
   useReorderCourses,
 } from "@/services/courses/mutations";
 import { AdminCourse, CourseStatus } from "@/services/courses";
+import { useToggleLiveStreaming } from "@/services/liveStream";
 
 interface SortableRowProps {
   id: string;
@@ -129,6 +130,8 @@ export default function AdminCoursesPage() {
   const { mutate: toggleFeatured, isPending: isTogglingFeatured } =
     useToggleFeaturedCourse();
   const { mutate: reorderCourses } = useReorderCourses();
+  const { mutate: toggleLiveStreaming, isPending: isTogglingLive } =
+    useToggleLiveStreaming();
 
   // Sync data to local state
 
@@ -209,6 +212,13 @@ export default function AdminCoursesPage() {
     toggleFeatured(courseId);
   };
 
+  const handleToggleLiveStreaming = (
+    courseId: string,
+    currentlyEnabled: boolean,
+  ) => {
+    toggleLiveStreaming({ courseId, enable: !currentlyEnabled });
+  };
+
   return (
     <div className="space-y-6">
       {/* ----------------------------- Table ----------------------------- */}
@@ -221,6 +231,7 @@ export default function AdminCoursesPage() {
               <TableHead>Instructor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Featured</TableHead>
+              <TableHead>Live</TableHead>
               <TableHead>Request Type</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-center">
@@ -262,6 +273,7 @@ export default function AdminCoursesPage() {
                     <TableCell>
                       <Badge
                         variant={course.isPublished ? "default" : "secondary"}
+                        className="text-amber-100"
                       >
                         {course.status}
                       </Badge>
@@ -280,6 +292,24 @@ export default function AdminCoursesPage() {
                           className={`w-3 h-3 mr-1 ${course.isFeatured ? "fill-white" : ""}`}
                         />
                         {course.isFeatured ? "Featured" : "Not Featured"}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge
+                        variant={
+                          course.liveStreamingEnabled ? "default" : "secondary"
+                        }
+                        className={
+                          course.liveStreamingEnabled
+                            ? "bg-red-500/90 hover:bg-red-600 text-white border-none"
+                            : ""
+                        }
+                      >
+                        <Radio
+                          className={`w-3 h-3 mr-1 ${course.liveStreamingEnabled ? "animate-pulse" : ""}`}
+                        />
+                        {course.liveStreamingEnabled ? "Enabled" : "Disabled"}
                       </Badge>
                     </TableCell>
 
@@ -336,6 +366,22 @@ export default function AdminCoursesPage() {
                               ? "Unmark as Featured"
                               : "Mark as Featured"}
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleToggleLiveStreaming(
+                                course._id,
+                                !!course.liveStreamingEnabled,
+                              )
+                            }
+                            disabled={isTogglingLive}
+                          >
+                            <Radio
+                              className={`w-4 h-4 mr-2 ${course.liveStreamingEnabled ? "text-red-500" : ""}`}
+                            />
+                            {course.liveStreamingEnabled
+                              ? "Disable Live Streaming"
+                              : "Enable Live Streaming"}
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => handleViewCourse(course)}
@@ -352,7 +398,7 @@ export default function AdminCoursesPage() {
 
             {!courses.length && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-6">
+                <TableCell colSpan={9} className="text-center py-6">
                   No courses found
                 </TableCell>
               </TableRow>

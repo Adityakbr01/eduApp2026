@@ -18,6 +18,7 @@ import classroomRouter from "./classroom/index.js";
 import notificationRouter from "./notification/index.js";
 import webhookRouter from "./webHook/webhook.route.js";
 import videoRouter from "./course/video.route.js";
+import liveStreamRouter from "./liveStream/liveStream.route.js";
 
 const router = express.Router();
 
@@ -76,5 +77,8 @@ router.use(`${API_PREFIX}/notifications`, notificationRouter);
 // Videos
 
 router.use(`${API_PREFIX}/videos`, videoRouter);
+
+// Live Streams
+router.use(`${API_PREFIX}/live-streams`, liveStreamRouter);
 
 export default router;

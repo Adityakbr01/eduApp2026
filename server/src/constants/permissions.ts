@@ -36,6 +36,28 @@ export const PERMISSIONS = {
     UPLOAD_FILES: { code: "UPLOAD_FILES", description: "Upload files" },
     DOWNLOAD_FILES: { code: "DOWNLOAD_FILES", description: "Download files" },
     MANAGE_TAGS: { code: "MANAGE_TAGS", description: "Manage tags/categories" },
+
+    // Live Stream Permissions
+    START_LIVE_STREAM: {
+        code: "START_LIVE_STREAM",
+        description: "Start live stream for assigned course"
+    },
+    END_LIVE_STREAM: {
+        code: "END_LIVE_STREAM",
+        description: "End live stream"
+    },
+    SCHEDULE_LIVE_STREAM: {
+        code: "SCHEDULE_LIVE_STREAM",
+        description: "Schedule live session"
+    },
+    MANAGE_LIVE_STREAM: {
+        code: "MANAGE_LIVE_STREAM",
+        description: "Enable/disable live streaming for courses (admin)"
+    },
+    VIEW_LIVE_STREAM: {
+        code: "VIEW_LIVE_STREAM",
+        description: "View live streams as a student"
+    },
 } as const;
 
 

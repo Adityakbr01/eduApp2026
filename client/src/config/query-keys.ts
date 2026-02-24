@@ -93,5 +93,13 @@ export const QUERY_KEYS = {
         LEADERBOARD: (courseId: string) => ["classroom", "leaderboard", courseId],
     },
 
+    // Live Streams
+    LIVE_STREAMS: {
+        INSTRUCTOR_LIST: ["live-streams", "instructor"],
+        CREDENTIALS: ["live-streams", "credentials"],
+        ADMIN_ALL: ["live-streams", "admin"],
+        STUDENT_ACTIVE: ["live-streams", "student-active"],
+    },
+
     PREFERENCES: ["preferences"],
 };

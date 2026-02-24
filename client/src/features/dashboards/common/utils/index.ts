@@ -91,6 +91,7 @@ const sidebarItems = [
   { label: "Overview", icon: Activity, value: "overview" },
   { label: "Users", icon: Users, value: "users" },
   { label: "Courses", icon: Shield, value: "courses" },
+  { label: "Live Access", icon: Activity, value: "live-access" },
   { label: "Email Marketing", icon: Settings, value: "email" },
   { label: "Push Notifications", icon: Bell, value: "push" },
 ];

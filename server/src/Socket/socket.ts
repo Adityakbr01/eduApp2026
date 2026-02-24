@@ -57,10 +57,29 @@ export const initSocket = async (httpServer: HttpServer) => {
             }
         });
 
-        socket.on("disconnect", (reason) => {
+        socket.on("disconnect", async (reason) => {
             logger.info(`❌ Socket disconnected: ${socket.id} | Reason: ${reason}`);
             if (userId) {
                 redis.del(`online:${userId}`);
+            }
+
+            // Decrement live viewer count if this socket was watching a stream
+            const trackedLiveId = (socket as any).__liveId;
+            const trackedCourseId = (socket as any).__liveCourseId;
+            if (trackedLiveId && trackedCourseId) {
+                try {
+                    const { decrementViewerCount } = await import("src/utils/liveViewerCounter.js");
+                    const count = await decrementViewerCount(trackedLiveId);
+                    if (io) {
+                        io.to(`course:${trackedCourseId}`).emit(SOCKET_KEYS.LIVE_STREAM.VIEWER_COUNT, {
+                            liveId: trackedLiveId,
+                            viewerCount: count,
+                        });
+                    }
+                    logger.info(`👁️ Viewer disconnected: ${count} viewers for liveId ${trackedLiveId}`);
+                } catch (err) {
+                    logger.error("❌ Failed to decrement viewer count on disconnect", err);
+                }
             }
         });
 
@@ -87,6 +106,41 @@ export const initSocket = async (httpServer: HttpServer) => {
                 socket.leave(roomName);
                 logger.debug(`Socket ${socket.id} left room ${roomName}`);
             }
+        });
+
+        socket.on(SOCKET_KEYS.LIVE_STREAM.JOIN, async (data: { courseId: string, liveId: string }) => {
+            const { courseId, liveId } = typeof data === "string" ? { courseId: data, liveId: "" } : data;
+            if (!courseId) return;
+
+            const roomName = `course:${courseId}`;
+            socket.join(roomName);
+            // Track which liveId this socket is watching (for disconnect cleanup)
+            (socket as any).__liveId = liveId;
+            (socket as any).__liveCourseId = courseId;
+            logger.debug(`Socket ${socket.id} joined Live Stream room ${roomName}`);
+
+            if (liveId) {
+                const { incrementViewerCount } = await import("src/utils/liveViewerCounter.js");
+                const count = await incrementViewerCount(liveId);
+                // Broadcast updated count to everyone in the room
+                if (io) {
+                    io.to(roomName).emit(SOCKET_KEYS.LIVE_STREAM.VIEWER_COUNT, { liveId, viewerCount: count });
+                }
+                logger.info(`👁️ Viewer joined: ${count} viewers for liveId ${liveId}`);
+            }
+        });
+
+        // LEAVE handler — only leave room, don't decrement here.
+        // The disconnect handler always fires (clean or dirty) and handles the actual decrement.
+        // This prevents double-decrement when a user leaves cleanly (LEAVE + disconnect both fire).
+        socket.on(SOCKET_KEYS.LIVE_STREAM.LEAVE, async (data: { courseId: string, liveId: string }) => {
+            const { courseId } = typeof data === "string" ? { courseId: data } : data;
+            if (!courseId) return;
+
+            const roomName = `course:${courseId}`;
+            socket.leave(roomName);
+            // Keep __liveId and __liveCourseId markers so disconnect handler can decrement
+            logger.debug(`Socket ${socket.id} left Live Stream room ${roomName}`);
         });
     });
 
@@ -116,6 +170,19 @@ export const emitLeaderboardUpdate = (courseId: string, data?: any) => {
     if (io) {
         // Emit to the specific course room
         io.to(`course:${courseId}`).emit(SOCKET_KEYS.LEADERBOARD_UPDATE.UPDATE, {
+            courseId,
+            timestamp: new Date(),
+            ...data
+        });
+    }
+};
+
+/**
+ * Emit a live stream status update (e.g. going live or ended) to the course room
+ */
+export const emitLiveStreamStatusUpdate = (courseId: string, data: { streamId: string, status: "live" | "ended" }) => {
+    if (io) {
+        io.to(`course:${courseId}`).emit(SOCKET_KEYS.LIVE_STREAM.STATUS_CHANGED, {
             courseId,
             timestamp: new Date(),
             ...data

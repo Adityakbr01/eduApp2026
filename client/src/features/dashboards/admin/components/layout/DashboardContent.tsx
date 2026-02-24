@@ -15,6 +15,11 @@ import CoursesPage from "../../pages/CoursesPage";
 import OverviewWidgets from "../widgets/OverviewWidgets";
 import DashBoardHeader from "./DashBoardHeader";
 
+const LiveAccessPage = dynamic(
+  () => import("../../pages/LiveAccessPage").then((mod) => mod.default),
+  { ssr: false },
+);
+
 const EmailMarketingPage = dynamic(
   () => import("../../pages/EmailMarketingPage").then((mod) => mod.default),
   { ssr: false },
@@ -149,12 +154,18 @@ function DashboardContent({
         )}
 
         {activeSection === adminUtils.sidebarItems[3].value && (
+          <div className="min-h-screen overflow-y-auto">
+            <LiveAccessPage />
+          </div>
+        )}
+
+        {activeSection === adminUtils.sidebarItems[4].value && (
           <div className="min-h-screen h-screen overflow-y-auto">
             <EmailMarketingPage />
           </div>
         )}
 
-        {activeSection === adminUtils.sidebarItems[4].value && (
+        {activeSection === adminUtils.sidebarItems[5].value && (
           <div className="min-h-screen overflow-y-auto">
             <PushNotificationPage />
           </div>

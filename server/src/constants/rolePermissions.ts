@@ -17,6 +17,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
         PERMISSIONS.VIEW_DASHBOARD.code,
         PERMISSIONS.SEND_MESSAGES.code,
         PERMISSIONS.READ_MESSAGES.code,
+        PERMISSIONS.START_LIVE_STREAM.code,
+        PERMISSIONS.END_LIVE_STREAM.code,
+        PERMISSIONS.SCHEDULE_LIVE_STREAM.code,
     ],
 
     [ROLES.INSTRUCTOR.code]: [
@@ -32,6 +35,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
         PERMISSIONS.VIEW_ENROLLMENTS.code,
         PERMISSIONS.SEND_MESSAGES.code,
         PERMISSIONS.READ_MESSAGES.code,
+        PERMISSIONS.START_LIVE_STREAM.code,
+        PERMISSIONS.END_LIVE_STREAM.code,
+        PERMISSIONS.SCHEDULE_LIVE_STREAM.code,
     ],
 
     [ROLES.SUPPORT.code]: [
@@ -50,5 +56,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
         PERMISSIONS.UNENROLL_COURSE.code,
         PERMISSIONS.SEND_MESSAGES.code,
         PERMISSIONS.READ_MESSAGES.code,
+        PERMISSIONS.VIEW_LIVE_STREAM.code,
     ],
 };

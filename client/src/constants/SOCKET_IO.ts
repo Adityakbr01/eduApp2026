@@ -21,5 +21,10 @@ export const SOCKET_KEYS = {
         LEAVE: "leave-course-room",
         UPDATE: "leaderboard:update",
     },
-
+    LIVE_STREAM: {
+        JOIN: "join-live-class-room",
+        LEAVE: "leave-live-class-room",
+        STATUS_CHANGED: "live-stream:status-changed",
+        VIEWER_COUNT: "live-stream:viewer-count",
+    },
 }

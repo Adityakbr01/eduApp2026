@@ -24,6 +24,7 @@ export interface Module {
 }
 
 export interface BatchData {
+    courseId: string;
     title: string;
     progress: number;
     modules: number;

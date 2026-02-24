@@ -85,6 +85,7 @@ const courseSchema = new mongoose.Schema({
     },
     isPublished: { type: Boolean, default: false },
     isFeatured: { type: Boolean, default: false },
+    liveStreamingEnabled: { type: Boolean, default: false },
     publishedAt: { type: Date },
 
 

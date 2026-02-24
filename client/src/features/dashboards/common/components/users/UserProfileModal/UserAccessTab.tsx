@@ -57,7 +57,6 @@ const UserAccessTab = ({ panelRef, activeRoles, permissionCollections, manualOve
             <ActiveRolesSection activeRoles={activeRoles} />
             <PermissionCollectionsSection permissionCollections={permissionCollections} />
             {canManageUser && <ManualOverridesSection {...manualOverrides} />}
-
             <PermissionDebuggerSection payload={debuggerPayload} />
         </div>
     );

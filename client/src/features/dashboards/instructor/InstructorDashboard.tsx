@@ -15,6 +15,7 @@ import { InstructorHeader } from "./components/layout/InstructorHeader";
 import { InstructorSidebar } from "./components/layout/InstructorSidebar";
 import GradingPage from "./grading/page";
 import { CoursesPage } from "./pages/CoursesPage";
+import { LiveStreamsPage } from "./pages/LiveStreamsPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import {
@@ -155,6 +156,10 @@ export function InstructorDashboard() {
           )}
 
           {activeSection === "grading" && <GradingPage />}
+
+          {activeSection === "live-streams" && (
+            <LiveStreamsPage courses={courses} />
+          )}
 
           {activeSection === "notifications" && (
             <NotificationsPage courses={courses} />

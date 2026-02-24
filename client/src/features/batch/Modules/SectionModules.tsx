@@ -8,6 +8,7 @@ import LiveClassBanner from "./LiveClassBanner";
 import SectionAccordion from "./SectionAccordion";
 
 interface SectionModulesProps {
+  courseId: string;
   modules: Module[];
   lastVisitedId?: string;
   onContentSelect?: (contentId: string) => void;
@@ -15,6 +16,7 @@ interface SectionModulesProps {
 }
 
 const SectionModules = ({
+  courseId,
   modules,
   lastVisitedId,
   onContentSelect,
@@ -111,7 +113,7 @@ const SectionModules = ({
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {activeTab === "modules" && (
           <div className="flex flex-col pb-20">
-            <LiveClassBanner />
+            <LiveClassBanner courseId={courseId} />
 
             {modules.map((module) => (
               <SectionAccordion

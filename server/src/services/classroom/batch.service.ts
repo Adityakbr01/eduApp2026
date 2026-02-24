@@ -166,6 +166,7 @@ export const batchService = {
                 : 0;
 
         const batchData: BatchData = {
+            courseId: courseId,
             title: courseTitle.title,
             progress: progressPercent,
             modules: completedSections,

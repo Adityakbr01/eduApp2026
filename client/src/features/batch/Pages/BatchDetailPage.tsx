@@ -27,6 +27,7 @@ const BatchDetailPage = () => {
   const modules = data?.data?.modules || [];
   const lastVisitedId = data?.data?.lastVisitedId;
   const lastVisitedLessonId = data?.data?.lastVisitedLessonId;
+  console.log("batchData", batchData);
 
   const searchParams = useSearchParams();
   const stay = searchParams.get("stay");
@@ -147,33 +148,13 @@ const BatchDetailPage = () => {
                     }
 
                     if (lastLesson && !lastLesson.isLocked) {
-                      return (
-                        <div className="w-full bg-linear-to-r from-accent/20 to-accent/5 border border-accent/20 rounded-xl p-4 flex items-center justify-between gap-4">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-accent text-xs font-bold tracking-wider uppercase">
-                              Continue Learning
-                            </span>
-                            <h3 className="text-white font-medium text-lg leading-tight line-clamp-1">
-                              {lastLesson.title}
-                            </h3>
-                            <p className="text-white/40 text-sm line-clamp-1">
-                              {sectionTitle}
-                            </p>
-                          </div>
-                          <Link
-                            href={`/classroom/batch/${batchId}/lessons/${lastLesson.id}?lastVisitedId=${lastLesson.id}`}
-                            className="shrink-0 bg-accent text-white px-4 py-2 rounded-lg font-medium text-sm hover:brightness-110 transition-all flex items-center gap-2"
-                          >
-                            <Play className="w-4 h-4 fill-current" />
-                            Resume
-                          </Link>
-                        </div>
-                      );
+                      return null;
                     }
                     return null;
                   })()}
 
                 <SectionModules
+                  courseId={batchData?.courseId}
                   modules={modules}
                   lastVisitedId={lastVisitedLessonId}
                 />
@@ -223,6 +204,7 @@ const BatchDetailPage = () => {
           <BatchProgress data={batchData} />
 
           <SectionModules
+            courseId={batchData?.courseId}
             modules={modules}
             lastVisitedId={lastVisitedLessonId}
           />

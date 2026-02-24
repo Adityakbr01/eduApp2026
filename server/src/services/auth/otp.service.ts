@@ -36,7 +36,6 @@ const emailService = {
                 subject,
                 html,
             });
-            console.log("Email sent successfully", response);
             return response;
         } catch (error) {
             logger.error(`❌ Failed to send email to ${payload.email}:`, error);

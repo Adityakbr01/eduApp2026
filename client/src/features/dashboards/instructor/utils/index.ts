@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, LayoutDashboard, Settings, Video } from "lucide-react";
+import { BookOpen, LayoutDashboard, Radio, Settings, Video } from "lucide-react";
 import { ICourse, CourseStatus } from "@/services/courses";
 
 // ==================== SIDEBAR ITEMS ====================
@@ -8,6 +8,7 @@ import { ICourse, CourseStatus } from "@/services/courses";
 export const instructorSidebarItems = [
     { label: "Overview", icon: LayoutDashboard, value: "overview" },
     { label: "My Courses", icon: BookOpen, value: "courses" },
+    { label: "Live Streams", icon: Radio, value: "live-streams" },
     { label: "Content Library", icon: Video, value: "content" },
     { label: "Grading", icon: BookOpen, value: "grading" },
     { label: "Notifications", icon: BookOpen, value: "notifications" },

@@ -722,5 +722,3 @@ If you find this project helpful, please consider giving it a ⭐ on [GitHub](ht
 [🔝 Back to Top](#-eduapp-2026)
 
 </div>
-
-fake push

@@ -8,6 +8,7 @@ export const QUEUE_NAMES = {
     PROGRESS: "progress-queue",
     PUSH_NOTIFICATION: "push-notification-queue",
     REVIEW_AGGREGATION: "review-aggregation-queue",
+    LIVE_STREAM: "live-stream-queue",
 } as const;
 
 export const JOB_NAMES = {
@@ -27,6 +28,9 @@ export const JOB_NAMES = {
     },
     REVIEW_AGGREGATION: {
         REVIEW_STATS: "recalculate-review-stats",
+    },
+    LIVE_STREAM: {
+        CREATE_RECORDING_CONTENT: "live-stream:create-recording-content",
     },
 } as const;
 
