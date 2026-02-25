@@ -47,14 +47,17 @@ export const useGetAccessRequests = (
  */
 export const useGetInstructorLiveStreams = (
     courseId?: string,
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
     options?: Omit<
         UseQueryOptions<ApiResponse<ILiveStream[]>>,
         "queryKey" | "queryFn"
     >
 ) => {
     return useQuery({
-        queryKey: [QUERY_KEYS.LIVE_STREAMS.INSTRUCTOR_LIST, courseId],
-        queryFn: () => liveStreamApi.getInstructorStreams(courseId),
+        queryKey: [QUERY_KEYS.LIVE_STREAMS.INSTRUCTOR_LIST, courseId, page, limit, status],
+        queryFn: () => liveStreamApi.getInstructorStreams(courseId, page, limit, status),
         ...options,
     });
 };

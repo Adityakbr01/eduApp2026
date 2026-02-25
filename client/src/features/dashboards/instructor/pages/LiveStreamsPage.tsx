@@ -2,7 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { ICourse } from "@/services/courses";
-import { useGetInstructorLiveStreams } from "@/services/liveStream";
+import {
+  useGetInstructorLiveStreams,
+  ILiveStream,
+} from "@/services/liveStream";
 import {
   Select,
   SelectContent,
@@ -33,11 +36,15 @@ interface LiveStreamsPageProps {
 
 export function LiveStreamsPage({ courses }: LiveStreamsPageProps) {
   const [courseFilter, setCourseFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(9);
   const [credentialsStreamId, setCredentialsStreamId] = useState<string | null>(
     null,
   );
 
   const activeCourseId = courseFilter === "all" ? undefined : courseFilter;
+  const activeStatusFilter = statusFilter === "all" ? undefined : statusFilter;
 
   // Access Request Logic
   const { data: accessData } = useGetAccessStatus();
@@ -45,9 +52,18 @@ export function LiveStreamsPage({ courses }: LiveStreamsPageProps) {
     useRequestAccess();
   const accessStatus = accessData?.data?.status || "none";
 
-  const { data, isLoading } = useGetInstructorLiveStreams(activeCourseId);
+  const { data, isLoading } = useGetInstructorLiveStreams(
+    activeCourseId,
+    page,
+    limit,
+    activeStatusFilter,
+  );
 
-  const streams = useMemo(() => data?.data || [], [data]);
+  const streams = useMemo(
+    () => (data?.data as ILiveStream[]) || [],
+    [data?.data],
+  );
+  const meta = data?.meta as Record<string, any> | undefined;
 
   const liveCount = useMemo(
     () => streams.filter((s) => s.status === "live").length,
@@ -58,6 +74,12 @@ export function LiveStreamsPage({ courses }: LiveStreamsPageProps) {
     () => streams.filter((s) => s.status === "scheduled").length,
     [streams],
   );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && (!meta || newPage <= (meta.totalPages || 1))) {
+      setPage(newPage);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -91,7 +113,13 @@ export function LiveStreamsPage({ courses }: LiveStreamsPageProps) {
           )}
 
           {/* Course Filter */}
-          <Select value={courseFilter} onValueChange={setCourseFilter}>
+          <Select
+            value={courseFilter}
+            onValueChange={(v) => {
+              setCourseFilter(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[180px] h-9 text-xs">
               <SelectValue placeholder="Filter by course" />
             </SelectTrigger>
@@ -102,6 +130,25 @@ export function LiveStreamsPage({ courses }: LiveStreamsPageProps) {
                   {c.title}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          {/* Status Filter */}
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[140px] h-9 text-xs">
+              <SelectValue placeholder="Stream status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+              <SelectItem value="ended">Ended</SelectItem>
             </SelectContent>
           </Select>
 
@@ -193,15 +240,59 @@ export function LiveStreamsPage({ courses }: LiveStreamsPageProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {streams.map((stream) => (
-            <LiveStreamCard
-              key={stream._id}
-              stream={stream}
-              onViewCredentials={setCredentialsStreamId}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {streams.map((stream) => (
+              <LiveStreamCard
+                key={stream._id}
+                stream={stream}
+                onViewCredentials={setCredentialsStreamId}
+              />
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {meta && meta.totalPages > 1 && (
+            <div className="flex items-center justify-between py-4 border-t mt-6">
+              <div className="text-sm text-muted-foreground hidden sm:block">
+                Showing{" "}
+                <span className="font-medium text-foreground">
+                  {(page - 1) * limit + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium text-foreground">
+                  {Math.min(page * limit, meta.total)}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-foreground">
+                  {meta.total}
+                </span>{" "}
+                streams
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+                <div className="text-sm font-medium px-2">
+                  Page {page} of {meta.totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= meta.totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* RTMP Credentials Dialog */}

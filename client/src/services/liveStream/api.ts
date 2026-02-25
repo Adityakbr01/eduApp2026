@@ -77,9 +77,15 @@ export const liveStreamApi = {
      * Get instructor's live streams (optionally filtered by courseId)
      */
     getInstructorStreams: async (
-        courseId?: string
+        courseId?: string,
+        page: number = 1,
+        limit: number = 10,
+        status?: string
     ): Promise<ApiResponse<ILiveStream[]>> => {
-        const params = courseId ? { courseId } : {};
+        const params: any = { page, limit };
+        if (courseId && courseId !== "all") params.courseId = courseId;
+        if (status && status !== "all") params.status = status;
+
         const response = await apiClient.get(`${LIVE_STREAM_BASE}/instructor`, {
             params,
         });

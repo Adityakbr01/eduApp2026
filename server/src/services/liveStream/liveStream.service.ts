@@ -114,21 +114,52 @@ export const liveStreamService = {
         return { courseId, liveStreamingEnabled: false };
     },
 
-    getInstructorStreams: async (instructorId: string, courseId?: string) => {
+    getInstructorStreams: async (
+        instructorId: string,
+        courseId?: string,
+        page: number = 1,
+        limit: number = 10,
+        status?: string
+    ) => {
         const query: Record<string, any> = { instructorId: new mongoose.Types.ObjectId(instructorId) };
         if (courseId) query.courseId = new mongoose.Types.ObjectId(courseId);
+        if (status && status !== "all") query.status = status;
 
-        const dbStreams = await LiveStream.find(query).select("-webhookProcessedEvents").sort({ createdAt: -1 }).lean();
+        const skip = (page - 1) * limit;
 
-        // Fetch real-time metadata from VdoCipher to merge with DB state
+        const [dbStreams, total] = await Promise.all([
+            LiveStream.find(query)
+                .select("-webhookProcessedEvents")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            LiveStream.countDocuments(query)
+        ]);
+
+        // 1. Skip VdoCipher check entirely if all streams on this page are already "ended"
+        const needsVdoCheck = dbStreams.some((s) => s.status !== "ended");
+
+        if (!needsVdoCheck) {
+            return { streams: dbStreams, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+        }
+
+        // 2. Fetch real-time metadata from VdoCipher to merge with DB state
         try {
             const { listLiveStreams } = await import("src/services/liveStream/vdocipher-live.service.js");
-            const vdoStreams = await listLiveStreams();
+            const cacheManager = (await import("src/cache/cacheManager.js")).default;
+
+            // Cache for 10 seconds to significantly speed up page loads and pagination
+            const { data: vdoStreams } = await cacheManager.getOrSet(
+                "vdocipher:all_streams",
+                () => listLiveStreams(),
+                10
+            );
 
             // Map liveId to VdoLiveStream object
             const vdoStreamMap = new Map(vdoStreams.map((s) => [s.streamId, s]));
 
-            return dbStreams.map((stream) => {
+            const mergedStreams = dbStreams.map((stream) => {
                 const liveId = stream.liveId as string;
                 const vdoData = vdoStreamMap.get(liveId);
 
@@ -153,9 +184,11 @@ export const liveStreamService = {
                 // If stream is 'ended' in DB but not returned by listLiveStreams, it's accurately ended
                 return stream;
             });
+
+            return { streams: mergedStreams, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
         } catch (error) {
             logger.error("❌ Failed to fetch VdoCipher live streams for merge", { instructorId, error });
-            return dbStreams; // Fallback to DB state if API fails
+            return { streams: dbStreams, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } }; // Fallback to DB state if API fails
         }
     },
 

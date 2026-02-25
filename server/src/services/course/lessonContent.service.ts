@@ -90,12 +90,26 @@ export const lessonContentService = {
       throw new AppError("Forbidden", 403, ERROR_CODE.FORBIDDEN);
     }
 
-    const updateData = { ...data };
+    const updateData: any = { ...data };
 
     // 🔥 VIDEO RE-UPLOAD HANDLING
     if (content.type === "video" && data.video?.rawKey && !data.video?.hlsKey && data.video?.status !== "uploaded") {
       updateData.video = normalizeVideoPayload(data.video);
+      // Clear videoId on re-upload to ensure old VdoCipher ID is removed
+      updateData["video.videoId"] = null;
     }
+
+    // 🔥 PREVENT NESTED OBJECT OVERWRITE (Flatten Data)
+    // Mongoose will replace the entire subdocument if we pass `{ video: { duration: 10 } }` 
+    // This wipes `status`, `isEmailSent`, etc., if we don't flatten it into `{ "video.duration": 10 }`
+    ["video", "audio", "pdf", "assessment"].forEach((key) => {
+      if (updateData[key] && typeof updateData[key] === "object") {
+        Object.entries(updateData[key]).forEach(([subKey, value]) => {
+          updateData[`${key}.${subKey}`] = value;
+        });
+        delete updateData[key];
+      }
+    });
 
     const updated = await lessonContentRepository.updateById(contentId, updateData);
     await batchRepository.invalidateCourseStructure(content.courseId.toString());

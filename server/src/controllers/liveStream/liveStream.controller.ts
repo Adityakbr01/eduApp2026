@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { catchAsync } from "src/utils/catchAsync.js";
 import { sendResponse } from "src/utils/sendResponse.js";
+import { sendPaginatedResponse } from "src/utils/sendPaginatedResponse.js";
 import { liveStreamService } from "src/services/liveStream/liveStream.service.js";
 import sessionCache from "src/cache/userCache.js";
 import logger from "src/utils/logger.js";
@@ -64,10 +65,24 @@ export const getInstructorStreams = catchAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
         const instructorId = req.user!.id;
         const courseId = req.query.courseId as string | undefined;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const status = req.query.status as string | undefined;
 
-        const streams = await liveStreamService.getInstructorStreams(instructorId, courseId);
+        const { streams, meta } = await liveStreamService.getInstructorStreams(
+            instructorId,
+            courseId,
+            page,
+            limit,
+            status
+        ) as any;
 
-        return sendResponse(res, 200, "Instructor streams fetched", streams);
+        return sendPaginatedResponse({
+            res,
+            message: "Instructor streams fetched",
+            data: streams,
+            meta,
+        });
     }
 );
 

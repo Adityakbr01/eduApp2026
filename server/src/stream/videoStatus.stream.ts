@@ -36,11 +36,24 @@ export function initVideoStatusStream() {
 
             // logger.info("🔥 Video READY status update detected");
 
-            // RELAXED CHECK: Check full document status instead of just updatedFields
-            // This ensures we catch the state even if the update structure varies
-            const currentStatus = change.fullDocument?.video?.status;
+            let isNewlyReady = false;
 
-            if (currentStatus !== "READY") {
+            if (change.operationType === "insert") {
+                isNewlyReady = change.fullDocument?.video?.status === "READY";
+            } else if (change.operationType === "update") {
+                const updatedFields = change.updateDescription?.updatedFields || {};
+
+                // STRICT CHECK: Only trigger if status explicitly changed to READY in this update
+                // This prevents triggering on manual updates (like changing title) of an already READY video
+                if (updatedFields["video.status"] === "READY" ||
+                    (updatedFields["video"] && updatedFields["video"].status === "READY")) {
+                    isNewlyReady = true;
+                }
+            } else if (change.operationType === "replace") {
+                isNewlyReady = change.fullDocument?.video?.status === "READY";
+            }
+
+            if (!isNewlyReady) {
                 return;
             }
 
