@@ -34,6 +34,7 @@ export interface UserProfile {
 export interface User {
     userId?: string;
     id?: string;
+    _id?: string;
     name?: string;
     avatar?: string;
     email?: string;

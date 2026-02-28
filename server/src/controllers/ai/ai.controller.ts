@@ -19,6 +19,8 @@ export const generateEmailContent = catchAsync(async (req, res) => {
         brandColor,
         brandLogo,
         senderName,
+        language,
+        provider,
     } = req.body;
 
     const result = await aiService.generateEmailContent({
@@ -32,8 +34,9 @@ export const generateEmailContent = catchAsync(async (req, res) => {
         brandColor,
         brandLogo,
         senderName,
+        language,
+        provider,
     });
-
     sendResponse(res, 200, "Email content generated successfully", result);
 });
 
@@ -43,10 +46,8 @@ export const generateEmailContent = catchAsync(async (req, res) => {
  * @access  Private (Admin/Manager)
  */
 export const improveEmailContent = catchAsync(async (req, res) => {
-    const { content, instruction } = req.body;
-
-    const result = await aiService.improveEmailContent(content, instruction);
-
+    const { content, instruction, language, provider } = req.body;
+    const result = await aiService.improveEmailContent(content, instruction, language, provider);
     sendResponse(res, 200, "Email content improved successfully", result);
 });
 
@@ -56,10 +57,8 @@ export const improveEmailContent = catchAsync(async (req, res) => {
  * @access  Private (Admin/Manager)
  */
 export const generateSubjectSuggestions = catchAsync(async (req, res) => {
-    const { content, count } = req.body;
-
-    const result = await aiService.generateSubjectSuggestions(content, count);
-
+    const { content, count, language, provider } = req.body;
+    const result = await aiService.generateSubjectSuggestions(content, count, language, provider);
     sendResponse(res, 200, "Subject suggestions generated successfully", result);
 });
 

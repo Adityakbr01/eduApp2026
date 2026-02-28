@@ -1,4 +1,4 @@
-import { InfoItem } from "./UserInfoTab";
+import { InfoItem } from "./UserInfoTab/UserInfoTab";
 import { CustomPermissionItem } from "./UserAccessTab";
 
 export const buildInfoItems = (

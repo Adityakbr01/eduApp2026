@@ -14,6 +14,7 @@ export function buildEmailPrompt(params: GenerateEmailContentParams): string {
         brandName = "EduApp",
         brandColor = "#3b82f6",
         senderName = "The EduApp Team",
+        language = "English",
     } = params;
 
     const sections = [
@@ -27,6 +28,7 @@ CAMPAIGN BRIEF
         `EMAIL TYPE: ${EMAIL_TEMPLATES[campaignType]}`,
         `TARGET AUDIENCE: ${AUDIENCE_CONTEXT[targetAudience]}`,
         `TONE & STYLE: ${TONE_GUIDELINES[tone]}`,
+        language ? `LANGUAGE: Generate the complete email strictly in ${language}.` : null,
 
         subject
             ? `SUBJECT DIRECTION: "${subject}" — improve or adapt this as needed`
@@ -69,9 +71,9 @@ Respond with ONLY a valid JSON object — no markdown, no code fences, no commen
     return sections.filter(Boolean).join("\n\n");
 }
 
-export function buildImproveEmailPrompt(content: string, instruction: string): string {
+export function buildImproveEmailPrompt(content: string, instruction: string, language?: string): string {
     return `You are an expert email copywriter. Improve the following email content based on this instruction: "${instruction}"
-
+${language ? `\nMake sure the required output language is ${language}.` : ""}
 CURRENT EMAIL CONTENT:
 ${content}
 
@@ -84,8 +86,9 @@ INSTRUCTIONS:
 Respond with ONLY the improved HTML content.`;
 }
 
-export function buildSubjectSuggestionsPrompt(content: string, count: number): string {
+export function buildSubjectSuggestionsPrompt(content: string, count: number, language?: string): string {
     return `Based on the following email content, generate ${count} compelling subject line suggestions. Each should be unique in approach (e.g., question, urgency, benefit-focused, curiosity).
+${language ? `\nThe suggestions must be in ${language}.` : ""}
 
 EMAIL CONTENT:
 ${content}

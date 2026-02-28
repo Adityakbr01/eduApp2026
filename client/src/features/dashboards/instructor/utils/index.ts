@@ -1,17 +1,20 @@
 "use client";
 
-import { BookOpen, LayoutDashboard, Radio, Settings, Video } from "lucide-react";
-import { ICourse, CourseStatus } from "@/services/courses";
+import { BellIcon } from "@/components/ui/bell-icon";
+import { BookOpenTextIcon } from "@/components/ui/book-open-text-icon";
+import { LayoutGridIcon } from "@/components/ui/layout-grid-icon";
+import { CourseStatus, ICourse } from "@/services/courses";
+import { BookOpen, Radio, Video } from "lucide-react";
 
 // ==================== SIDEBAR ITEMS ====================
 
 export const instructorSidebarItems = [
-    { label: "Overview", icon: LayoutDashboard, value: "overview" },
+    { label: "Overview", icon: LayoutGridIcon, value: "overview" },
     { label: "My Courses", icon: BookOpen, value: "courses" },
     { label: "Live Streams", icon: Radio, value: "live-streams" },
     { label: "Content Library", icon: Video, value: "content" },
-    { label: "Grading", icon: BookOpen, value: "grading" },
-    { label: "Notifications", icon: BookOpen, value: "notifications" },
+    { label: "Grading", icon: BookOpenTextIcon, value: "grading" },
+    { label: "Notifications", icon: BellIcon, value: "notifications" },
 ] as const;
 
 export type InstructorSidebarValue = (typeof instructorSidebarItems)[number]["value"];

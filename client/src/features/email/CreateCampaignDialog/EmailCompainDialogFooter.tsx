@@ -91,7 +91,7 @@ export function EmailCompainDialogFooter({
                 size={isMobile ? "sm" : "default"}
                 onClick={handleGenerateWithAI}
                 disabled={isGenerating || !canProceedToContent}
-                className="bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-xs sm:text-sm"
+                className="text-xs sm:text-sm"
               >
                 {isGenerating ? (
                   <>

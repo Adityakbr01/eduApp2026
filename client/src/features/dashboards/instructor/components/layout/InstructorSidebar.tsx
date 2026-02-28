@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Bell, LogOut } from "lucide-react";
 import { instructorSidebarItems, InstructorSidebarValue } from "../../utils";
+import { BellIcon } from "@/components/ui/bell-icon";
+import { LogoutIcon } from "@/components/ui/logout-icon";
 
 interface InstructorSidebarProps {
   activeSection: InstructorSidebarValue;
@@ -76,7 +78,7 @@ export function InstructorSidebar({
             className="w-full justify-start gap-2"
             size="sm"
           >
-            <Bell className="h-4 w-4" />
+            <BellIcon className="h-4 w-4" />
             Notifications
           </Button>
           <Button
@@ -85,7 +87,7 @@ export function InstructorSidebar({
             className="w-full justify-start gap-2 text-destructive"
             size="sm"
           >
-            <LogOut className="h-4 w-4" />
+            <LogoutIcon className="h-4 w-4" />
             Log out
           </Button>
         </div>

@@ -1,9 +1,14 @@
 "use client";
 
-import { Activity, Bell, Settings, Shield, Users } from "lucide-react";
-
+import { ActivityIcon } from "@/components/ui/activity-icon";
+import { BellIcon } from "@/components/ui/bell-icon";
+import { SettingsIcon } from "@/components/ui/settings-icon";
+import { ShieldUserIcon } from "@/components/ui/shield-user-icon";
+import { UserIcon } from "@/components/ui/user-icon";
 import { approvalStatusEnum, type User } from "@/services/auth";
 import { StatusMeta, UserRow } from "../types";
+import { ChartLineIcon } from "@/components/ui/chart-line-icon";
+import { BrainIcon } from "@/components/ui/brain-icon";
 
 export type RecentUserItem = {
   id: string;
@@ -88,17 +93,17 @@ export const getStatusMeta = (user: User): StatusMeta => {
 };
 
 const sidebarItems = [
-  { label: "Overview", icon: Activity, value: "overview" },
-  { label: "Users", icon: Users, value: "users" },
-  { label: "Courses", icon: Shield, value: "courses" },
-  { label: "Live Access", icon: Activity, value: "live-access" },
-  { label: "Email Marketing", icon: Settings, value: "email" },
-  { label: "Push Notifications", icon: Bell, value: "push" },
+  { label: "Overview", icon: ChartLineIcon, value: "overview" },
+  { label: "Users", icon: UserIcon, value: "users" },
+  { label: "Courses", icon: BrainIcon, value: "courses" },
+  { label: "Live Access", icon: ShieldUserIcon, value: "live-access" },
+  { label: "Email Marketing", icon: SettingsIcon, value: "email" },
+  { label: "Push Notifications", icon: BellIcon, value: "push" },
 ];
 const ManagerSidebarItems = [
-  { label: "Overview", icon: Activity, value: "overview" },
-  { label: "Users", icon: Users, value: "users" },
-  { label: "Courses", icon: Shield, value: "courses" },
+  { label: "Overview", icon: ActivityIcon, value: "overview" },
+  { label: "Users", icon: UserIcon, value: "users" },
+  { label: "Courses", icon: ShieldUserIcon, value: "courses" },
 ];
 
 const quickStats = [
@@ -344,7 +349,7 @@ const buildRecentUsers = (rows: UserRow[], limit = 5): RecentUserItem[] => {
     return bDate - aDate;
   });
   return sorted.slice(0, limit).map((row) => ({
-    id: row.id,
+    id: row.id || row._id || `unknown-${Math.random().toString(36).substr(2, 9)}`,
     name: row.name,
     email: row.email,
     role: row.roleLabel,

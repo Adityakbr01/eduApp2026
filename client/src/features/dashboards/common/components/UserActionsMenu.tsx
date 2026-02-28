@@ -59,12 +59,15 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
     requirement: app_permissions.DELETE_USER,
   });
 
+  const userId = user.id || user._id;
+
   const handleApprove = () => {
     if (!CanManageUser) {
       toast.error("You do not have permission to approve users.");
       return;
     }
-    approveMutation.mutate({ userId: user.id });
+    if (!userId) return toast.error("User ID is missing.");
+    approveMutation.mutate({ userId });
   };
 
   const handleBanToggle = () => {
@@ -72,7 +75,8 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
       toast.error("You do not have permission to ban/unban users.");
       return;
     }
-    banMutation.mutate({ userId: user.id });
+    if (!userId) return toast.error("User ID is missing.");
+    banMutation.mutate({ userId });
   };
 
   const handleDelete = () => {
@@ -80,7 +84,8 @@ export function UserActionsMenu({ user, onView }: UserActionsMenuProps) {
       toast.error("You do not have permission to delete users.");
       return;
     }
-    deleteMutation.mutate(user.id);
+    if (!userId) return toast.error("User ID is missing.");
+    deleteMutation.mutate(userId);
   };
 
   const normalizedStatus = user.status.label.toLowerCase();

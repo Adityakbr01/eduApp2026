@@ -63,6 +63,8 @@ export interface GenerateEmailParams {
     campaignType: CampaignType;
     targetAudience: TargetAudience;
     tone: EmailTone;
+    language?: string;
+    provider?: "gemini" | "openrouter";
     subject?: string;
     keyPoints?: string[];
     additionalContext?: string;
@@ -78,11 +80,15 @@ export interface GeneratedEmailContent {
 export interface ImproveEmailParams {
     content: string;
     instruction: string;
+    language?: string;
+    provider?: "gemini" | "openrouter";
 }
 
 export interface SubjectSuggestionsParams {
     content: string;
     count?: number;
+    language?: string;
+    provider?: "gemini" | "openrouter";
 }
 
 // ==================== API RESPONSES ====================
@@ -102,7 +108,7 @@ export const aiApi = {
      * Generate email content using AI
      */
     generateEmail: async (params: GenerateEmailParams): Promise<ApiResponse<GeneratedEmailContent>> => {
-        const response = await apiClient.post(`${BASE_PATH}/generate-email`, params);
+        const response = await apiClient.post(`${BASE_PATH}/generate-email`, params, { timeout: 180000 });
         return response.data;
     },
 
@@ -110,7 +116,7 @@ export const aiApi = {
      * Improve existing email content using AI
      */
     improveEmail: async (params: ImproveEmailParams): Promise<ApiResponse<{ improvedContent: string }>> => {
-        const response = await apiClient.post(`${BASE_PATH}/improve-email`, params);
+        const response = await apiClient.post(`${BASE_PATH}/improve-email`, params, { timeout: 180000 });
         return response.data;
     },
 
@@ -118,7 +124,7 @@ export const aiApi = {
      * Generate email subject line suggestions
      */
     getSubjectSuggestions: async (params: SubjectSuggestionsParams): Promise<ApiResponse<{ suggestions: string[] }>> => {
-        const response = await apiClient.post(`${BASE_PATH}/subject-suggestions`, params);
+        const response = await apiClient.post(`${BASE_PATH}/subject-suggestions`, params, { timeout: 180000 });
         return response.data;
     },
 };

@@ -29,9 +29,7 @@ import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AISettingStep from "./AISettingStep";
-import {
-  CampaignWizardSteps,
-} from "./CampaignWizardSteps";
+import { CampaignWizardSteps } from "./CampaignWizardSteps";
 import { ContentStep } from "./ContentStep";
 import { EmailCompainDialogFooter } from "./EmailCompainDialogFooter";
 import { ReviewStep } from "./ReviewStep";
@@ -63,6 +61,8 @@ export function CreateCampaignDialog({
   const [aiSettings, setAiSettings] = useState({
     campaignType: "newsletter" as CampaignType,
     tone: "friendly" as EmailTone,
+    language: "English",
+    provider: "gemini" as "gemini" | "openrouter",
     keyPoints: [] as string[],
     additionalContext: "",
   });
@@ -102,6 +102,8 @@ export function CreateCampaignDialog({
     setAiSettings({
       campaignType: "newsletter",
       tone: "friendly",
+      language: "English",
+      provider: "gemini",
       keyPoints: [],
       additionalContext: "",
     });
@@ -126,6 +128,8 @@ export function CreateCampaignDialog({
         campaignType: aiSettings.campaignType,
         targetAudience,
         tone: aiSettings.tone,
+        language: aiSettings.language,
+        provider: aiSettings.provider,
         subject: formData.subject || undefined,
         keyPoints:
           aiSettings.keyPoints.length > 0 ? aiSettings.keyPoints : undefined,
@@ -155,7 +159,12 @@ export function CreateCampaignDialog({
     }
 
     getSuggestions(
-      { content: formData.content, count: 5 },
+      {
+        content: formData.content,
+        count: 5,
+        language: aiSettings.language,
+        provider: aiSettings.provider,
+      },
       {
         onSuccess: (response) => {
           setSuggestions(response.data.suggestions);

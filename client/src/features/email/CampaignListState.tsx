@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { MailIcon } from "@/components/ui/mail-icon";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MailOpen, Plus, RefreshCw, XCircle } from "lucide-react";
+import { Plus, RefreshCw, XCircle } from "lucide-react";
 
 interface CampaignListStateProps {
   isLoading: boolean;
@@ -56,7 +57,7 @@ export function CampaignListState({
   if (isEmpty) {
     return (
       <div className="text-center py-14">
-        <MailOpen className="h-10 w-10 mx-auto text-primary mb-4" />
+        <MailIcon className="h-10 w-10 mx-auto text-primary mb-4" />
         <p className="font-semibold mb-2">
           {searchQuery ? "No campaigns found" : "No campaigns yet"}
         </p>

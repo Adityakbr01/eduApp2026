@@ -9,7 +9,8 @@ import type { User } from "@/services/auth";
 export type PermissionItem = string | { code: string; _id?: string; description?: string };
 
 export type UserRow = {
-    id: string;
+    id?: string;
+    _id?: string;
     name: string;
     email: string;
     roleLabel: string;

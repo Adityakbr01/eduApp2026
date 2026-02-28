@@ -20,7 +20,11 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { TONES } from "@/constants/EMAIL_CAMPAGN_CONST";
 import { cn } from "@/lib/utils";
-import { CAMPAIGN_TYPES, type CampaignType, type EmailTone } from "@/services/ai";
+import {
+  CAMPAIGN_TYPES,
+  type CampaignType,
+  type EmailTone,
+} from "@/services/ai";
 import {
   CampaignPriority,
   RecipientType,
@@ -28,14 +32,14 @@ import {
 } from "@/services/campaigns";
 import { ChevronDown, Plus, Wand2, X } from "lucide-react";
 
-
-
 interface AISettingStepProps {
   aiSectionOpen: boolean;
   setAiSectionOpen: (open: boolean) => void;
   aiSettings: {
     campaignType: CampaignType;
     tone: EmailTone;
+    language: string;
+    provider: "gemini" | "openrouter";
     keyPoints: string[];
     additionalContext: string;
   };
@@ -43,6 +47,8 @@ interface AISettingStepProps {
     React.SetStateAction<{
       campaignType: CampaignType;
       tone: EmailTone;
+      language: string;
+      provider: "gemini" | "openrouter";
       keyPoints: string[];
       additionalContext: string;
     }>
@@ -74,7 +80,7 @@ function AISettingStep({
     <div className="space-y-4">
       {/* Collapsible AI Generator */}
       <Collapsible open={aiSectionOpen} onOpenChange={setAiSectionOpen}>
-        <div className="rounded-lg border bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+        <div className="rounded-lg border">
           <CollapsibleTrigger className="w-full p-3 sm:p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -85,7 +91,7 @@ function AISettingStep({
                 variant="secondary"
                 className="ml-2 text-xs hidden sm:inline-flex"
               >
-                Powered by Gemini
+                Powered by {aiSettings.provider}
               </Badge>
             </div>
             <ChevronDown
@@ -155,6 +161,53 @@ function AISettingStep({
                           {tone.label}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* AI Provider */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">AI Engine</Label>
+                  <Select
+                    value={aiSettings.provider}
+                    onValueChange={(v) =>
+                      setAiSettings((prev) => ({
+                        ...prev,
+                        provider: v as "gemini" | "openrouter",
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gemini">Gemini Default</SelectItem>
+                      <SelectItem value="openrouter">Open Router</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Language */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">Language</Label>
+                  <Select
+                    value={aiSettings.language}
+                    onValueChange={(v) =>
+                      setAiSettings((prev) => ({
+                        ...prev,
+                        language: v,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* You can expand these as needed */}
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Hindi">Hindi</SelectItem>
+                      <SelectItem value="Hinglish">Hinglish</SelectItem>
+                      <SelectItem value="Spanish">Spanish</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

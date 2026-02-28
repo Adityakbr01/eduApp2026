@@ -11,8 +11,8 @@ const router = express.Router();
  * Sirf AI routes ke liye
  */
 router.use((req, res, next) => {
-    req.setTimeout(120000);       // disable request timeout 2 mint
-    res.setTimeout(120000);       // disable response timeout 2 mint
+    req.setTimeout(180000);       // disable request timeout 3 mint
+    res.setTimeout(180000);       // disable response timeout 3 mint
     next();
 });
 

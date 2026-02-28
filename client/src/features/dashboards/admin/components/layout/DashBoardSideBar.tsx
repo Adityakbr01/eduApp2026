@@ -1,11 +1,13 @@
 "use client";
 
+import { BellIcon } from "@/components/ui/bell-icon";
 import { Button } from "@/components/ui/button";
+import { LogoutIcon } from "@/components/ui/logout-icon";
 import { Separator } from "@/components/ui/separator";
 import { user_roles } from "@/constants/roles";
 import { adminUtils } from "@/features/dashboards/common/utils";
 import { cn } from "@/lib/utils";
-import { Bell, LogOut, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface Props {
   setActiveSection: (
@@ -74,7 +76,7 @@ function DashBoardSideBar({
               key={value}
               onClick={() => handleNavClick(value)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                "flex w-full items-center gap-3 group  rounded-lg px-3 py-2 text-sm font-medium transition",
                 activeSection === value
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted",
@@ -93,7 +95,7 @@ function DashBoardSideBar({
             className="w-full justify-start gap-2"
             size="sm"
           >
-            <Bell className="h-4 w-4" />
+            <BellIcon className="h-4 w-4" />
             Notifications
           </Button>
           <Button
@@ -102,7 +104,7 @@ function DashBoardSideBar({
             className="w-full justify-start gap-2 text-destructive"
             size="sm"
           >
-            <LogOut className="h-4 w-4" />
+            <LogoutIcon className="h-4 w-4" />
             Log out
           </Button>
         </div>

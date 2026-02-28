@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { InfoItem } from "./UserInfoTab";
+import type { InfoItem } from "./UserInfoTab/UserInfoTab";
 import type {
   PermissionCollection,
   CustomPermissionItem,
@@ -33,7 +33,10 @@ export const buildInfoItems = ({
   timezoneGuess,
   normalizedStatus,
 }: InfoItemsParams): InfoItem[] => [
-  { label: "User ID", value: user.id },
+  {
+    label: "User ID",
+    value: user.id ?? user._id ?? user.sourceUser?.id ?? user.sourceUser?._id,
+  },
   { label: "Full Name", value: user.name },
   { label: "Email", value: user.email },
   { label: "Role", value: user.roleLabel },

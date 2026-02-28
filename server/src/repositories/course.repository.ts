@@ -546,6 +546,7 @@ export const courseRepository = {
                     isPublished: 1,
                     isFeatured: 1,
                     createdAt: 1,
+                    liveStreamingEnabled: 1,
 
                     // 🔑 review info
                     requestId: "$statusRequest._id",
