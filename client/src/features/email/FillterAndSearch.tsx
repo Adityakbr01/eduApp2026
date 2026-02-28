@@ -24,6 +24,7 @@ interface Props {
   handleCancel: (id: string) => void;
   setCreateDialogOpen: (v: boolean) => void;
   setPreviewCampaignId: (id: string | null) => void;
+  setScheduleCampaignId: (id: string | null) => void;
   setDeleteConfirmId: (id: string | null) => void;
 }
 
@@ -44,6 +45,7 @@ function FillterAndSearchAndList(props: Props) {
     handleCancel,
     setCreateDialogOpen,
     setPreviewCampaignId,
+    setScheduleCampaignId,
     setDeleteConfirmId,
   } = props;
 
@@ -75,6 +77,7 @@ function FillterAndSearchAndList(props: Props) {
                 campaign={campaign}
                 onPreview={() => setPreviewCampaignId(campaign._id)}
                 onSend={() => handleSend(campaign._id)}
+                onScheduleClick={() => setScheduleCampaignId(campaign._id)}
                 onCancel={() => handleCancel(campaign._id)}
                 onDelete={() => setDeleteConfirmId(campaign._id)}
                 isSending={isSending}

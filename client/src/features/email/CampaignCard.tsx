@@ -18,6 +18,7 @@ import {
   Mail,
   MoreVertical,
   Send,
+  CalendarClock,
   Target,
   Trash2,
 } from "lucide-react";
@@ -29,6 +30,7 @@ interface CampaignCardProps {
   campaign: IEmailCampaign;
   onPreview: () => void;
   onSend: () => void;
+  onScheduleClick: () => void;
   onCancel: () => void;
   onDelete: () => void;
   isSending: boolean;
@@ -39,6 +41,7 @@ function CampaignCard({
   campaign,
   onPreview,
   onSend,
+  onScheduleClick,
   onCancel,
   onDelete,
   isSending,
@@ -152,10 +155,16 @@ function CampaignCard({
             </DropdownMenuItem>
 
             {canSend && (
-              <DropdownMenuItem onClick={onSend} disabled={isSending}>
-                <Send className="mr-2 h-4 w-4" />
-                {isSending ? "Sending..." : "Send Now"}
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem onClick={onSend} disabled={isSending}>
+                  <Send className="mr-2 h-4 w-4" />
+                  {isSending ? "Sending..." : "Send Now"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onScheduleClick}>
+                  <CalendarClock className="mr-2 h-4 w-4" />
+                  Schedule Campaign
+                </DropdownMenuItem>
+              </>
             )}
 
             {canCancel && (

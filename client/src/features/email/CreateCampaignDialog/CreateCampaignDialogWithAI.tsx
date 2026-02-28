@@ -62,7 +62,7 @@ export function CreateCampaignDialog({
     campaignType: "newsletter" as CampaignType,
     tone: "friendly" as EmailTone,
     language: "English",
-    provider: "gemini" as "gemini" | "openrouter",
+    provider: "gemini" as "gemini",
     keyPoints: [] as string[],
     additionalContext: "",
   });

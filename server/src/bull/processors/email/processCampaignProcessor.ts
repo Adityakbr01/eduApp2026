@@ -64,16 +64,19 @@ export default async function processCampaignProcessor(job: Job<ProcessCampaignJ
         logger.info(`📧 Processing campaign ${campaignId}: ${filteredRecipients.length} recipients (${recipients.length - filteredRecipients.length} opted out)`);
 
         // Dispatch individual email jobs
-        const emailJobs = filteredRecipients.map((recipient) =>
-            sendMarketingEmailJob({
+        const emailJobs = filteredRecipients.map((recipient) => {
+            const firstName = (recipient.name || "User").split(" ")[0] || "User";
+            const personalizedContent = campaign.content.replace(/\{\{\s*first_name\s*\}\}/g, firstName);
+
+            return sendMarketingEmailJob({
                 campaignId: campaignId.toString(),
                 userId: recipient._id.toString(),
                 email: recipient.email,
                 subject: campaign.subject,
-                content: campaign.content,
+                content: personalizedContent,
                 priority: campaign.priority as "low" | "normal" | "high",
-            })
-        );
+            });
+        });
 
         await Promise.all(emailJobs);
 

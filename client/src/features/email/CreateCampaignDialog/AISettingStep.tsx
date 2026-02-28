@@ -39,7 +39,7 @@ interface AISettingStepProps {
     campaignType: CampaignType;
     tone: EmailTone;
     language: string;
-    provider: "gemini" | "openrouter";
+    provider: "gemini";
     keyPoints: string[];
     additionalContext: string;
   };
@@ -48,7 +48,7 @@ interface AISettingStepProps {
       campaignType: CampaignType;
       tone: EmailTone;
       language: string;
-      provider: "gemini" | "openrouter";
+      provider: "gemini";
       keyPoints: string[];
       additionalContext: string;
     }>
@@ -173,7 +173,7 @@ function AISettingStep({
                     onValueChange={(v) =>
                       setAiSettings((prev) => ({
                         ...prev,
-                        provider: v as "gemini" | "openrouter",
+                        provider: v as "gemini",
                       }))
                     }
                   >
@@ -182,7 +182,6 @@ function AISettingStep({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="gemini">Gemini Default</SelectItem>
-                      <SelectItem value="openrouter">Open Router</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

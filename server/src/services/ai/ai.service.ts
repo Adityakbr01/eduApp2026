@@ -1,5 +1,4 @@
 import { AImodel } from "src/configs/GEMINI_CONF.js";
-import { openRouter } from "src/configs/OPENROUTER_CONF.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { buildEmailPrompt, buildImproveEmailPrompt, buildSubjectSuggestionsPrompt } from "src/prompts/emailPrompt.builder.js";
@@ -19,18 +18,11 @@ export const aiService = {
         let text = "";
 
         try {
-            if (params.provider === "openrouter") {
-                if (!process.env.OPENROUTER_API_KEY) {
-                    throw new AppError("OpenRouter service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
-                }
-                text = await openRouter.generateText(prompt, undefined, "You are a specialized AI that outputs JSON only.", 2500);
-            } else {
-                if (!process.env.GEMINI_API_KEY) {
-                    throw new AppError("Gemini service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
-                }
-                const result = await AImodel.generateContent(prompt);
-                text = result.response.text();
+            if (!process.env.GEMINI_API_KEY) {
+                throw new AppError("Gemini service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
             }
+            const result = await AImodel.generateContent(prompt);
+            text = result.response.text();
 
             // Parse the JSON response
             let cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
@@ -70,24 +62,17 @@ export const aiService = {
         content: string,
         instruction: string,
         language?: string,
-        provider?: "gemini" | "openrouter"
+        provider?: "gemini" | string
     ): Promise<{ improvedContent: string }> => {
         const prompt = buildImproveEmailPrompt(content, instruction, language);
         let text = "";
 
         try {
-            if (provider === "openrouter") {
-                if (!process.env.OPENROUTER_API_KEY) {
-                    throw new AppError("OpenRouter service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
-                }
-                text = await openRouter.generateText(prompt, undefined, undefined, 2500);
-            } else {
-                if (!process.env.GEMINI_API_KEY) {
-                    throw new AppError("Gemini service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
-                }
-                const result = await AImodel.generateContent(prompt);
-                text = result.response.text();
+            if (!process.env.GEMINI_API_KEY) {
+                throw new AppError("Gemini service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
             }
+            const result = await AImodel.generateContent(prompt);
+            text = result.response.text();
             const improvedContent = text.replace(/```html\n?|\n?```/g, "").trim();
 
             return { improvedContent };
@@ -107,24 +92,19 @@ export const aiService = {
         content: string,
         count: number = 5,
         language?: string,
-        provider?: "gemini" | "openrouter"
+        provider?: "gemini" | string
     ): Promise<{ suggestions: string[] }> => {
         const prompt = buildSubjectSuggestionsPrompt(content, count, language);
         let text = "";
 
         try {
-            if (provider === "openrouter") {
-                if (!process.env.OPENROUTER_API_KEY) {
-                    throw new AppError("OpenRouter service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
-                }
-                text = await openRouter.generateText(prompt, undefined, "You are a specialized AI that outputs JSON only.", 1000);
-            } else {
-                if (!process.env.GEMINI_API_KEY) {
-                    throw new AppError("Gemini service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
-                }
-                const result = await AImodel.generateContent(prompt);
-                text = result.response.text();
+
+            if (!process.env.GEMINI_API_KEY) {
+                throw new AppError("Gemini service not configured", STATUSCODE.SERVICE_UNAVAILABLE, ERROR_CODE.SERVICE_UNAVAILABLE);
             }
+            const result = await AImodel.generateContent(prompt);
+            text = result.response.text();
+
             let cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
             const jsonArrayMatch = cleanedText.match(/\[[\s\S]*\]/);
             if (jsonArrayMatch) {

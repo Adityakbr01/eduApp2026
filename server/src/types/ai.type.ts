@@ -3,7 +3,7 @@ export interface GenerateEmailContentParams {
     targetAudience: "students" | "instructors" | "all" | "managers";
     tone: "professional" | "friendly" | "urgent" | "casual";
     language?: string;
-    provider?: "gemini" | "openrouter";
+    provider?: "gemini" | string;
     subject?: string;
     keyPoints?: string[];
     additionalContext?: string;

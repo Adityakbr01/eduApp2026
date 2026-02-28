@@ -80,16 +80,25 @@ export const emailCampaignService = {
 
         await emailCampaignRepository.update(campaignId, updateData);
 
-        // If immediate send, dispatch to BullMQ
+        // Dispatch to BullMQ (immediate or delayed)
         if (!scheduledAt) {
             await processCampaignJob({
                 campaignId: campaignId.toString(),
                 priority: campaign.priority as "low" | "normal" | "high",
             });
 
-            logger.info(`🚀 Campaign ${campaignId} dispatched to queue`);
+            logger.info(`🚀 Campaign ${campaignId} dispatched to queue for immediate delivery`);
         } else {
-            logger.info(`📅 Campaign ${campaignId} scheduled for ${scheduledAt}`);
+            const delay = new Date(scheduledAt).getTime() - Date.now();
+            await processCampaignJob(
+                {
+                    campaignId: campaignId.toString(),
+                    priority: campaign.priority as "low" | "normal" | "high",
+                },
+                Math.max(0, delay)
+            );
+
+            logger.info(`📅 Campaign ${campaignId} scheduled in queue for ${scheduledAt} (delay: ${delay}ms)`);
         }
 
         return emailCampaignRepository.findById(campaignId);

@@ -64,7 +64,7 @@ export interface GenerateEmailParams {
     targetAudience: TargetAudience;
     tone: EmailTone;
     language?: string;
-    provider?: "gemini" | "openrouter";
+    provider?: "gemini" | string;
     subject?: string;
     keyPoints?: string[];
     additionalContext?: string;
@@ -81,14 +81,14 @@ export interface ImproveEmailParams {
     content: string;
     instruction: string;
     language?: string;
-    provider?: "gemini" | "openrouter";
+    provider?: "gemini" | string;
 }
 
 export interface SubjectSuggestionsParams {
     content: string;
     count?: number;
     language?: string;
-    provider?: "gemini" | "openrouter";
+    provider?: "gemini" | string;
 }
 
 // ==================== API RESPONSES ====================

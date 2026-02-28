@@ -5,15 +5,16 @@ import ConfirmDeleteCampaign from "@/features/email/ConfirmDeleteCampaign";
 import { CreateCampaignDialog } from "@/features/email/CreateCampaignDialog/CreateCampaignDialogWithAI";
 import FillterAndSearchAndList from "@/features/email/FillterAndSearch";
 import Header from "@/features/email/Header";
+import { ScheduleCampaignDialog } from "@/features/email/ScheduleCampaignDialog";
 import StatsCards from "@/features/email/StatsCards ";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
-    CampaignStatus,
-    iStats,
-    useCancelCampaign,
-    useDeleteCampaign,
-    useGetCampaigns,
-    useSendCampaign,
+  CampaignStatus,
+  iStats,
+  useCancelCampaign,
+  useDeleteCampaign,
+  useGetCampaigns,
+  useSendCampaign,
 } from "@/services/campaigns";
 import { useMemo, useState } from "react";
 
@@ -24,6 +25,9 @@ export default function AdminEmailMarketingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewCampaignId, setPreviewCampaignId] = useState<string | null>(
+    null,
+  );
+  const [scheduleCampaignId, setScheduleCampaignId] = useState<string | null>(
     null,
   );
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -94,6 +98,15 @@ export default function AdminEmailMarketingPage() {
     sendCampaign({ id });
   };
 
+  const handleSchedule = (id: string, scheduledAt: string) => {
+    sendCampaign(
+      { id, data: { scheduledAt } },
+      {
+        onSuccess: () => setScheduleCampaignId(null),
+      },
+    );
+  };
+
   const handleCancel = (id: string) => {
     cancelCampaign(id);
   };
@@ -135,6 +148,7 @@ export default function AdminEmailMarketingPage() {
           setCreateDialogOpen={setCreateDialogOpen}
           setPreviewCampaignId={setPreviewCampaignId}
           setDeleteConfirmId={setDeleteConfirmId}
+          setScheduleCampaignId={setScheduleCampaignId}
         />
 
         {/* Dialogs */}
@@ -147,6 +161,14 @@ export default function AdminEmailMarketingPage() {
           campaignId={previewCampaignId}
           open={!!previewCampaignId}
           onOpenChange={(open) => !open && setPreviewCampaignId(null)}
+        />
+
+        <ScheduleCampaignDialog
+          isOpen={!!scheduleCampaignId}
+          onClose={() => setScheduleCampaignId(null)}
+          campaignId={scheduleCampaignId}
+          onSchedule={handleSchedule}
+          isScheduling={isSending}
         />
 
         <ConfirmDeleteCampaign

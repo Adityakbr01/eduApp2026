@@ -68,10 +68,7 @@ const envSchema = z.object({
 
     // AI - Gemini
     GEMINI_API_KEY: z.string().min(10).optional(),
-    GEMINI_MODEL: z.string().default("models/gemini-2.5-flash"),
-
-    OPENROUTER_API_KEY: z.string().min(10).optional(),
-    OPENROUTER_MODEL: z.string().default("models/gemini-2.5-flash"),
+    GEMINI_MODEL: z.string().optional(),
 
     //Admin - credentials
     ADMIN_EMAIL: z.string().email(),

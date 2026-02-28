@@ -9,7 +9,7 @@ export interface ProcessCampaignJobData {
  * Add a job to process an entire email campaign
  * This will fetch recipients and dispatch individual email jobs
  */
-export const processCampaignJob = async (data: ProcessCampaignJobData) => {
+export const processCampaignJob = async (data: ProcessCampaignJobData, delay?: number) => {
     const priorityMap = {
         high: 1,
         normal: 5,
@@ -23,5 +23,6 @@ export const processCampaignJob = async (data: ProcessCampaignJobData) => {
             type: "fixed",
             delay: 10000,
         },
+        ...(delay && delay > 0 ? { delay } : {})
     });
 };
