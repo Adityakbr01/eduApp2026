@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMarkContentCompleted } from "@/services/classroom";
 import { contentProgressApi } from "@/services/classroom/content-progress-api";
+import { BASE_URL } from "@/lib/api/axios";
 
 interface Props {
   batchId: string;
@@ -88,13 +89,13 @@ export default function VdoCipherPlayer({
       try {
         setLoading(true);
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+        const baseUrl = BASE_URL;
 
         // 🔥 Production-safe URL builder
         const apiUrl =
           process.env.NODE_ENV === "production"
             ? `/api/v1/videos/${lessonContentId}/play`
-            : `${baseUrl}videos/${lessonContentId}/play`;
+            : `${baseUrl}/videos/${lessonContentId}/play`;
 
         const res = await fetch(apiUrl, {
           credentials: "include",

@@ -10,9 +10,10 @@ const AUTH_IGNORE_links = [
     "/auth/token-refresh",
 ];
 
+export const BASE_URL = "https://eduapp2026-xyz.onrender.com/api/v1";
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "/api/v1",
+    baseURL: BASE_URL,
     withCredentials: true, // ✅ cookies (access + refresh)
     timeout: 15000,
 });
