@@ -14,7 +14,7 @@ const storage = multer.memoryStorage();
 // File filter for different upload types
 const imageFilter = (
     req: any,
-    file: Express.Multer.File,
+    file: any,
     cb: FileFilterCallback
 ) => {
     const allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
@@ -27,7 +27,7 @@ const imageFilter = (
 
 const videoFilter = (
     req: any,
-    file: Express.Multer.File,
+    file: any,
     cb: FileFilterCallback
 ) => {
     const allowedMimes = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"];
@@ -40,7 +40,7 @@ const videoFilter = (
 
 const audioFilter = (
     req: any,
-    file: Express.Multer.File,
+    file: any,
     cb: FileFilterCallback
 ) => {
     const allowedMimes = [
@@ -66,7 +66,7 @@ const audioFilter = (
 
 const documentFilter = (
     req: any,
-    file: Express.Multer.File,
+    file: any,
     cb: FileFilterCallback
 ) => {
     const allowedMimes = [
@@ -83,7 +83,7 @@ const documentFilter = (
 
 const lessonContentFilter = (
     req: any,
-    file: Express.Multer.File,
+    file: any,
     cb: FileFilterCallback
 ) => {
     const allowedMimes = [
@@ -145,10 +145,10 @@ export const uploadLessonContent = multer({
 // ==================== DISK STORAGE FOR VDOCIPHER ====================
 
 const diskStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (req, file: any, cb) => {
         cb(null, os.tmpdir());
     },
-    filename: (req, file, cb) => {
+    filename: (req, file: any, cb) => {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
         cb(null, file.fieldname + "-" + uniqueSuffix + "-" + file.originalname);
     },
