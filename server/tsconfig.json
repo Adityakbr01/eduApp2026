@@ -7,11 +7,7 @@
     "lib": [
       "esnext"
     ],
-    "types": [
-      "node",
-      "express",
-      "multer"
-    ],
+
     "baseUrl": "./",
     "paths": {
       "src/*": [
