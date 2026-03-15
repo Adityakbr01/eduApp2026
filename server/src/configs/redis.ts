@@ -4,11 +4,11 @@ import { env, isProd } from "./env.js";
 
 // Dev me Upstash (cloud Redis) use karega
 // Prod me local Docker Redis use karega (hardcoded)
-const redisUrl = isProd ? "redis://redis:6379" : env.UPSTASH_REDIS_URL;
+const redisUrl = env.UPSTASH_REDIS_URL;
 
 // Regular Redis client
 export const redis = new Redis(redisUrl!, {
-  // tls: isProd ? undefined : {},  // Prod: no TLS (local), Dev: TLS (Upstash)
+  tls: isProd ? undefined : {},  // Prod: no TLS (local), Dev: TLS (Upstash)
   maxRetriesPerRequest: 3,
   enableReadyCheck: true,
   retryStrategy(times) {
@@ -18,7 +18,7 @@ export const redis = new Redis(redisUrl!, {
 
 // BullMQ connection
 export const bullMQConnection = new Redis(redisUrl!, {
-  // tls: isProd ? undefined : {},
+  tls: isProd ? undefined : {},
   maxRetriesPerRequest: null,
   enableReadyCheck: !isProd,
   retryStrategy(times) {
