@@ -14,7 +14,7 @@ const categoryController = {
      * @access  Public
      */
     getAllCategories: asyncHandler(
-        async (req, res: Response, _next: NextFunction) => {
+        async (req: Request, res: Response, _next: NextFunction) => {
             const filter: CategoryFilterDTO = {
                 parent: req.query.parent as string | undefined,
                 level: req.query.level ? Number(req.query.level) : undefined,
@@ -204,7 +204,7 @@ const categoryController = {
      * @access  Private - Admin
      */
     createCategory: asyncHandler(
-        async (req, res: Response, _next: NextFunction) => {
+        async (req: Request, res: Response, _next: NextFunction) => {
             const category = await categoryService.createCategory(req.body);
 
             res.status(STATUSCODE.CREATED).json({
@@ -223,7 +223,7 @@ const categoryController = {
      * @access  Private - Admin
      */
     updateCategory: asyncHandler(
-        async (req, res: Response, _next: NextFunction) => {
+        async (req: Request, res: Response, _next: NextFunction) => {
             const { id } = req.params;
             const category = await categoryService.updateCategory(id, req.body);
 
@@ -243,7 +243,7 @@ const categoryController = {
      * @access  Private - Admin
      */
     deleteCategory: asyncHandler(
-        async (req, res: Response, _next: NextFunction) => {
+        async (req: Request, res: Response, _next: NextFunction) => {
             const { id } = req.params;
             const soft = req.query.soft !== "false";
             const result = await categoryService.deleteCategory(id, soft);

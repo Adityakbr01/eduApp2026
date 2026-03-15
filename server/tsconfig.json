@@ -8,7 +8,9 @@
       "esnext"
     ],
     "types": [
-      "node"
+      "node",
+      "express",
+      "multer"
     ],
     "baseUrl": "./",
     "paths": {

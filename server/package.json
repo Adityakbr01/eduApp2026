@@ -67,6 +67,7 @@
   "devDependencies": {
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
     "@types/express-session": "^1.18.2",
     "@types/form-data": "^2.2.1",
     "@types/jsonwebtoken": "^9.0.10",

@@ -1,5 +1,5 @@
 import os from "node:os";
-import multer from "multer";
+import multer, { type FileFilterCallback } from "multer";
 import { STATUSCODE } from "src/constants/statusCodes.js";
 import { ERROR_CODE } from "src/constants/errorCodes.js";
 import cloudinary from "src/configs/cloudinary.js";
@@ -13,9 +13,9 @@ const storage = multer.memoryStorage();
 
 // File filter for different upload types
 const imageFilter = (
-    req: Express.Request,
+    req: any,
     file: Express.Multer.File,
-    cb: multer.FileFilterCallback
+    cb: FileFilterCallback
 ) => {
     const allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
     if (allowedMimes.includes(file.mimetype)) {
@@ -26,9 +26,9 @@ const imageFilter = (
 };
 
 const videoFilter = (
-    req: Express.Request,
+    req: any,
     file: Express.Multer.File,
-    cb: multer.FileFilterCallback
+    cb: FileFilterCallback
 ) => {
     const allowedMimes = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"];
     if (allowedMimes.includes(file.mimetype)) {
@@ -39,9 +39,9 @@ const videoFilter = (
 };
 
 const audioFilter = (
-    req: Express.Request,
+    req: any,
     file: Express.Multer.File,
-    cb: multer.FileFilterCallback
+    cb: FileFilterCallback
 ) => {
     const allowedMimes = [
         "audio/mpeg",      // MP3
@@ -65,9 +65,9 @@ const audioFilter = (
 };
 
 const documentFilter = (
-    req: Express.Request,
+    req: any,
     file: Express.Multer.File,
-    cb: multer.FileFilterCallback
+    cb: FileFilterCallback
 ) => {
     const allowedMimes = [
         "application/pdf",
@@ -82,9 +82,9 @@ const documentFilter = (
 };
 
 const lessonContentFilter = (
-    req: Express.Request,
+    req: any,
     file: Express.Multer.File,
-    cb: multer.FileFilterCallback
+    cb: FileFilterCallback
 ) => {
     const allowedMimes = [
         // Images
