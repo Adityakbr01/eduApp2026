@@ -62,7 +62,8 @@
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
     "xss": "^1.0.15",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+      "tsc-alias": "^1.8.16"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
